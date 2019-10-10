@@ -1,0 +1,31 @@
+<layout name="layout"/>
+
+<script src="{$uri}Public/Scripts/PSI/FileManager/MainForm.js?dt={$dtFlag}" type="text/javascript"></script>
+<script src="{$uri}Public/Scripts/PSI/FileManager/DirEditForm.js?dt={$dtFlag}" type="text/javascript"></script>
+<script src="{$uri}Public/Scripts/PSI/FileManager/UpFileForm.js?dt={$dtFlag}" type="text/javascript"></script>
+<script>
+    Ext.onReady(function () {
+        var app = Ext.create('PSI.App', {
+            userName: "{$loginUserName}",
+            productionName: "{$productionName}",
+            showCopyright: true
+        })
+        app.add(Ext.create('PSI.FileManager.MainForm', {
+            AddDir: "{$AddDir}",
+            EditDir: "{$EditDir}",
+            DeleteDir: "{$DeleteDir}",
+            UpFile: "{$UpFile}",
+            DeleteFile: "{$DeleteFile}",
+            EditFile: "{$EditFile}",
+            PreviewFile: "{$PreviewFile}",
+            Move: "{$Move}",
+            DownLoad: "{$DownLoad}",
+            LookActionLog:"{$LookActionLog}",
+            ActionLog:"{$ActionLog}"
+        }));
+        app.setAppHeader({
+            title: "{$title}",
+            iconCls: "PSI-fid-9997"
+        });
+    })
+</script>
