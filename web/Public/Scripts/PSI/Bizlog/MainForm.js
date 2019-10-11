@@ -108,22 +108,18 @@ Ext.define("PSI.Bizlog.MainForm", {
       xtype: "displayfield",
       value: "条记录"
     }, "-", {
-      text: "帮助",
-      iconCls: "PSI-help",
-      handler: function () {
-        window.open(me.URL("/Home/Help/index?t=bizlog"));
-      }
-    }, "-", {
       text: "关闭",
       handler: function () {
         me.closeWindow();
       }
-    }, "->", {
-      text: "一键升级数据库",
-      iconCls: "PSI-button-database",
-      scope: me,
-      handler: me.onUpdateDatabase
-    }];
+    }, "->"
+    //   , {
+    //   text: "一键升级数据库",
+    //   iconCls: "PSI-button-database",
+    //   scope: me,
+    //   handler: me.onUpdateDatabase
+    // }
+    ];
 
     if (me.getUnitTest() == "1") {
       buttons.push("-", {

@@ -83,16 +83,6 @@ Ext.define("PSI.Permission.SelectPermissionForm", {
           text: "选择数据域",
           handler: me.onSelectDataOrg,
           scope: me
-        }, {
-          text: "数据域的使用帮助",
-          xtype: "button",
-          margin: "5 5 5 20",
-          iconCls: "PSI-help",
-          handler: function () {
-            var url = me
-              .URL("/Home/Help/index?t=dataOrg")
-            window.open(url);
-          }
         }]
       }],
       buttons: [{

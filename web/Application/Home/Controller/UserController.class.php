@@ -51,7 +51,7 @@ class UserController extends PSIBaseController
 
       $this->display();
     } else {
-      $this->gotoLoginPage("/Home/User/index");
+      $this->gotoLoginPage();//"/Home/User/index"
     }
   }
 
@@ -62,7 +62,7 @@ class UserController extends PSIBaseController
   {
     if (session("loginUserId")) {
       // 已经登录了，就返回首页
-      redirect(__ROOT__);
+      redirect(__ROOT__."/Home/FileManager/index");
     }
 
     // 自动初始化数据库
@@ -166,7 +166,6 @@ class UserController extends PSIBaseController
 
       $us = new UserService();
       $data = $us->allOrgs($params);
-
       $this->ajaxReturn($data);
     }
   }

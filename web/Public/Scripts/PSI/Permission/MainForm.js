@@ -155,11 +155,6 @@ Ext.define("PSI.Permission.MainForm", {
       scope: me,
       disabled: me.getPDelete() == "0"
     }, "-", {
-      text: "帮助",
-      handler: function () {
-        window.open(me.URL("/Home/Help/index?t=permission"));
-      }
-    }, "-", {
       text: "关闭",
       handler: function () {
         me.closeWindow();

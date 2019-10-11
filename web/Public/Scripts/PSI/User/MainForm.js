@@ -57,12 +57,6 @@ Ext.define("PSI.User.MainForm", {
         handler: me.onEditUserPassword,
         scope: me
       }, "-", {
-        text: "帮助",
-        handler: function () {
-          window.open(me
-            .URL("/Home/Help/index?t=user"));
-        }
-      }, "-", {
         text: "关闭",
         handler: function () {
           me.closeWindow();

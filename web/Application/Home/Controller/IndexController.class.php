@@ -19,6 +19,7 @@ class IndexController extends PSIBaseController
    */
   public function index()
   {
+    return redirect(__ROOT__."/Home/FileManager/index");
     $us = new UserService();
     if ($us->hasPermission()) {
       $this->initVar();
