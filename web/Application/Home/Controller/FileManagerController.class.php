@@ -5,6 +5,7 @@ namespace Home\Controller;
 use Home\Common\FIdConst;
 use Home\Service\UserService;
 use Home\Service\FileManagerService;
+use Org\Util\Date;
 
 class FileManagerController extends PSIBaseController
 {
@@ -124,10 +125,10 @@ class FileManagerController extends PSIBaseController
 
       $upType = array('zip', 'rar', '7z',
         'jpg', 'gif', 'png', 'jpeg',
-        'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx','pdf',
-        'mp4','avi','mov','rmvb','flv','3gp','mpeg','wmv','asf','mkv','rm',
-        'mp3','wma','m4a','flac','ape','wav','aac',
-        'iso','html','exe','txt','apk','bat');
+        'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'pdf',
+        'mp4', 'avi', 'mov', 'rmvb', 'flv', '3gp', 'mpeg', 'wmv', 'asf', 'mkv', 'rm',
+        'mp3', 'wma', 'm4a', 'flac', 'ape', 'wav', 'aac',
+        'iso', 'html', 'exe', 'txt', 'apk', 'bat');
 
       $fms = new FileManagerService();
       $rs = $fms->upFile($params, $upType);
@@ -200,6 +201,9 @@ class FileManagerController extends PSIBaseController
       $fms = new FileManagerService();
       $rs = $fms->getPathById($arr);
       if ($rs["success"]) {
+        if (!file_exists($rs["paths"]["root"] . '/download')) {
+          mkdir($rs["paths"]["root"] . '/download');
+        }
         $tmpFile = tempnam('/temp', '');  //临时文件
         $zip = new \ZipArchive();
         $zip->open($tmpFile, \ZipArchive::CREATE);
@@ -214,10 +218,11 @@ class FileManagerController extends PSIBaseController
           }
         }
         $zip->close();
-        copy($tmpFile, $rs["paths"]["root"] . "/" . 'filebag.zip');
+        copy($tmpFile, $rs["paths"]["root"] . '/download/' . Date("Y-m-d H-i-s") . '.zip');
         unlink($tmpFile);
-        $rs["url"] = __ROOT__ . '/' . $rs["paths"]["root"] . "/" . 'filebag.zip';
+        $rs["url"] = __ROOT__ . '/' . $rs["paths"]["root"] . '/download/' . Date("Y-m-d H-i-s") . '.zip';
       }
+
       $rs["paths"] = "";
       $this->ajaxReturn($rs);
 
