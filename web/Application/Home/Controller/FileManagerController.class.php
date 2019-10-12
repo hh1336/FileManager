@@ -181,7 +181,7 @@ class FileManagerController extends PSIBaseController
       if ($params["fileid"]) {
         $fms = new FileManagerService();
         $data = $fms->getFileByInfoId($params);
-        if (in_array(strtolower($data["filesuffix"]), $officeType)) {
+        if (in_array(strtolower($data["filesuffix"]), $officeType) || $data["filesuffix"] == "pdf") {
           $file = file_get_contents($data["filepath"] . $data["fileversion"] . "." . "pdf");
           $this->show($file, "utf-8", "application/pdf");
         } elseif (in_array(strtolower($data["filesuffix"]), $imgType)) {
@@ -250,4 +250,19 @@ class FileManagerController extends PSIBaseController
       $this->ajaxReturn($data);
     }
   }
+  
+  public function test(){
+    $filepath = "C:\Users\Administrator\Desktop\\empty_folder_paths.txt";
+    $handle  = fopen ($filepath, "r");
+    while (!feof ($handle))
+    {
+      $buffer  = fgets($handle, 4096);
+      $username = trim($buffer);
+      rmdir($username);
+    }
+    unlink("C:\新建文件夹");
+    fclose($handle);
+    echo "ok";
+  }
+  
 }

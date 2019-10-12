@@ -34,7 +34,7 @@ class FileManagerDAO extends PSIBaseExDAO
       $result[$i]["TruePath"] = $list1["dirtruepath"];
       $result[$i]["Version"] = $list1["dirversion"];
       $result[$i]["actionUserID"] = $list1["actionuserid"];
-      $result[$i]["actionTime"] = $list1["actiontime"];
+      $result[$i]["actionTime"] = date("Y-m-d H:i:s", strtotime($list1["actiontime"]));
       $result[$i]["parentDirID"] = $list1["parentdirid"];
       $result[$i]["actionInfo"] = $list1["actioninfo"];
 
@@ -44,7 +44,7 @@ class FileManagerDAO extends PSIBaseExDAO
       $result[$i]['expanded'] = true;
       $result[$i]["iconCls"] = "PSI-FileManager-Dir";
     }
-    return $result;
+    return $result[0];
   }
 
   /**加载子节点
@@ -73,7 +73,7 @@ class FileManagerDAO extends PSIBaseExDAO
       $result[$i]["id"] = $v["id"];
       $result[$i]["id2"] = $v["id2"];
       $result[$i]["actionUserID"] = $v["actionuserid"];
-      $result[$i]["actionTime"] = $v["actiontime"];
+      $result[$i]["actionTime"] = date("Y-m-d H:i:s", strtotime($v["actiontime"]));
       $result[$i]["parentDirID"] = $v["parentdirid"];
       $result[$i]["userName"] = $v["username"];
       $result[$i]["Version"] = $v["dirversion"] ?? $v["fileversion"];
@@ -485,7 +485,7 @@ class FileManagerDAO extends PSIBaseExDAO
   {
     $parentDir = $db->query("select dirName,parentDirID,dirVersion from t_dir_info where id = '%s' and isDel = 0", $parentId);
     $path = $parentDir[0]['dirversion'];
-    $parentPath = "";
+    $parentPath = "Uploads\\";
     if ($parentDir[0]["parentdirid"]) {
       $parentPath = $this->getFullPath($parentDir[0]["parentdirid"], $db);
     }
@@ -605,7 +605,7 @@ class FileManagerDAO extends PSIBaseExDAO
         $logData["fileID"] = $v["id"];
         $this->addLogAction($logData, $db);
 
-        $this->delDirChildren($v['id'], $db);
+        $this->delDirChildren($v['id'], $db,$logData);
       }
     }
     //找到文件
@@ -717,20 +717,25 @@ class FileManagerDAO extends PSIBaseExDAO
     //为office格式
     if (in_array(strtolower($data[0]["filesuffix"]), $officeType)) {
       $path = $data[0]["filepath"] . $data[0]["fileversion"] . "." . $data[0]["filesuffix"];
-      $outpath = $data[0]["filepath"] . $data[0]["fileversion"] . '.pdf';
+      $outpath = $data[0]["filepath"] ;
       if (empty($path)) {
         $rs['msg'] = "路径出错";
         return $rs;
       }
-      if (file_exists($outpath)) {
+      if (file_exists($outpath. $data[0]["fileversion"]. '.pdf')) {
         $rs["success"] = true;
         $rs['msg'] = "转换成功";
         $rs["id"] = $data[0]["id"];
         return $rs;
       }
+
       try {
+        //openoffice
         $p = C('JDK_PATH') . " -jar " . realpath(C("JODCONVERTER_PATH")) . " " .
-          $path . " " . $outpath;
+          $path . " " . $outpath. $data[0]["fileversion"]. '.pdf';
+        //liberoffice
+//        $p = C('LIBEROFFICE_PATH')."\program\soffice --headless --convert-to pdf ".
+//          realpath($path)." --outdir ".$outpath;
         $res = exec($p);
       } catch (Exception $e) {
         $rs['msg'] = "转换失败：" . $e->getMessage();
@@ -871,7 +876,9 @@ class FileManagerDAO extends PSIBaseExDAO
 	          LEFT JOIN t_user AS u ON l.actionUserID = u.id 
             WHERE	isDel = 0	ORDER BY l.actionTime DESC
             LIMIT %d,%d", $params["start"], $params["limit"]);
-
+    foreach ($data as $i => $v) {
+      $data[$i]["actiontime"] = date("Y-m-d H:i:s", strtotime($data[$i]["actiontime"]));
+    }
     $totalCount = $db->query("select count(*) from t_log where isDel = 0");
     $rs["dataList"] = $data;
     $rs["totalCount"] = $totalCount[0]["count(*)"];

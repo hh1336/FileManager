@@ -62,6 +62,7 @@ Ext.define("PSI.FileManager.UpFileForm", {
             id: 'uploadinput',
             name: 'file',
             blankText: '请上传文件',
+            size:40,
             listeners: {
               change: function (fileinfo, opts) {
                 me.setFilePath(opts);
@@ -82,8 +83,9 @@ Ext.define("PSI.FileManager.UpFileForm", {
           },
           {
             id: "PSI_FileManager_UpFileForm_actionInfo",
-            fieldLabel: "描述",
+            fieldLabel: "描述:",
             name: "actionInfo",
+            width: 278,
             value: "",
           }],
         buttons: [{

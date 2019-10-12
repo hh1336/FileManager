@@ -97,11 +97,11 @@ class PSIBaseService
   }
 
   /**
-   * 把时间类型格式化成类似2015-08-13的格式
+   * 把时间类型格式化成类似2015-08-13 24:00:00的格式
    */
   protected function toYMD($d)
   {
-    return date("Y-m-d", strtotime($d));
+    return date("Y-m-d H:i:s", strtotime($d));
   }
 
   /**

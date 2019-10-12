@@ -17,7 +17,8 @@ class FileManagerService extends PSIBaseExService
 
     $params["loginUserId"] = $us->getLoginUserId();
     $dao = new FileManagerDAO($this->db());
-    return $dao->loadTree($params);
+    $tree_data = $dao->loadTree($params);
+    return $tree_data;
   }
 
   public function loadLog($params)
@@ -43,7 +44,7 @@ class FileManagerService extends PSIBaseExService
       return $this->emptyResult();
     }
     $us = new UserService();
-    if(!$us->hasPermission(FIdConst::WJGL_BBHT)){
+    if (!$us->hasPermission(FIdConst::WJGL_BBHT)) {
       $rs["msg"] = "没有权限";
       $rs["success"] = false;
       return $rs;

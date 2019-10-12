@@ -2,7 +2,8 @@
 return array(
 	//'配置项'=>'配置值'
   "JODCONVERTER_PATH" => 'ThinkPHP\Library\jodconverter\lib\jodconverter-cli-2.2.2.jar',//配置jod路径
-  "JDK_PATH" => 'C:\Progra~1\Java\jdk1.8.0_144\bin\java.exe'
+  "JDK_PATH" => 'C:\Progra~1\Java\jdk1.8.0_144\bin\java.exe',
+  "LIBEROFFICE_PATH" => "D:\LibreOffice"
 );
 
 //进入openoffice安装目录下的program 目录，执行下面语句开启openoffice服务

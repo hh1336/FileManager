@@ -124,6 +124,7 @@ Ext.define('PSI.FileManager.MainForm', {
         url: me.URL("Home/FileManager/loadDir"),
         reader: {
           type: 'json',
+
         }
       },
       root: {expanded: true}
@@ -200,16 +201,7 @@ Ext.define('PSI.FileManager.MainForm', {
         }, {
           text: "最后操作时间",
           dataIndex: "actionTime",
-          width: 100,
-          renderer: function (time) {
-            var date = new Date(time);
-            return date.getFullYear() + "-"
-              + ((date.getMonth() + 1) >= 10 ? (date.getMonth() + 1) : "0" + (date.getMonth() + 1)) + "-"
-              + (date.getDate() >= 10 ? date.getDate() : "0" + date.getDate()) + " "
-              + (date.getHours() >= 10 ? date.getHours() : "0" + date.getHours()) + ":"
-              + (date.getMinutes() >= 10 ? date.getMinutes() : "0" + date.getMinutes()) + ":"
-              + (date.getSeconds() >= 10 ? date.getSeconds() : "0" + date.getSeconds());
-          }
+          width: 100
         }, {
           text: "操作人",
           dataIndex: "userName",
@@ -231,27 +223,24 @@ Ext.define('PSI.FileManager.MainForm', {
       }
     });
 
-    var menu = Ext.create({
-      xtype: "menu",
-      width: 50,
-      height: 20,
-      plain: true,
-      cls: "PSI",
-      // margin: '0 0 10 0',
-      floating: true,
-      items: [{
-        text: "下载",
-        //handler: me.itemContextClick
-      }, {
-        text: "刷新"
-      }]
-    });
+    var itemmenu =  new Ext.menu.Menu();
+    itemmenu.add({text:"下载",handler:me.itemContextClick,scope:me});
 
-    //右击事件
-    // fileTree.on("itemcontextmenu", function (node, record, item, index, e) {
-    //   e.preventDefault();
-    //   menu.showAt(e.xy);
-    // }, me);
+    var treemenu = new Ext.menu.Menu();
+    treemenu.add({text:"新建文件夹",handler:me.containercontext,scope:me,cls:"PSI"},"-");
+    treemenu.add({text:"刷新",handler:me.freshFileGrid,scope:me});
+
+    //右击菜单
+    fileTree.on("itemcontextmenu", function (node, record, item, index, e) {
+      e.preventDefault();
+      itemmenu.showAt(e.xy);
+    }, me);
+
+    //右击容器
+    fileTree.on("containercontextmenu", function (node, e) {
+      e.preventDefault();
+      treemenu.showAt(e.xy);
+    }, me);
 
     fileTree.on("itemdblclick", me.onPreviewFile, me);
     fileTree.on("checkchange", function (node, checked) {
@@ -321,16 +310,7 @@ Ext.define('PSI.FileManager.MainForm', {
             {
               text: '操作时间',
               dataIndex: "actiontime",
-              width: "25%",
-              renderer: function (time) {
-                var date = new Date(time);
-                return date.getFullYear() + "-"
-                  + ((date.getMonth() + 1) >= 10 ? (date.getMonth() + 1) : "0" + (date.getMonth() + 1)) + "-"
-                  + (date.getDate() >= 10 ? date.getDate() : "0" + date.getDate()) + " "
-                  + (date.getHours() >= 10 ? date.getHours() : "0" + date.getHours()) + ":"
-                  + (date.getMinutes() >= 10 ? date.getMinutes() : "0" + date.getMinutes()) + ":"
-                  + (date.getSeconds() >= 10 ? date.getSeconds() : "0" + date.getSeconds());
-              }
+              width: "25%"
             },
             {
               text: '操作人',
@@ -455,6 +435,9 @@ Ext.define('PSI.FileManager.MainForm', {
   getSelectNodeData: function (action) {
     var me = this;
     var id = me.__fileGrid.getSelectionModel().selected.keys[0];
+    if(!me.__fileGrid.getSelectionModel().selected.map[id]){
+      return {};
+    }
     var data = me.__fileGrid.getSelectionModel().selected.map[id].data;
     data["action"] = action;
     return data;
@@ -556,9 +539,6 @@ Ext.define('PSI.FileManager.MainForm', {
     }
     //下载单击中的目标
     var data = me.getSelectNodeData();
-    if (data.Name == "/") {
-      return me.showInfo("不能选择根节点");
-    }
     arr.push(data.id2);
     me.downFiles(arr, me);
   },
@@ -576,8 +556,6 @@ Ext.define('PSI.FileManager.MainForm', {
           return scope.showInfo(data.msg);
         }
         window.open(data.url);
-        // var dom = Ext.get("mainframe");
-        // dom.set({"src": data.url});
       }
     });
   },
@@ -588,7 +566,6 @@ Ext.define('PSI.FileManager.MainForm', {
       return me.showInfo("没有权限");
     }
     var data = me.getSelectNodeData();
-    console.log(data);
   },
 
   //删除文件
@@ -691,6 +668,13 @@ Ext.define('PSI.FileManager.MainForm', {
       me.__fileGrid.updateLayout(node.childNodes[i]);
       me.onCheck(node.childNodes[i], checked, me);
     }
+  },
+  containercontext:function () {
+    var me = this;
+    var temp = me.__fileGrid.getSelectionModel().selected.map;
+    me.__fileGrid.getSelectionModel().selected.map = {}
+    me.onAddDir();
+    me.__fileGrid.getSelectionModel().selected.map = temp;
   }
 })
 ;

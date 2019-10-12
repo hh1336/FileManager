@@ -166,7 +166,7 @@ Ext.define("PSI.FileManager.DirEditForm", {
     } else {
       el.unmask();
       me.editParentDirId.setValue(entity["id2"]);
-      me.editParentDir.setValue(entity["Name"]);
+      me.editParentDir.setValue(entity["Name"]||"根目录");
     }
 
 
@@ -192,7 +192,7 @@ Ext.define("PSI.FileManager.DirEditForm", {
       },
       failure: function (form, action) {
         el.unmask();
-        me.showInfo(action.result, function () {
+        me.showInfo(action.result.msg, function () {
           me.editName.focus();
         });
       }
