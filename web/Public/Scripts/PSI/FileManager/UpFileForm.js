@@ -79,7 +79,7 @@ Ext.define("PSI.FileManager.UpFileForm", {
             id: "PSI_FileManager_UpFileForm_parentDirId",
             xtype: "hidden",
             name: "parentDirID",
-            value: entity["id2"]
+            value: entity["Name"] == "../" ? entity["parentDirID"] : entity["id2"]
           },
           {
             id: "PSI_FileManager_UpFileForm_actionInfo",

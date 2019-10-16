@@ -7,11 +7,12 @@ Ext.define("PSI.FileManager.DirEditForm", {
   initComponent: function () {
     var me = this;
     var entity = me.getEntity();
+    console.log(entity) ;
 
     var t = entity["action"] == "add" ? "新增文件夹" : "编辑文件夹";
-    var f = entity["action"] == "add"
-      ? "edit-form-create.png"
-      : "edit-form-update.png";
+    var f = entity["action"] == "edit"
+      ? "edit-form-update.png"
+      : "edit-form-create.png";
     var logoHtml = "<img style='float:left;margin:10px 20px 0px 10px;width:48px;height:48px;' src='"
       + PSI.Const.BASE_URL
       + "Public/Images/"
@@ -82,7 +83,7 @@ Ext.define("PSI.FileManager.DirEditForm", {
           id: "PSI_FileManager_DirEditForm_editParentDirId",
           xtype: "hidden",
           name: "parentDirID",
-          value: entity["action"] == "add" ? entity["id2"] : entity["parentDirID"]
+          value: ((entity["action"] == "add") && (entity["Name"] != "../")) ? entity["id2"] : entity["parentDirID"]
         },
           {
             id: "PSI_FileManager_DirEditForm_editActionInfo",
@@ -165,7 +166,7 @@ Ext.define("PSI.FileManager.DirEditForm", {
       });
     } else {
       el.unmask();
-      me.editParentDirId.setValue(entity["id2"]);
+      //me.editParentDirId.setValue(entity["id2"]);
       me.editParentDir.setValue(entity["Name"]||"根目录");
     }
 

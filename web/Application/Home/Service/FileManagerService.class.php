@@ -15,9 +15,10 @@ class FileManagerService extends PSIBaseExService
     }
     $us = new UserService();
 
-    $params["loginUserId"] = $us->getLoginUserId();
+    $params["login_user_id"] = $us->getLoginUserId();
     $dao = new FileManagerDAO($this->db());
-    $tree_data = $dao->loadTree($params);
+    //$tree_data = $dao->loadTree($params);
+    $tree_data = $dao->loadDir($params);
     return $tree_data;
   }
 
@@ -32,7 +33,7 @@ class FileManagerService extends PSIBaseExService
       $rs["success"] = false;
       return $rs;
     }
-    $params["loginUserId"] = $us->getLoginUserId();
+    $params["login_user_id"] = $us->getLoginUserId();
     $dao = new FileManagerDAO($this->db());
     $rs = $dao->loadLog($params);
     return $rs;
@@ -64,7 +65,7 @@ class FileManagerService extends PSIBaseExService
     }
     $dao = new FileManagerDAO($this->db());
 
-    $params["logInfo"] = empty($params["id"]) ? "创建文件夹[" . $params["dirName"] . "]" : "编辑文件夹[" . $params["dirName"] . "]";
+    $params["log_info"] = empty($params["id"]) ? "创建文件夹[" . $params["dir_name"] . "]" : "编辑文件夹[" . $params["dir_name"] . "]";
     $dao->log($params);
 
     return $dao->mkDir($params);
@@ -77,7 +78,7 @@ class FileManagerService extends PSIBaseExService
       return $this->emptyResult();
     }
     $dao = new FileManagerDAO($this->db());
-    $params["logInfo"] = "移动[" . $params["name"] . "]--->[" . $params["todirname"] . "]";
+    $params["log_info"] = "移动[" . $params["name"] . "]--->[" . $params["to_dir_name"] . "]";
     $dao->log($params);
     return $dao->Move($params);
   }
@@ -97,7 +98,7 @@ class FileManagerService extends PSIBaseExService
       return $this->emptyResult();
     }
     $dao = new FileManagerDAO($this->db());
-    $params["logInfo"] = "删除文件夹[" . $params["name"] . "]";
+    $params["log_info"] = "删除文件夹[" . $params["name"] . "]";
     $dao->log($params);
     return $dao->delDir($params);
   }
@@ -108,7 +109,7 @@ class FileManagerService extends PSIBaseExService
       return $this->emptyResult();
     }
     $dao = new FileManagerDAO($this->db());
-    $params["logInfo"] = "删除文件[" . $params["name"] . "]";
+    $params["log_info"] = "删除文件[" . $params["name"] . "]";
     $dao->log($params);
     return $dao->delFile($params);
   }
@@ -130,20 +131,20 @@ class FileManagerService extends PSIBaseExService
     $rs["success"] = false;
     $rs["msg"] = "";
     $us = new UserService();
-    $params["loginUserId"] = $us->getLoginUserId();
-    $params["fileSuffix"] = substr($params["path"], (strripos($params["path"], '.') + 1), strlen($params["path"]));
-    $params["fileName"] = substr($params["path"], (strripos($params["path"], '\\') + 1), (-1 - strlen($params["fileSuffix"])));
+    $params["login_user_id"] = $us->getLoginUserId();
+    $params["file_suffix"] = substr($params["path"], (strripos($params["path"], '.') + 1), strlen($params["path"]));
+    $params["file_name"] = substr($params["path"], (strripos($params["path"], '\\') + 1), (-1 - strlen($params["file_suffix"])));
     if (!$us->hasPermission(FIdConst::WJGL_UP_FILE)) {
       $rs["msg"] = "没有权限";
       return $rs;
     }
 
-    if (!in_array(strtolower($params["fileSuffix"]), $arr)) {
+    if (!in_array(strtolower($params["file_suffix"]), $arr)) {
       $rs["msg"] = "非法文件，请上传有效格式";
       return $rs;
     }
     $dao = new FileManagerDAO($this->db());
-    $params["logInfo"] = "上传文件[" . $params["fileName"] . "." . $params["fileSuffix"] . "]";
+    $params["log_info"] = "上传文件[" . $params["file_name"] . "." . $params["file_suffix"] . "]";
     $dao->log($params);
     $dao->upFile($params, $rs);
     return $rs;

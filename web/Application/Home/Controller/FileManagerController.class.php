@@ -36,7 +36,7 @@ class FileManagerController extends PSIBaseController
   public function loadDir()
   {
     if (IS_POST) {
-      $params["parentDirID"] = I("post.parentDirID");
+      $params["parent_dir_id"] = I("post.parentDirID");
       $fms = new FileManagerService();
       $us = new UserService();
       if ($us->hasPermission(FIdConst::WJGL)) {
@@ -54,13 +54,13 @@ class FileManagerController extends PSIBaseController
     if (IS_POST) {
       $params = [
         "id" => I("post.id"),
-        "dirName" => I("post.dirName"),
-        "parentDirID" => I("post.parentDirID"),
-        "actionInfo" => I("post.actionInfo")
+        "dir_name" => I("post.dirName"),
+        "parent_dir_id" => I("post.parentDirID"),
+        "action_info" => I("post.actionInfo")
       ];
       $fms = new FileManagerService();
       $us = new UserService();
-      $params["loginUserId"] = $us->getLoginUserId();
+      $params["login_user_id"] = $us->getLoginUserId();
       $rs = $fms->mkDir($params);
       $this->ajaxReturn($rs);
     }
@@ -70,12 +70,12 @@ class FileManagerController extends PSIBaseController
   {
     if (IS_POST) {
       $params["mid"] = I("post.mid");
-      $params["dirid"] = I("post.dirid");
+      $params["dir_id"] = I("post.dirid");
       $params["name"] = I("post.name");
-      $params["todirname"] = I("post.todirname");
+      $params["to_dir_name"] = I("post.todirname");
       $fms = new FileManagerService();
       $us = new UserService();
-      $params["loginUserId"] = $us->getLoginUserId();
+      $params["login_user_id"] = $us->getLoginUserId();
       $rs = $fms->Move($params);
       $this->ajaxReturn($rs);
     }
@@ -96,7 +96,7 @@ class FileManagerController extends PSIBaseController
       $us = new UserService();
       $params["id"] = I("post.id");
       $params["name"] = I("post.name");
-      $params["loginUserId"] = $us->getLoginUserId();
+      $params["login_user_id"] = $us->getLoginUserId();
       $fms = new FileManagerService();
 
       $this->ajaxReturn($fms->delDir($params));
@@ -109,7 +109,7 @@ class FileManagerController extends PSIBaseController
       $us = new UserService();
       $params["id"] = I("post.id");
       $params['name'] = I("post.name");
-      $params["loginUserId"] = $us->getLoginUserId();
+      $params["login_user_id"] = $us->getLoginUserId();
       $fms = new FileManagerService();
 
       $this->ajaxReturn($fms->delFile($params));
@@ -120,8 +120,8 @@ class FileManagerController extends PSIBaseController
   {
     if (IS_POST) {
       $params["path"] = I("post.path");
-      $params["parentDirID"] = I("post.parentDirID");
-      $params["actionInfo"] = I("post.actionInfo");
+      $params["parent_dir_id"] = I("post.parentDirID");
+      $params["action_info"] = I("post.actionInfo");
 
       $upType = array('zip', 'rar', '7z',
         'jpg', 'gif', 'png', 'jpeg',
@@ -137,21 +137,21 @@ class FileManagerController extends PSIBaseController
       }
 
       $upload = new \Think\Upload();// 实例化上传类
-      $upload->maxSize = 5242880;// 设置附件上传大小 5M
+      $upload->maxSize = 20971520;// 设置附件上传大小 5M
       $upload->exts = $upType;// 设置附件上传类型
       $upload->savePath = ''; // 设置附件上传（子）目录
       $upload->autoSub = false;
       $upload->hash = false;
-      $upload->rootPath = $params["data"]["filePath"]; // 设置附件上传根目录
-      $upload->saveName = $params["data"]["fileVersion"];
+      $upload->rootPath = $params["data"]["file_path"]; // 设置附件上传根目录
+      $upload->saveName = $params["data"]["file_version"];
 
       $info = $upload->upload();
 
       if (!$info) {// 上传错误提示错误信息
         $rs["msg"] = "上传错误，出现了：" . $upload->getError();
         $del_params["id"] = $params["data"]["id"];
-        $del_params["loginUserId"] = $params["loginUserId"];
-        $del_params["logID"] = $params['logID'];
+        $del_params["login_user_id"] = $params["login_user_id"];
+        $del_params["log_id"] = $params['log_id'];
         $fms->reFile($del_params);
         $this->ajaxReturn($rs);
       } else {// 上传成功
@@ -176,16 +176,28 @@ class FileManagerController extends PSIBaseController
     $us = new UserService();
     if ($us->hasPermission(FIdConst::WJGL_YL_FILE)) {
       $imgType = array('jpg', 'gif', 'png', 'jpeg');
-      $officeType = array('doc', 'docx', 'xls', 'xlsx', 'pptx');
-      $params["fileid"] = I("fileid");
-      if ($params["fileid"]) {
+      $officeType = array('doc', 'docx', 'xls', 'xlsx', 'pptx','ppt');
+      $params["file_id"] = I("fileid");
+      if ($params["file_id"]) {
         $fms = new FileManagerService();
         $data = $fms->getFileByInfoId($params);
-        if (in_array(strtolower($data["filesuffix"]), $officeType) || $data["filesuffix"] == "pdf") {
-          $file = file_get_contents($data["filepath"] . $data["fileversion"] . "." . "pdf");
-          $this->show($file, "utf-8", "application/pdf");
-        } elseif (in_array(strtolower($data["filesuffix"]), $imgType)) {
-          $this->show(file_get_contents($data["filepath"] . $data["fileversion"] . "." . $data["filesuffix"]), "utf-8", "image/" . $data["filesuffix"]);
+        if (in_array(strtolower($data["file_suffix"]), $officeType) || $data["file_suffix"] == "pdf") {
+
+//          header ( "Content-Type: application/vnd.ms-excel");
+          //返回的文件(流形式)
+          header("Content-type: application/octet-stream");
+          //按照字节大小返回
+          header("Accept-Ranges: bytes");
+
+          header ( "Content-Disposition: attachment; filename=".$data["file_version"] . "." . "pdf");
+          header("Pragma:No-cache;");
+          header("Cache-Control:No-cache;");
+          header("Expires:0;");
+          readfile ($data["file_path"] . $data["file_version"] . "." . "pdf" ,"预览.pdf");
+          //@unlink($data["file_path"] . $data["file_version"] . "." . "pdf");
+
+        } elseif (in_array(strtolower($data["file_suffix"]), $imgType)) {
+          $this->show(file_get_contents($data["file_path"] . $data["file_version"] . "." . $data["file_suffix"]), "utf-8", "image/" . $data["file_suffix"]);
         } else {
           $this->show("<h2>暂不支持该格式预览</h2>", "utf-8", "text/html");
         }
@@ -235,6 +247,7 @@ class FileManagerController extends PSIBaseController
       $params["limit"] = I("post.limit");
       $params["page"] = I("post.page");
       $params["start"] = I("post.start");
+      $params["id"] = I("post.id");
       $fms = new FileManagerService();
       $data = $fms->loadLog($params);
       $this->ajaxReturn($data);
@@ -249,20 +262,6 @@ class FileManagerController extends PSIBaseController
       $data = $fms->backVersion($params);
       $this->ajaxReturn($data);
     }
-  }
-  
-  public function test(){
-    $filepath = "C:\Users\Administrator\Desktop\\empty_folder_paths.txt";
-    $handle  = fopen ($filepath, "r");
-    while (!feof ($handle))
-    {
-      $buffer  = fgets($handle, 4096);
-      $username = trim($buffer);
-      rmdir($username);
-    }
-    unlink("C:\新建文件夹");
-    fclose($handle);
-    echo "ok";
   }
   
 }

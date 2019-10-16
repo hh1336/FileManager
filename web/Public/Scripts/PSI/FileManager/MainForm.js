@@ -106,8 +106,7 @@ Ext.define('PSI.FileManager.MainForm', {
         "actionTime", "parentDirID",
         "userName", "actionInfo",
         "leaf", "Version",
-        "Name", "Path",
-        "TruePath",
+        "Name",
         //文件
         "fileSize", "fileSuffix"
 
@@ -121,10 +120,12 @@ Ext.define('PSI.FileManager.MainForm', {
         actionMethods: {
           read: "POST"
         },
+        extraParams: {
+          parentDirId: ""
+        },
         url: me.URL("Home/FileManager/loadDir"),
         reader: {
-          type: 'json',
-
+          type: 'json'
         }
       },
       root: {expanded: true}
@@ -178,7 +179,7 @@ Ext.define('PSI.FileManager.MainForm', {
               });
             });
             me.freshFileGrid();
-          },
+          }
         }
       },
       tools: [{
@@ -223,12 +224,25 @@ Ext.define('PSI.FileManager.MainForm', {
       }
     });
 
-    var itemmenu =  new Ext.menu.Menu();
-    itemmenu.add({text:"下载",handler:me.itemContextClick,scope:me});
+    var itemmenu = new Ext.menu.Menu();
+    itemmenu.add({text: "下载", handler: me.itemContextClick, scope: me}, "-");
+    itemmenu.add({text: "查看历史版本", handler: me.onLookFileLog, scope: me}, "-");
+    itemmenu.add({
+      text: "权限", handler: function () {
+
+      }, scope: me
+    });
 
     var treemenu = new Ext.menu.Menu();
-    treemenu.add({text:"新建文件夹",handler:me.containercontext,scope:me,cls:"PSI"},"-");
-    treemenu.add({text:"刷新",handler:me.freshFileGrid,scope:me});
+    treemenu.add({text: "新建文件夹", handler: me.containercontext, scope: me, cls: "PSI"}, "-");
+    treemenu.add({
+      text: "上传文件", handler: function () {
+        me.onfileStoryLoad();
+        me.onUpFile();
+      }, scope: me
+    }, "-");
+    treemenu.add({text: "刷新", handler: me.freshFileGrid, scope: me});
+
 
     //右击菜单
     fileTree.on("itemcontextmenu", function (node, record, item, index, e) {
@@ -239,19 +253,22 @@ Ext.define('PSI.FileManager.MainForm', {
     //右击容器
     fileTree.on("containercontextmenu", function (node, e) {
       e.preventDefault();
+      me.onfileStoryLoad();
       treemenu.showAt(e.xy);
     }, me);
 
     fileTree.on("itemdblclick", me.onPreviewFile, me);
-    fileTree.on("checkchange", function (node, checked) {
-      me.onCheck(node, checked, me);
-    }, me);
+    fileTree.on("containerclick", me.onfileStoryLoad, me);
+    // fileTree.on("checkchange", function (node, checked) {
+    //   me.onCheck(node, checked, me);
+    // }, me);
 
     me.__fileGrid = fileTree;
+    me.__fileTreeStory = fileStory;
     return me.__fileGrid;
   },
 
-  getWindo: function () {
+  getWindow: function () {
     var me = this;
     if (me.__window) {
       return me.__window;
@@ -259,7 +276,7 @@ Ext.define('PSI.FileManager.MainForm', {
     var modelName = "PSIActionLogModel";
     Ext.define(modelName, {
       extend: "Ext.data.Model",
-      fields: ['id', 'actiontime', 'actionuserid', 'remarks', 'actioninfo', 'actionusername']
+      fields: ['id', 'action_time', 'action_user_id', 'remarks', 'action_info', 'action_user_name', 'type', 'name']
     });
 
     var myStore = Ext.create('Ext.data.Store', {
@@ -272,6 +289,9 @@ Ext.define('PSI.FileManager.MainForm', {
         actionMethods: {
           read: "POST"
         },
+        extraParams: {
+          id: ""
+        },
         reader: {
           type: 'json',
           root: 'dataList',
@@ -282,9 +302,9 @@ Ext.define('PSI.FileManager.MainForm', {
 
     me.__window = Ext.create('Ext.window.Window', {
       title: '操作记录',
-      height: "55%",
+      //height: "45%",
       cls: "PSI",
-      width: "40%",
+      width: "55%",
       modal: true,
       closeAction: 'hide',
       items: {
@@ -309,27 +329,50 @@ Ext.define('PSI.FileManager.MainForm', {
           items: [
             {
               text: '操作时间',
-              dataIndex: "actiontime",
-              width: "25%"
+              dataIndex: "action_time",
+              width: "15%"
+            },
+            {
+              text: '名称',
+              dataIndex: "name",
+              width: "10%"
             },
             {
               text: '操作人',
-              dataIndex: "actionusername",
-              width: "12%"
+              dataIndex: "action_user_name",
+              width: "10%"
             },
             {
               text: '操作描述',
               dataIndex: "remarks",
-              width: "30%"
+              width: "25%"
             },
             {
               text: '操作备注',
-              dataIndex: "actioninfo",
-              width: "21%"
+              dataIndex: "action_info",
+              width: "25%"
+            },
+            {
+              text: "预览",
+              width: "5%",
+              dataIndex: "type",
+              renderer: function (value) {
+                var html = "";
+                if (value == "file") {
+                  html = "<img src='' width='50%' height='50%' class='PSI-fid-2003'/>";
+                }
+                return html;
+              },
+              listeners: {
+                click: {
+                  fn: me.lookOldVersion,
+                  scope: me
+                }
+              }
             },
             {
               text: '版本',
-              width: "12%",
+              width: "10%",
               dataIndex: "id",
               renderer: function (value) {
                 return value.slice(0, 8);
@@ -384,6 +427,23 @@ Ext.define('PSI.FileManager.MainForm', {
               return me.showInfo("请选择对应版本");
             }
             var data = me.__selectData;
+            if(data.type){
+              return me.confirm("是否撤回["+data.id.slice(0, 8) + "]版本",function () {
+                Ext.Ajax.request({
+                  url:me.URL("Home/FileManager/revokeFile"),
+                  params:{
+                    id:data.id
+                  },
+                  success:function (response) {
+                    var data = me.decodeJSON(response.responseText);
+                    me.showInfo(data.msg, function () {
+                      me.freshFileGrid();
+                      me.__window.close();
+                    });
+                  }
+                })
+              });
+            }
             me.confirm("是否回到[" + data.id.slice(0, 8) + "],该版本之后的所有操作将被撤销。", function () {
               Ext.Ajax.request({
                 url: me.URL("Home/FileManager/backVersion"),
@@ -403,10 +463,9 @@ Ext.define('PSI.FileManager.MainForm', {
         }
       ]
     });
-    // me.__window.on("hide", function () {//绑定隐藏事件
-    //   me.__selectData = "";
-    //   console.log("123");
-    // }, me);
+    me.__window.on("hide",function () {
+      me.__selectData = "";
+    },me);
 
     return me.__window;
   },
@@ -435,7 +494,7 @@ Ext.define('PSI.FileManager.MainForm', {
   getSelectNodeData: function (action) {
     var me = this;
     var id = me.__fileGrid.getSelectionModel().selected.keys[0];
-    if(!me.__fileGrid.getSelectionModel().selected.map[id]){
+    if (!me.__fileGrid.getSelectionModel().selected.map[id]) {
       return {};
     }
     var data = me.__fileGrid.getSelectionModel().selected.map[id].data;
@@ -466,8 +525,8 @@ Ext.define('PSI.FileManager.MainForm', {
     if (data.fileSuffix != "dir") {
       return me.onEditFile();
     }
-    if (data.Name == "/") {
-      return me.showInfo("不能编辑根目录");
+    if (data.Name == "../") {
+      return false;
     }
     var form = Ext.create("PSI.FileManager.DirEditForm", {
       parentForm: me,
@@ -513,7 +572,7 @@ Ext.define('PSI.FileManager.MainForm', {
       return me.showInfo("没有权限");
     }
     var data = me.getSelectNodeData();
-    if (data.fileSuffix == "dir" || data.fileSuffix == "") {
+    if (data.fileSuffix == "dir") {
       var form = Ext.create("PSI.FileManager.UpFileForm", {
         parentForm: me,
         entity: data
@@ -600,15 +659,15 @@ Ext.define('PSI.FileManager.MainForm', {
   }
   ,
   //预览文件
-  onPreviewFile: function () {
+  onPreviewFile: function (node, record, item) {
     var me = this;
     if (me.getPreviewFile() == "0") {
       return me.showInfo("没有权限");
     }
     if (me.__fileGrid) {
       var data = me.getSelectNodeData();
-      if (data.Name == "/" || data.fileSuffix == "dir") {
-        return false;
+      if (data.fileSuffix == "dir") {
+        return me.onloadChildrenDir(node, record, item);
       }
       Ext.Ajax.request({
         url: me.URL("Home/FileManager/convertFile"),
@@ -619,7 +678,11 @@ Ext.define('PSI.FileManager.MainForm', {
           var rsdata = me.decodeJSON(response.responseText);
           if (rsdata.success) {
             var dom = Ext.get("mainframe");
-            dom.set({"src": me.URL("Home/FileManager/getFile?fileid=" + rsdata.id)});
+            if (!(rsdata.file_suffix == "pdf")) {
+              dom.set({"src": me.URL("Home/FileManager/getFile?fileid=" + rsdata.id)});
+              return true;
+            }
+            dom.set({"src": me.URL("Public/pdfjs/web/viewer.html?file=" + me.URL("Home/FileManager/getFile/fileid/" + rsdata.id))})
           } else {
             me.showInfo(rsdata.msg);
           }
@@ -633,7 +696,10 @@ Ext.define('PSI.FileManager.MainForm', {
     if (me.getLookActionLog() == "0") {
       return me.showInfo("没有权限");
     }
-    me.getWindo().show();
+    me.getWindow().child("grid").getStore().proxy.extraParams = {
+      id: ""
+    }
+    me.getWindow().show();
     Ext.getCmp("pagingToobar").doRefresh();
   },
 
@@ -647,11 +713,10 @@ Ext.define('PSI.FileManager.MainForm', {
   //刷新树
   freshFileGrid: function () {
     var me = this;
-
     me.getFileGrid().getStore().reload();
   }
   ,
-  onfileStoryLoad: function () {
+  onfileStoryLoad: function (node, records) {
     var me = this;
     var tree = me.getFileGrid();
     var root = tree.getRootNode();
@@ -662,19 +727,70 @@ Ext.define('PSI.FileManager.MainForm', {
       }
     }
   },
-  onCheck: function (node, checked, me) {
-    for (var i = 0, len = node.childNodes.length; i < len; i++) {
-      node.childNodes[i].data.checked = checked;
-      me.__fileGrid.updateLayout(node.childNodes[i]);
-      me.onCheck(node.childNodes[i], checked, me);
-    }
-  },
-  containercontext:function () {
+  //让文件夹处于选中状态
+  // onCheck: function (node, checked, me) {
+  //   for (var i = 0, len = node.childNodes.length; i < len; i++) {
+  //     node.childNodes[i].data.checked = checked;
+  //     me.__fileGrid.updateLayout(node.childNodes[i]);
+  //     me.onCheck(node.childNodes[i], checked, me);
+  //   }
+  // },
+  //右键新增文件夹
+  containercontext: function () {
     var me = this;
-    var temp = me.__fileGrid.getSelectionModel().selected.map;
-    me.__fileGrid.getSelectionModel().selected.map = {}
+    var data = me.getSelectNodeData();
+    if (!(data.Name == "../")) {
+      var temp = me.__fileGrid.getSelectionModel().selected.map;
+      me.__fileGrid.getSelectionModel().selected.map = {}
+      me.onAddDir();
+      me.__fileGrid.getSelectionModel().selected.map = temp;
+      return false;
+    }
     me.onAddDir();
-    me.__fileGrid.getSelectionModel().selected.map = temp;
+
+  },
+  //进入文件夹
+  onloadChildrenDir: function (node, record, item) {
+    var me = this;
+    var data = me.getSelectNodeData();
+    me.getFileGrid().getStore().proxy.extraParams = {
+      parentDirID: data.id2
+    }
+    me.freshFileGrid();
+  },
+  //查看文件版本
+  onLookFileLog: function () {
+    var me = this;
+    var data = me.getSelectNodeData();
+    if (data.Name == "../") {
+      return me.onLookLog();
+    }
+    me.getWindow().child("grid").getStore().proxy.extraParams = {
+      id: data.id
+    }
+    me.getWindow().show();
+    Ext.getCmp("pagingToobar").doRefresh();
+  },
+  //预览旧文件
+  lookOldVersion: function (node, el, index) {
+    var me = this;
+    if (node.getStore().getAt(index).data.type == "file") {
+      Ext.Ajax.request({
+        url: me.URL("Home/FileManager/convertFile"),
+        params: {
+          id: node.getStore().getAt(index).data.id
+        },
+        success: function (response) {
+          var rsdata = me.decodeJSON(response.responseText);
+          if (rsdata.success) {
+            var url = me.URL("Public/pdfjs/web/viewer.html?file=" + me.URL("Home/FileManager/getFile/fileid/" + rsdata.id));
+            window.open(url);
+          } else {
+            me.showInfo(rsdata.msg);
+          }
+        }
+      });
+    }
   }
 })
 ;
