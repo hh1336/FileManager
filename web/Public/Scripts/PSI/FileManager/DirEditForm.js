@@ -7,7 +7,6 @@ Ext.define("PSI.FileManager.DirEditForm", {
   initComponent: function () {
     var me = this;
     var entity = me.getEntity();
-    console.log(entity) ;
 
     var t = entity["action"] == "add" ? "新增文件夹" : "编辑文件夹";
     var f = entity["action"] == "edit"

@@ -33,9 +33,8 @@ class FileManagerService extends PSIBaseExService
       $rs["success"] = false;
       return $rs;
     }
-    $params["login_user_id"] = $us->getLoginUserId();
-    $dao = new FileManagerDAO($this->db());
-    $rs = $dao->loadLog($params);
+    $logService = new FileManagerlogService();
+    $rs = $logService->loadLog($params);
     return $rs;
   }
 
@@ -50,8 +49,8 @@ class FileManagerService extends PSIBaseExService
       $rs["success"] = false;
       return $rs;
     }
-    $dao = new FileManagerDAO($this->db());
-    return $dao->backVersion($params);
+    $logService = new FileManagerlogService();
+    return $logService->backLog($params);
   }
 
   /**创建目录
@@ -64,9 +63,9 @@ class FileManagerService extends PSIBaseExService
       return $this->emptyResult();
     }
     $dao = new FileManagerDAO($this->db());
-
     $params["log_info"] = empty($params["id"]) ? "创建文件夹[" . $params["dir_name"] . "]" : "编辑文件夹[" . $params["dir_name"] . "]";
-    $dao->log($params);
+    $logService = new FileManagerlogService();
+    $logService->log($params);
 
     return $dao->mkDir($params);
 
@@ -79,7 +78,8 @@ class FileManagerService extends PSIBaseExService
     }
     $dao = new FileManagerDAO($this->db());
     $params["log_info"] = "移动[" . $params["name"] . "]--->[" . $params["to_dir_name"] . "]";
-    $dao->log($params);
+    $logService = new FileManagerlogService();
+    $logService->log($params);
     return $dao->Move($params);
   }
 
@@ -99,7 +99,8 @@ class FileManagerService extends PSIBaseExService
     }
     $dao = new FileManagerDAO($this->db());
     $params["log_info"] = "删除文件夹[" . $params["name"] . "]";
-    $dao->log($params);
+    $logService = new FileManagerlogService();
+    $logService->log($params);
     return $dao->delDir($params);
   }
 
@@ -110,7 +111,8 @@ class FileManagerService extends PSIBaseExService
     }
     $dao = new FileManagerDAO($this->db());
     $params["log_info"] = "删除文件[" . $params["name"] . "]";
-    $dao->log($params);
+    $logService = new FileManagerlogService();
+    $logService->log($params);
     return $dao->delFile($params);
   }
 
@@ -131,7 +133,6 @@ class FileManagerService extends PSIBaseExService
     $rs["success"] = false;
     $rs["msg"] = "";
     $us = new UserService();
-    $params["login_user_id"] = $us->getLoginUserId();
     $params["file_suffix"] = substr($params["path"], (strripos($params["path"], '.') + 1), strlen($params["path"]));
     $params["file_name"] = substr($params["path"], (strripos($params["path"], '\\') + 1), (-1 - strlen($params["file_suffix"])));
     if (!$us->hasPermission(FIdConst::WJGL_UP_FILE)) {
@@ -145,7 +146,8 @@ class FileManagerService extends PSIBaseExService
     }
     $dao = new FileManagerDAO($this->db());
     $params["log_info"] = "上传文件[" . $params["file_name"] . "." . $params["file_suffix"] . "]";
-    $dao->log($params);
+    $logService = new FileManagerlogService();
+    $logService->log($params);
     $dao->upFile($params, $rs);
     return $rs;
   }

@@ -11,7 +11,8 @@ Ext.define('PSI.FileManager.MainForm', {
     Move: null,
     DownLoad: null,
     LookActionLog: null,
-    ActionLog: null
+    ActionLog: null,
+    FilePermission: null
   },
   initComponent: function () {
     var me = this;
@@ -226,12 +227,11 @@ Ext.define('PSI.FileManager.MainForm', {
 
     var itemmenu = new Ext.menu.Menu();
     itemmenu.add({text: "下载", handler: me.itemContextClick, scope: me}, "-");
-    itemmenu.add({text: "查看历史版本", handler: me.onLookFileLog, scope: me}, "-");
-    itemmenu.add({
-      text: "权限", handler: function () {
+    itemmenu.add({text: "查看历史版本", handler: me.onLookFileLog, scope: me});
+    if (!(me.getFilePermission() == "0")) {
+      itemmenu.add("-", {text: "权限设置", handler: me.onFilePermission, scope: me});
+    }
 
-      }, scope: me
-    });
 
     var treemenu = new Ext.menu.Menu();
     treemenu.add({text: "新建文件夹", handler: me.containercontext, scope: me, cls: "PSI"}, "-");
@@ -427,14 +427,14 @@ Ext.define('PSI.FileManager.MainForm', {
               return me.showInfo("请选择对应版本");
             }
             var data = me.__selectData;
-            if(data.type){
-              return me.confirm("是否撤回["+data.id.slice(0, 8) + "]版本",function () {
+            if (data.type) {
+              return me.confirm("是否撤回[" + data.id.slice(0, 8) + "]版本", function () {
                 Ext.Ajax.request({
-                  url:me.URL("Home/FileManager/revokeFile"),
-                  params:{
-                    id:data.id
+                  url: me.URL("Home/FileManager/revokeFile"),
+                  params: {
+                    id: data.id
                   },
-                  success:function (response) {
+                  success: function (response) {
                     var data = me.decodeJSON(response.responseText);
                     me.showInfo(data.msg, function () {
                       me.freshFileGrid();
@@ -463,9 +463,9 @@ Ext.define('PSI.FileManager.MainForm', {
         }
       ]
     });
-    me.__window.on("hide",function () {
+    me.__window.on("hide", function () {
       me.__selectData = "";
-    },me);
+    }, me);
 
     return me.__window;
   },
@@ -716,7 +716,7 @@ Ext.define('PSI.FileManager.MainForm', {
     me.getFileGrid().getStore().reload();
   }
   ,
-  onfileStoryLoad: function (node, records) {
+  onfileStoryLoad: function () {
     var me = this;
     var tree = me.getFileGrid();
     var root = tree.getRootNode();
@@ -791,7 +791,21 @@ Ext.define('PSI.FileManager.MainForm', {
         }
       });
     }
+  },
+  //文件或文件夹权限
+  onFilePermission: function () {
+    var me = this;
+    var data = me.getSelectNodeData();
+    if(data.Name =="../"){
+      return me.showInfo("请选择操作目标");
+    }
+    var form = Ext.create("PSI.FileManager.FilePermissionForm",{
+      parentForm: me,
+      entity: data
+    });
+    return form.show();
   }
+
 })
 ;
 

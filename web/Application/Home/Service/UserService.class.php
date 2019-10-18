@@ -67,9 +67,7 @@ class UserService extends PSIBaseExService
     $idList = [
       FIdConst::CHANGE_MY_PASSWORD,
       FIdConst::RELOGIN,
-      FIdConst::HOME,
-      FIdConst::HELP,
-      FIdConst::ABOUT
+      FIdConst::HOME
     ];
 
     if ($fid == null || in_array($fid, $idList)) {

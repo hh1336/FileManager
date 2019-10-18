@@ -3,6 +3,7 @@
 namespace Home\Controller;
 
 use Home\Common\FIdConst;
+use Home\Service\FileManagerPermissionService;
 use Home\Service\UserService;
 use Home\Service\FileManagerService;
 use Org\Util\Date;
@@ -30,6 +31,7 @@ class FileManagerController extends PSIBaseController
     $this->assign("DownLoad", $us->hasPermission(FIdConst::WJGL_DOWN_FILE) ? 1 : 0);
     $this->assign("LookActionLog", $us->hasPermission(FIdConst::WJGL_CKCZJL) ? 1 : 0);
     $this->assign("ActionLog", $us->hasPermission(FIdConst::WJGL_BBHT) ? 1 : 0);
+    $this->assign("FilePermission", $us->hasPermission(FIdConst::WJGL_DWJQX) ? 1 : 0);
     $this->display();
   }
 
@@ -176,7 +178,7 @@ class FileManagerController extends PSIBaseController
     $us = new UserService();
     if ($us->hasPermission(FIdConst::WJGL_YL_FILE)) {
       $imgType = array('jpg', 'gif', 'png', 'jpeg');
-      $officeType = array('doc', 'docx', 'xls', 'xlsx', 'pptx','ppt');
+      $officeType = array('doc', 'docx', 'xls', 'xlsx', 'pptx', 'ppt');
       $params["file_id"] = I("fileid");
       if ($params["file_id"]) {
         $fms = new FileManagerService();
@@ -189,11 +191,11 @@ class FileManagerController extends PSIBaseController
           //按照字节大小返回
           header("Accept-Ranges: bytes");
 
-          header ( "Content-Disposition: attachment; filename=".$data["file_version"] . "." . "pdf");
+          header("Content-Disposition: attachment; filename=" . $data["file_version"] . "." . "pdf");
           header("Pragma:No-cache;");
           header("Cache-Control:No-cache;");
           header("Expires:0;");
-          readfile ($data["file_path"] . $data["file_version"] . "." . "pdf" ,"预览.pdf");
+          readfile($data["file_path"] . $data["file_version"] . "." . "pdf", "预览.pdf");
           //@unlink($data["file_path"] . $data["file_version"] . "." . "pdf");
 
         } elseif (in_array(strtolower($data["file_suffix"]), $imgType)) {
@@ -263,5 +265,13 @@ class FileManagerController extends PSIBaseController
       $this->ajaxReturn($data);
     }
   }
-  
+
+  public function loadRole(){
+    if(IS_POST){
+      $permissionService = new FileManagerPermissionService();
+      $data = $permissionService->loadRole();
+      $this->ajaxReturn($data);
+    }
+  }
+
 }

@@ -116,6 +116,7 @@ class FIdConst
    */
   const PORTAL_MONEY = "2011-04";
 
+
   /* * 文件管理
    */
   const WJGL = '-9998';
@@ -125,6 +126,8 @@ class FIdConst
   const WJGL_ADD_DIR = '-9998-02';
   const WJGL_EDIT_DIR = '-9998-03';
   const WJGL_DEL_DIR = '-9998-04';
+  const WJGL_INTO_DIR = '-9998-14';
+  const WJGL_MOVE_DIR = '-9998-15';
 
   /**文件操作
    */
@@ -139,4 +142,7 @@ class FIdConst
    */
   const WJGL_CKCZJL = '-9998-11';
   const WJGL_BBHT = '-9998-12';
+
+  const WJGL_DWJQX = '-9998-13';
+
 }

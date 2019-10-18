@@ -3,6 +3,7 @@
 namespace Home\DAO;
 
 use Home\Common\FIdConst;
+use Home\Service\FileManagerlogService;
 use Home\Service\UserService;
 use Org\Util\OfficeConverter;
 use Think\Exception;
@@ -200,6 +201,7 @@ class FileManagerDAO extends PSIBaseExDAO
    */
   private function moveChildrenVersion(&$dirs, &$oldId, &$newID, $db, &$actionUserId, &$actioninfo, $logData)
   {
+    $logService = new FileManagerlogService();
     if (count($dirs)) {
       foreach ($dirs as $i => $v) {
         //记录旧的t_dir_info表id
@@ -214,7 +216,7 @@ class FileManagerDAO extends PSIBaseExDAO
         $logData["action_type"] = "delete";
         $logData["file_type"] = "dir";
         $logData["file_id"] = $v['id'];
-        $this->addLogAction($logData, $db);
+        $logService->addLogAction($logData);
 
         //构造t_dir_info数据
         $insert_dir_sql = "INSERT INTO t_dir_info ( `id`, `dir_name`, `dir_path`, `dir_version`, `dir_fid`, `action_user_id`, `action_time`, `is_del`, `parent_dir_id`, `action_info` )
@@ -233,7 +235,7 @@ class FileManagerDAO extends PSIBaseExDAO
 
         $logData["action_type"] = "insert";
         $logData["file_id"] = $v['id'];
-        $this->addLogAction($logData, $db);
+        $logService->addLogAction($logData);
 
         $childrenDir = $db->query("select * from t_dir_info where parent_dir_id = '%s' and is_del = 0", $old_dir_info_id);
         $this->moveChildrenVersion($childrenDir, $old_dir_info_id, $v["id"], $db, $actionUserId, $actioninfo, $logData);
@@ -253,7 +255,8 @@ class FileManagerDAO extends PSIBaseExDAO
         $logData["action_type"] = "delete";
         $logData["file_type"] = "file";
         $logData["file_id"] = $v['id'];
-        $this->addLogAction($logData, $db);
+        $logService = new FileManagerlogService();
+        $logService->addLogAction($logData);
 
 
         //构建数据
@@ -275,7 +278,7 @@ class FileManagerDAO extends PSIBaseExDAO
 
         $logData["action_type"] = "insert";
         $logData["file_id"] = $v['id'];
-        $this->addLogAction($logData, $db);
+        $logService->addLogAction($logData);
 
         //拷贝文件
         if (file_exists($old_path . $old_version . "." . $v["file_suffix"])) {
@@ -298,8 +301,10 @@ class FileManagerDAO extends PSIBaseExDAO
     $rs["success"] = false;
     $rs["msg"] = "";
     $db = $this->db;
+    $logService = new FileManagerlogService();
     if (!$params['dir_name']) {
-      $this->delLog($params["log_id"], $db);
+      $logService->delLog($params["log_id"]);
+
       $rs["msg"] = "文件名为空";
       return $rs;
     }
@@ -313,12 +318,12 @@ class FileManagerDAO extends PSIBaseExDAO
         $old_dir_id = $dir_info[0]["id"];
 
         if (!count($dir_info)) {
-          $this->delLog($params["log_id"], $db);
+          $logService->delLog($params["log_id"]);
           $rs["msg"] = "文件夹已不存在";
           return $rs;
         }
         if (!$dir_info[0]["parent_dir_id"]) {
-          $this->delLog($params["log_id"], $db);
+          $logService->delLog($params["log_id"]);
           $rs["msg"] = "不能编辑根目录";
           return $rs;
         }
@@ -331,7 +336,7 @@ class FileManagerDAO extends PSIBaseExDAO
         $logData["action_type"] = "delete";
         $logData["file_type"] = "dir";
         $logData["file_id"] = $params['id'];
-        $this->addLogAction($logData, $db);
+        $logService->addLogAction($logData);
 
         //构造t_dir_info数据
         $insert_dir_sql = "INSERT INTO t_dir_info ( `id`, `dir_name`, `dir_path`,  `dir_version`, `dir_fid`, `action_user_id`, `action_time`, `is_del`, `parent_dir_id`, `action_info` )
@@ -350,14 +355,14 @@ class FileManagerDAO extends PSIBaseExDAO
         where parent_dir_id = '%s' AND is_del = 0 AND dir_name in ('%s')", $dir_info[0]["parent_dir_id"], $dir_info[0]["dir_name"]);
         if ($is_dirName[0]["count(*)"]) {
           $db->rollback();
-          $this->delLog($params["log_id"], $db);
+          $logService->delLog($params["log_id"]);
           $rs["msg"] = "文件夹已存在";
           return $rs;
         }
 
         $logData["action_type"] = "insert";
         $logData["file_id"] = $dir_info[0]['id'];
-        $this->addLogAction($logData, $db);
+        $logService->addLogAction($logData);
 
         //构建目录
         $dir_info[0]["dir_path"] = $this->getFullPath($dir_info[0]["parent_dir_id"], $db) . $dir_info[0]["dir_version"] . "\\";
@@ -366,7 +371,7 @@ class FileManagerDAO extends PSIBaseExDAO
         $edmkinfo = $db->execute($insert_dir_sql, $dir_info[0]);
         if (!$edmkinfo) {
           $db->rollback();
-          $this->delLog($params["logID"], $db);
+          $logService->delLog($params["log_id"]);
           $rs["msg"] = "操作失败";
           return $rs;
         }
@@ -421,7 +426,7 @@ class FileManagerDAO extends PSIBaseExDAO
         if ($is_dirName[0]["count(*)"]) {
           $db->rollback();
           $db->execute("delete from t_dir where id = '%s'", $dirId);
-          $this->delLog($params["log_id"], $db);
+          $logService->delLog($params["log_id"]);
           $rs["msg"] = "文件夹已存在";
           return $rs;
         }
@@ -432,19 +437,20 @@ class FileManagerDAO extends PSIBaseExDAO
           $logData["action_type"] = "insert";
           $logData["file_type"] = "dir";
           $logData["file_id"] = $data["id"];
-          $this->addLogAction($logData, $db);
+          $logService->addLogAction($logData);
           $db->commit();
           $rs["success"] = true;
           $rs["msg"] = "操作成功";
           return $rs;
         } else {
           $db->rollback();
+          $logService->delLog($params["log_id"]);
           $rs["msg"] = "操作失败";
           return $rs;
         }
       }
     }
-    $this->delLog($params["log_id"], $db);
+    $logService->delLog($params["log_id"]);
     $rs["msg"] = "权限不足";
     return $rs;
   }
@@ -459,16 +465,17 @@ class FileManagerDAO extends PSIBaseExDAO
     $rs["success"] = false;
     $rs["msg"] = "";
     $us = new UserService();
+    $logService = new FileManagerlogService();
     if (!$us->hasPermission(FIdConst::WJGL_MOVE_FILE)) {
       $rs["msg"] = "权限不足";
-      $this->delLog($params["log_id"], $db);
+      $logService->delLog($params["log_id"]);
       return $rs;
     }
     //判断要移动到的是否是一个文件夹
     $is_dir = $db->query("select count(*) from t_dir_info where id = '%s' and is_del = 0", $params["dir_id"]);
     if (!$is_dir[0]["count(*)"]) {
       $rs["msg"] = "不能移动到文件中";
-      $this->delLog($params["log_id"], $db);
+      $logService->delLog($params["log_id"]);
       return $rs;
     }
 
@@ -494,7 +501,7 @@ class FileManagerDAO extends PSIBaseExDAO
     where parent_dir_id = '%s' AND is_del = 0 AND file_name in ('%s') AND file_suffix in ('%s')",
         $dir_info["id"], $file_info["file_name"], $file_info["file_suffix"]);
       if (count($is_container)) {
-        $this->delLog($params["log_id"], $db);
+        $logService->delLog($params["log_id"]);
         $rs["msg"] = "文件已存在";
         return $rs;
       }
@@ -506,7 +513,7 @@ class FileManagerDAO extends PSIBaseExDAO
       $logData["action_type"] = "delete";
       $logData["file_type"] = "file";
       $logData["file_id"] = $file_info["id"];
-      $this->addLogAction($logData, $db);
+      $logService->addLogAction($logData);
 
       $insert_sql = "insert into t_file_info
     (id, file_name, file_path, file_size, file_suffix, parent_dir_id, file_version, file_fid, action_user_id, action_time, is_del, action_info) 
@@ -525,12 +532,12 @@ class FileManagerDAO extends PSIBaseExDAO
 
       $logData["action_type"] = "insert";
       $logData["file_id"] = $file_info["id"];
-      $this->addLogAction($logData, $db);
+      $logService->addLogAction($logData);
 
       if (!$exinfo) {
         $db->rollback();
         $rs["msg"] = "插入数据失败";
-        $this->delLog($params["log_id"], $db);
+        $logService->delLog($params["log_id"]);
         return $rs;
       }
       $this->createTrueDir($dir_info["dir_path"]);
@@ -542,7 +549,7 @@ class FileManagerDAO extends PSIBaseExDAO
       return $rs;
     }
     $rs["msg"] = "数据错误";
-    $this->delLog($params["log_id"], $db);
+    $logService->delLog($params["log_id"]);
     return $rs;
   }
 
@@ -589,14 +596,15 @@ class FileManagerDAO extends PSIBaseExDAO
     $rs['msg'] = "";
     $db = $this->db;
     $us = new UserService();
+    $logService = new FileManagerlogService();
     if (!$us->hasPermission(FIdConst::WJGL_DEL_DIR)) {
-      $this->delLog($params["log_id"], $db);
+      $logService->delLog($params["log_id"]);
       $rs["msg"] = "权限不足";
       return $rs;
     }
     $dir_info = $db->query("select * from t_dir_info where id = '%s' AND parent_dir_id is not null", $params["id"]);
     if (!count($dir_info)) {
-      $this->delLog($params["log_id"], $db);
+      $logService->delLog($params["log_id"]);
       $rs["msg"] = "数据不存在";
       return $rs;
     }
@@ -606,7 +614,7 @@ class FileManagerDAO extends PSIBaseExDAO
     $logData["action_type"] = "delete";
     $logData["file_type"] = "dir";
     $logData["file_id"] = $params["id"];
-    $this->addLogAction($logData, $db);
+    $logService->addLogAction($logData);
 
     $this->delDirChildren($dir_info[0]["id"], $db, $logData);
     $rs["success"] = true;
@@ -624,8 +632,9 @@ class FileManagerDAO extends PSIBaseExDAO
     $rs['msg'] = "";
     $us = new UserService();
     $db = $this->db;
+    $logService = new FileManagerlogService();
     if (!$us->hasPermission(FIdConst::WJGL_DEL_FILE)) {
-      $this->delLog($params["log_id"], $db);
+      $logService->delLog($params["log_id"]);
       $rs["msg"] = "权限不足";
       return $rs;
     }
@@ -633,7 +642,7 @@ class FileManagerDAO extends PSIBaseExDAO
     $file_info = $db->query("select * from t_file_info where id = '%s' AND is_del = 0", $params["id"]);
     if (!count($file_info)) {
       $rs["msg"] = "数据不存在";
-      $this->delLog($params["log_id"], $db);
+      $logService->delLog($params["log_id"]);
       return $rs;
     }
     $db->execute("update t_file_info set is_del = 1000 where id = '%s' ", $params["id"]);
@@ -642,7 +651,7 @@ class FileManagerDAO extends PSIBaseExDAO
     $logData["action_type"] = "delete";
     $logData["file_type"] = "file";
     $logData["file_id"] = $params["id"];
-    $this->addLogAction($logData, $db);
+    $logService->addLogAction($logData);
 
     unlink($file_info[0]["file_path"] . $file_info[0]["file_version"] . ".pdf");
     $rs["success"] = true;
@@ -653,7 +662,8 @@ class FileManagerDAO extends PSIBaseExDAO
   public function reFile($params)
   {
     $db = $this->db;
-    $this->delLog($params["log_id"], $db);
+    $logService = new FileManagerlogService();
+    $logService->delLog($params["log_id"]);
     $db->execute("delete from t_file_info where id = '%s' ", $params["id"]);
     $db->execute("delete from t_log_action where log_id = '%s'", $params["log_id"]);
   }
@@ -664,6 +674,7 @@ class FileManagerDAO extends PSIBaseExDAO
    */
   private function delDirChildren(&$parentId, $db, $logData)
   {
+    $logService = new FileManagerlogService();
     //找到文件夹
     $dirs = $db->query("select * from t_dir_info where parent_dir_id = '%s' AND is_del = 0", $parentId);
     if (count($dirs)) {
@@ -673,7 +684,7 @@ class FileManagerDAO extends PSIBaseExDAO
         $logData["action_type"] = "delete";
         $logData["file_type"] = "dir";
         $logData["file_id"] = $v["id"];
-        $this->addLogAction($logData, $db);
+        $logService->addLogAction($logData);
 
         $this->delDirChildren($v['id'], $db, $logData);
       }
@@ -686,7 +697,7 @@ class FileManagerDAO extends PSIBaseExDAO
         $logData["action_type"] = "delete";
         $logData["file_type"] = "file";
         $logData["file_id"] = $v["id"];
-        $this->addLogAction($logData, $db);
+        $logService->addLogAction($logData);
       }
     }
 
@@ -699,6 +710,7 @@ class FileManagerDAO extends PSIBaseExDAO
   public function upFile(&$param, &$rs)
   {
     $db = $this->db;
+    $logService = new FileManagerlogService();
     //验证名称
     $file_info = $db->query("select * from t_file_info 
                         where parent_dir_id = '%s' AND is_del = 0 AND file_name in ('%s') AND file_suffix in ('%s')",
@@ -707,6 +719,12 @@ class FileManagerDAO extends PSIBaseExDAO
       $db->startTrans();
 
       $db->execute("update t_file_info set is_del = 1000 where id = '%s'", $file_info[0]["id"]);
+
+      $logData["log_id"] = $param["log_id"];
+      $logData["action_type"] = "delete";
+      $logData["file_type"] = "file";
+      $logData["file_id"] = $file_info[0]["id"];
+      $logService->addLogAction($logData);
 
       $file_id = $this->newId();
       $file_info[0]["id"] = $file_id;
@@ -721,10 +739,15 @@ class FileManagerDAO extends PSIBaseExDAO
       if(!$is_commit){
         $db->rollback();
         $rs["msg"] = "更新失败";
-        $this->delLog($param["log_id"], $db);
+        $logService->delLog($param["log_id"]);
         return $rs;
       }
       $db->commit();
+      $logData["action_type"] = "insert";
+      $logData["file_id"] = $file_id;
+      $logService->addLogAction($logData);
+      $remarks = "更新了文件[". $param["file_name"] . "." . $param["file_suffix"] . "]";
+      $logService->editLogRemarksById($param["log_id"],$remarks);
       $param["data"] = $file_info[0];
       $rs["msg"] = "更新成功";
       $rs["success"] = true;
@@ -759,7 +782,7 @@ class FileManagerDAO extends PSIBaseExDAO
     if (!$param['parent_dir_id'] || !$is_parent_id[0]["count(*)"]) {
       $db->rollback();
       $rs["msg"] = "目录不存在或选择的不是一个目录";
-      $this->delLog($param["log_id"], $db);
+      $logService->delLog($param["log_id"]);
       return $rs;
     }
 
@@ -772,7 +795,7 @@ class FileManagerDAO extends PSIBaseExDAO
     $logData["action_type"] = "insert";
     $logData["file_type"] = "file";
     $logData["file_id"] = $data["id"];
-    $this->addLogAction($logData, $db);
+    $logService->addLogAction($logData);
 
 
     $db->commit();
@@ -930,144 +953,6 @@ class FileManagerDAO extends PSIBaseExDAO
     return $path;
   }
 
-  /**记录操作记录
-   * @param $params
-   */
-  public function log(&$params)
-  {
-    $db = $this->db;
-    $params["log_id"] = $this->newId();
-    $db->execute("insert into t_log 
-                (id, action_time, action_user_id, is_del, remarks, action_info)
-                values('%s','%s','%s',0,'%s','%s')",
-      $params["log_id"], Date("Y-m-d H:i:s"), $params["login_user_id"], $params["log_info"], $params["action_info"]);
-  }
-
-  /**出错时删除操作记录
-   * @param $id
-   * @param $db
-   */
-  public function delLog($id, $db)
-  {
-    $db->execute("delete from t_log where id = '%s'", $id);
-    $db->execute("delete from t_log_action where log_id = '%s'", $id);
-  }
-
-  /**添加操作记录
-   * @param $data
-   * @param $db
-   */
-  public function addLogAction($data, $db)
-  {
-    $data["id"] = $this->newId();
-    $db->execute("insert into t_log_action ( id, action_type, file_type, file_id, log_id )
-        values('%s','%s','%s','%s','%s')",
-      $data["id"], $data["action_type"], $data["file_type"], $data["file_id"], $data["log_id"]);
-  }
-
-  /**加载版本
-   * @param $params
-   * @return mixed
-   */
-  public function loadLog($params)
-  {
-    $db = $this->db;
-    if($params["id"]){//查看指定内容的操作历史
-      $is_dir = $db->query("select * from t_dir where id = '%s'",$params["id"]);
-      $data = [];
-      if(!count($is_dir)){//查看文件历史
-          $sql = "SELECT	fi.id,concat(fi.file_name,'.',fi.file_suffix) as name,	fi.action_time,	fi.action_user_id,	fi.action_info,	u.name as action_user_name,	'file' as type, fi.is_del
-        FROM	t_file_info AS fi 
-        LEFT JOIN t_user as u on fi.action_user_id = u.id
-        WHERE	fi.file_fid = '%s' 
-        ORDER BY	fi.is_del,fi.action_time DESC";
-          $data = $db->query($sql,$params["id"]);
-        $rs["totalCount"] = $db->query("select count(*) from t_file_info where file_fid = '%s'",$params["id"])[0]["count(*)"];
-      }else{
-        $sql = "SELECT	di.id,di.dir_name as name,	di.action_time,	di.action_user_id,	di.action_info,	u.name as action_user_name,'dir' as type, di.is_del
-        FROM	t_dir_info AS di 
-        LEFT JOIN t_user as u on di.action_user_id = u.id
-        WHERE	di.dir_fid = '%s' 
-        ORDER BY	di.is_del,di.action_time DESC";
-        $data = $db->query($sql,$params["id"]);
-        $rs["totalCount"] = count($is_dir);
-      }
-      foreach ($data as $i => $v) {
-        $data[$i]["action_time"] = date("Y-m-d H:i:s", strtotime($data[$i]["action_time"]));
-      }
-      $rs["dataList"] = $data;
-      return $rs;
-    }
-
-
-    $data = $db->query("SELECT	l.id,	l.action_user_id,	u.name as action_user_name,	l.action_time,	l.action_info,	l.remarks
-            FROM	t_log AS l
-	          LEFT JOIN t_user AS u ON l.action_user_id = u.id 
-            WHERE	is_del = 0	ORDER BY l.action_time DESC
-            LIMIT %d,%d", $params["start"], $params["limit"]);
-    foreach ($data as $i => $v) {
-      $data[$i]["action_time"] = date("Y-m-d H:i:s", strtotime($data[$i]["action_time"]));
-    }
-    $totalCount = $db->query("select count(*) from t_log where is_del = 0");
-    $rs["dataList"] = $data;
-    $rs["totalCount"] = $totalCount[0]["count(*)"];
-    return $rs;
-  }
-
-  /**版本回退
-   * @param $params
-   * @return mixed
-   */
-  public function backVersion($params)
-  {
-    $db = $this->db;
-    $rs["success"] = false;
-
-    $toVersion = $db->query("select * from t_log where id = '%s' and is_del = 0", $params["id"]);
-    if (!count($toVersion)) {
-      $rs["msg"] = "没有对应版本，请刷新";
-      return $rs;
-    }
-
-    $versions = $db->query("select id,action_time from t_log where action_time >= '%s' and is_del = 0 
-                                order by action_time desc", $toVersion[0]["action_time"]);
-    $db->startTrans();
-    $db->execute("update t_log set is_del = 1000 where action_time >= '%s' and is_del = 0", $toVersion[0]["action_time"]);
-    try {
-      foreach ($versions as $v) {
-        $actions = $db->query("select * from t_log_action where log_id = '%s'", $v["id"]);
-
-        foreach ($actions as $action) {
-          $this->backAction($action, $db);
-        }
-      }
-    } catch (Exception $e) {
-      $db->rollback();
-      $rs["msg"] = "操作失败：" + $e->getMessage();
-      return $rs;
-    }
-    $rs["success"] = true;
-    $rs["msg"] = "操作成功";
-    $db->commit();
-    return $rs;
-  }
-
-  private function backAction($params, &$db)
-  {
-    $action_sql = "update %s set is_del = ";
-    if ($params["action_type"] == "insert") {//撤回插入操作
-      $action_sql .= "1000";
-    } else {
-      $action_sql .= "0,action_time = '".Date("Y-m-d H:i:s")."' ";
-    }
-    $action_sql .= " where id = '%s' ";
-
-    if ($params["file_type"] == "file") {//对文件进行撤回
-      $db->execute($action_sql, "t_file_info", $params["file_id"]);
-    } else {
-      $db->execute($action_sql, "t_dir_info", $params["file_id"]);
-    }
-  }
 
   /**创建真实路径
    * @param $path
