@@ -86,10 +86,9 @@ Ext.define("PSI.FileManager.FilePermissionForm", {
         menuDisabled: true
       }]
     });
-
-    roleStore.on("load", me.initData, me);
-    roleGrid.on("itemclick", me.onSelectRole, me);
-
+    
+    roleGrid.on("select", me.onSelectRole, me);
+    roleStore.on("load",me.onfileStoryLoad,me);
     me.__roleGrid = roleGrid;
     return me.__roleGrid;
   },
@@ -102,25 +101,25 @@ Ext.define("PSI.FileManager.FilePermissionForm", {
     var modelName = "permissionModel";
     Ext.define(modelName, {
       extend: "Ext.data.Model",
-      fields: ["dir", "leaf", "type"]
+      fields: ["name", "leaf", "type"]
     });
 
     var dataobj = {
       "dir": [
-        {"dir": "新建文件夹", "type": "WJGL_ADD_DIR", "checked": true, "leaf": true},
-        {"dir": "编辑文件夹", "type": "WJGL_EDIT_DIR", "checked": true, "leaf": true},
-        {"dir": "删除文件夹", "type": "WJGL_DEL_DIR", "checked": true, "leaf": true},
-        {"dir": "查看文件夹", "type": "WJGL_INTO_DIR", "checked": true, "leaf": true},
-        {"dir": "移动文件夹", "type": "WJGL_MOVE_DIR", "checked": true, "leaf": true},
-        {"dir": "上传文件", "type": "WJGL_UP_FILE", "checked": true, "leaf": true},
-        {"dir": "下载", "type": "WJGL_DOWN_FILE", "checked": true, "leaf": true}
+        {"name": "新建文件夹", "type": "WJGL_ADD_DIR", "checked": true, "leaf": true},
+        {"name": "编辑文件夹", "type": "WJGL_EDIT_DIR", "checked": true, "leaf": true},
+        {"name": "删除文件夹", "type": "WJGL_DEL_DIR", "checked": true, "leaf": true},
+        {"name": "查看文件夹", "type": "WJGL_INTO_DIR", "checked": true, "leaf": true},
+        {"name": "移动文件夹", "type": "WJGL_MOVE_DIR", "checked": true, "leaf": true},
+        {"name": "上传文件", "type": "WJGL_UP_FILE", "checked": true, "leaf": true},
+        {"name": "下载", "type": "WJGL_DOWN_FILE", "checked": true, "leaf": true}
       ],
       "file": [
-        {"dir": "更新文件", "type": "WJGL_EDIT_FILE", "checked": true, "leaf": true},
-        {"dir": "删除文件", "type": "WJGL_DEL_FILE", "checked": true, "leaf": true},
-        {"dir": "移动文件", "type": "WJGL_MOVE_FILE", "checked": true, "leaf": true},
-        {"dir": "预览文件", "type": "WJGL_YL_FILE", "checked": true, "leaf": true},
-        {"dir": "下载", "type": "WJGL_DOWN_FILE", "checked": true, "leaf": true}
+        {"name": "更新文件", "type": "WJGL_EDIT_FILE", "checked": true, "leaf": true},
+        {"name": "删除文件", "type": "WJGL_DEL_FILE", "checked": true, "leaf": true},
+        {"name": "移动文件", "type": "WJGL_MOVE_FILE", "checked": true, "leaf": true},
+        {"name": "预览文件", "type": "WJGL_YL_FILE", "checked": true, "leaf": true},
+        {"name": "下载", "type": "WJGL_DOWN_FILE", "checked": true, "leaf": true}
       ]
     };
 
@@ -148,7 +147,7 @@ Ext.define("PSI.FileManager.FilePermissionForm", {
         items: [{
           xtype: "treecolumn",
           text: "权限",
-          dataIndex: "dir",
+          dataIndex: "name",
           width: "100%"
         }]
       }
@@ -163,22 +162,49 @@ Ext.define("PSI.FileManager.FilePermissionForm", {
   oncheckchange: function (node, checked) {
     var me = this;
     var roleGrid = me.getRoleGrid();
-    var roleData = roleGrid.getSelectionModel().getLastSelected().data;
+    var roleData = roleGrid.getSelectionModel();
     var nodeData = node.data;
-    me.__permissionData[roleData.id][nodeData.type] = checked;
+    console.log(roleGrid);
+    console.log(roleData);
+    console.log(nodeData);
 
   },
   //选中一个用户
   onSelectRole: function (node, record, item, index) {
     var me = this;
-    var permissionData = me.__permissionData[record.internalId];
     var root = me.__permissionGrid.getRootNode();
+
+    var roleId = record.data.id;
+    var fileId = me.getEntity().id2;
     var el = me.getEl() || Ext.getBody();
     el.mask("数据加载中...");
-    for (var i = 0, len = root.childNodes.length; i < len; i++) {
-      root.childNodes[i].data.checked = permissionData[root.childNodes[i].data.type];
-      me.__permissionGrid.updateLayout(root.childNodes[i]);
-    }
+    me.ajax({
+      url: me.URL("Home/FileManager/getRolePermission"),
+      params: {
+        fileId: fileId,
+        roleId: roleId
+      },
+      success: function (response) {
+        var permissions = me.decodeJSON(response.responseText);
+        var count = permissions.length;
+        for (var i = 0, len = root.data.children.length; i < len; i++) {
+          if(!count){
+            root.data.children[i].checked = true;
+          }
+          for (var j = 0; j < count; j++) {
+            if(root.data.children[i].type == permissions[j]["permission"]){
+              root.data.children[i].checked = false;
+            }else{
+              root.data.children[i].checked = true;
+            }
+          }
+        }
+        me.__permissionGrid.setRootNode(root.data);
+        me.__permissionGrid.doLayout();
+      }
+    })
+
+
     me.__permissionGrid.doAutoRender();
     el.unmask();
 
@@ -190,30 +216,5 @@ Ext.define("PSI.FileManager.FilePermissionForm", {
     var grid = me.getRoleGrid();
     grid.getSelectionModel().select(0, true);
   },
-  //初始化权限数据
-  initData: function () {
-    var me = this;
-    var grid = me.getRoleGrid();
-    var rolekeys = grid.getSelectionModel().store.data.keys;
-    for (var i = 0, len = rolekeys.length; i < len; i++) {
-      var key = rolekeys[i];
-      me.__permissionData[key] =
-        {
-          "WJGL_ADD_DIR": true,
-          "WJGL_EDIT_DIR": true,
-          "WJGL_DEL_DIR": true,
-          "WJGL_INTO_DIR": true,
-          "WJGL_MOVE_DIR": true,
-          "WJGL_UP_FILE": true,
-          "WJGL_DOWN_FILE": true,
-          "WJGL_EDIT_FILE": true,
-          "WJGL_DEL_FILE": true,
-          "WJGL_MOVE_FILE": true,
-          "WJGL_YL_FILE": true
-        };
-    }
-
-    me.onfileStoryLoad();
-  }
 
 })

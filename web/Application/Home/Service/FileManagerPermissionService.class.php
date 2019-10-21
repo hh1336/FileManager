@@ -11,7 +11,19 @@ class FileManagerPermissionService extends PSIBaseExService
    */
   public function loadRole()
   {
+    if ($this->isNotOnline()) {
+      return $this->emptyResult();
+    }
     $dao = new FileManagerPermissionDAO($this->db());
     return $dao->loadRole();
+  }
+
+  public function loadRolePermission($params)
+  {
+    if ($this->isNotOnline()) {
+      return $this->emptyResult();
+    }
+    $dao = new FileManagerPermissionDAO($this->db());
+    return $dao->loadRolePermission($params);
   }
 }

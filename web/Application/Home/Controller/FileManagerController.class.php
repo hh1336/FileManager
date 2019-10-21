@@ -274,4 +274,14 @@ class FileManagerController extends PSIBaseController
     }
   }
 
+  public function getRolePermission(){
+    if(IS_POST){
+      $params["file_id"] = I("post.fileId");
+      $params["role_id"] = I("post.roleId");
+      $permissionService = new FileManagerPermissionService();
+      $data = $permissionService->loadRolePermission($params);
+      $this->ajaxReturn($data);
+    }
+  }
+
 }
