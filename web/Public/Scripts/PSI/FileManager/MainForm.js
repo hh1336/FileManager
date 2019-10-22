@@ -432,14 +432,19 @@ Ext.define('PSI.FileManager.MainForm', {
                 Ext.Ajax.request({
                   url: me.URL("Home/FileManager/revokeFile"),
                   params: {
-                    id: data.id
+                    id: data.id,
+                    fileName: data.name
                   },
                   success: function (response) {
                     var data = me.decodeJSON(response.responseText);
-                    me.showInfo(data.msg, function () {
-                      me.freshFileGrid();
-                      me.__window.close();
-                    });
+                    console.log(response);
+                    if(data){
+                      me.showInfo(data.msg, function () {
+                        me.freshFileGrid();
+                        me.__window.close();
+                      });
+                    }
+
                   }
                 })
               });
@@ -762,8 +767,8 @@ Ext.define('PSI.FileManager.MainForm', {
   onLookFileLog: function () {
     var me = this;
     var data = me.getSelectNodeData();
-    if (data.Name == "../") {
-      return me.onLookLog();
+    if(data.fileSuffix == "dir"){
+      return me.showInfo("只能查看文件");
     }
     me.getWindow().child("grid").getStore().proxy.extraParams = {
       id: data.id
@@ -796,10 +801,10 @@ Ext.define('PSI.FileManager.MainForm', {
   onFilePermission: function () {
     var me = this;
     var data = me.getSelectNodeData();
-    if(data.Name =="../"){
+    if (data.Name == "../") {
       return me.showInfo("请选择操作目标");
     }
-    var form = Ext.create("PSI.FileManager.FilePermissionForm",{
+    var form = Ext.create("PSI.FileManager.FilePermissionForm", {
       parentForm: me,
       entity: data
     });

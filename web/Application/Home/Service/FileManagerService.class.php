@@ -14,7 +14,6 @@ class FileManagerService extends PSIBaseExService
       return $this->emptyResult();
     }
     $us = new UserService();
-
     $params["login_user_id"] = $us->getLoginUserId();
     $dao = new FileManagerDAO($this->db());
     //$tree_data = $dao->loadTree($params);
@@ -210,5 +209,22 @@ class FileManagerService extends PSIBaseExService
     $rs["success"] = true;
     $rs["paths"] = $paths;
     return $rs;
+  }
+
+  public function revokeFile($params){
+    $rs["success"] = false;
+    $us = new UserService();
+    if ($this->isNotOnline()) {
+      return $this->emptyResult();
+    }
+    if (!$us->hasPermission(FIdConst::WJGL_BBHT)) {
+      $rs["msg"] = "权限不足";
+      return $rs;
+    }
+    $params["log_info"] = "撤回文件[" . $params["name"] . "]";
+    $logService = new FileManagerlogService();
+    $logService->log($params);
+
+    return $logService->revokeFile($params);
   }
 }

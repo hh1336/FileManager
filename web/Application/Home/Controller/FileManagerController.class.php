@@ -266,20 +266,46 @@ class FileManagerController extends PSIBaseController
     }
   }
 
-  public function loadRole(){
-    if(IS_POST){
+  public function revokeFile()
+  {
+    if (IS_POST) {
+      $params["id"] = I("post.id");
+      $params['name'] = I("post.fileName");
+      $fms = new FileManagerService();
+      $data = $fms->revokeFile($params);
+      $this->ajaxReturn($data);
+    }
+  }
+
+  public function loadRole()
+  {
+    if (IS_POST) {
       $permissionService = new FileManagerPermissionService();
       $data = $permissionService->loadRole();
       $this->ajaxReturn($data);
     }
   }
 
-  public function getRolePermission(){
-    if(IS_POST){
+  public function getRolePermission()
+  {
+    if (IS_POST) {
       $params["file_id"] = I("post.fileId");
       $params["role_id"] = I("post.roleId");
       $permissionService = new FileManagerPermissionService();
       $data = $permissionService->loadRolePermission($params);
+      $this->ajaxReturn($data);
+    }
+  }
+
+  public function setRolePermission()
+  {
+    if (IS_POST) {
+      $params["role_id"] = I("post.roleId");
+      $params["file_type"] = I("post.fileType");
+      $params["file_id"] = I("post.fileId");
+      $params["checked"] = I("post.checked");
+      $permissionService = new FileManagerPermissionService();
+      $data = $permissionService->setRolePermission($params);
       $this->ajaxReturn($data);
     }
   }

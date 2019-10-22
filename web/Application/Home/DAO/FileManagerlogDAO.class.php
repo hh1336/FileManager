@@ -155,4 +155,62 @@ class FileManagerlogDAO extends PSIBaseExDAO
     $db = $this->db;
     $db->execute("update t_log set remarks = '%s' where id = '%s'", $remarks, $id);
   }
+
+  public function revokeFile($params)
+  {
+    $db = $this->db;
+    $rs['success'] = false;
+    $old_file_info = $db->query("select * from t_file_info where id = '%s' and is_del = 1000", $params['id']);
+    if (count($old_file_info)) {
+      $now_file_info = $db->query("select * from t_file_info where file_fid = '%s' and is_del = 0", $old_file_info[0]['file_fid']);
+      $db->startTrans();
+
+      $db->execute("update t_file_info set is_del = 1000 where id = '%s'", $now_file_info[0]["id"]);
+
+      $data["action_type"] = "delete";
+      $data["file_type"] = "file";
+      $data["file_id"] = $now_file_info[0]["id"];
+      $data["log_id"] = $params["log_id"];
+      $this->addLogAction($data);
+
+
+      $insert_sql = "INSERT INTO t_file_info 
+( id, file_name, file_path, file_size, file_suffix, parent_dir_id, file_version, file_fid, action_user_id, action_time, is_del, action_info )
+        VALUES	( '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s' )";
+
+      $old_file_path = $old_file_info[0]["file_path"];
+      $old_file_version = $old_file_info[0]["file_version"];
+      $old_file_info[0]["id"] = $this->newId();
+      $old_file_info[0]["file_version"] = $this->newId();
+      $old_file_info[0]["action_time"] = Date("Y-m-d H:i:s");
+      $old_file_info[0]["is_del"] = 0;
+      $old_file_info[0]["parent_dir_id"] = $now_file_info[0]["parent_dir_id"];
+      $old_file_info[0]["file_path"] = $now_file_info[0]["file_path"];
+
+      $info = $db->execute($insert_sql, $old_file_info[0]);
+      if (!$info) {
+        $this->delLog($params["log_id"]);
+        $rs["msg"] = "操作失败";
+        $db->rollback();
+      } else {
+        copy($old_file_path . $old_file_version . "." . $old_file_info[0]["file_suffix"],
+          $now_file_info[0]["file_path"] . $old_file_info[0]["file_version"] . "." . $old_file_info[0]["file_suffix"]);
+        $data["action_type"] = "insert";
+        $data["file_type"] = "file";
+        $data["file_id"] = $old_file_info[0]["id"];
+        $data["log_id"] = $params["log_id"];
+        $this->addLogAction($data);
+        $db->commit();
+        $rs["msg"] = "操作成功";
+        $rs["success"] = true;
+        return $rs;
+      }
+
+    } else {
+      $this->delLog($params["log_id"]);
+      $rs["msg"] = "请选择旧版本";
+      return $rs;
+    }
+
+  }
 }

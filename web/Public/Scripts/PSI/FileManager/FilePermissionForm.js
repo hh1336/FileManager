@@ -86,9 +86,9 @@ Ext.define("PSI.FileManager.FilePermissionForm", {
         menuDisabled: true
       }]
     });
-    
+
     roleGrid.on("select", me.onSelectRole, me);
-    roleStore.on("load",me.onfileStoryLoad,me);
+    roleStore.on("load", me.onfileStoryLoad, me);
     me.__roleGrid = roleGrid;
     return me.__roleGrid;
   },
@@ -106,20 +106,20 @@ Ext.define("PSI.FileManager.FilePermissionForm", {
 
     var dataobj = {
       "dir": [
-        {"name": "新建文件夹", "type": "WJGL_ADD_DIR", "checked": true, "leaf": true},
-        {"name": "编辑文件夹", "type": "WJGL_EDIT_DIR", "checked": true, "leaf": true},
-        {"name": "删除文件夹", "type": "WJGL_DEL_DIR", "checked": true, "leaf": true},
-        {"name": "查看文件夹", "type": "WJGL_INTO_DIR", "checked": true, "leaf": true},
-        {"name": "移动文件夹", "type": "WJGL_MOVE_DIR", "checked": true, "leaf": true},
-        {"name": "上传文件", "type": "WJGL_UP_FILE", "checked": true, "leaf": true},
-        {"name": "下载", "type": "WJGL_DOWN_FILE", "checked": true, "leaf": true}
+        {"name": "新建文件夹", "type": "-9998-02", "checked": false, "leaf": true},
+        {"name": "编辑文件夹", "type": "-9998-03", "checked": false, "leaf": true},
+        {"name": "删除文件夹", "type": "-9998-04", "checked": false, "leaf": true},
+        {"name": "查看文件夹", "type": "-9998-14", "checked": false, "leaf": true},
+        {"name": "移动文件夹", "type": "-9998-15", "checked": false, "leaf": true},
+        {"name": "上传文件", "type": "-9998-05", "checked": false, "leaf": true},
+        {"name": "下载", "type": "-9998-10", "checked": false, "leaf": true}
       ],
       "file": [
-        {"name": "更新文件", "type": "WJGL_EDIT_FILE", "checked": true, "leaf": true},
-        {"name": "删除文件", "type": "WJGL_DEL_FILE", "checked": true, "leaf": true},
-        {"name": "移动文件", "type": "WJGL_MOVE_FILE", "checked": true, "leaf": true},
-        {"name": "预览文件", "type": "WJGL_YL_FILE", "checked": true, "leaf": true},
-        {"name": "下载", "type": "WJGL_DOWN_FILE", "checked": true, "leaf": true}
+        {"name": "更新文件", "type": "-9998-06", "checked": false, "leaf": true},
+        {"name": "删除文件", "type": "-9998-08", "checked": false, "leaf": true},
+        {"name": "移动文件", "type": "-9998-09", "checked": false, "leaf": true},
+        {"name": "预览文件", "type": "-9998-07", "checked": false, "leaf": true},
+        {"name": "下载", "type": "-9998-10", "checked": false, "leaf": true}
       ]
     };
 
@@ -150,7 +150,12 @@ Ext.define("PSI.FileManager.FilePermissionForm", {
           dataIndex: "name",
           width: "100%"
         }]
-      }
+      },
+      // bbar:[{
+      //   text:"全选",
+      //   handler:me.onCheckAll,
+      //   scope:me
+      // }]
     });
 
     permissionPanel.on("checkchange", me.oncheckchange, me);
@@ -162,11 +167,28 @@ Ext.define("PSI.FileManager.FilePermissionForm", {
   oncheckchange: function (node, checked) {
     var me = this;
     var roleGrid = me.getRoleGrid();
-    var roleData = roleGrid.getSelectionModel();
+    var roleData = roleGrid.getSelectionModel().getLastSelected();
     var nodeData = node.data;
-    console.log(roleGrid);
-    console.log(roleData);
-    console.log(nodeData);
+    var fileData = me.getEntity();
+
+    var el = me.getEl() || Ext.getBody();
+    el.mask("数据加载中...");
+    me.ajax({
+      url: me.URL("Home/FileManager/setRolePermission"),
+      params: {
+        roleId: roleData.data.id,
+        fileType: nodeData.type,
+        fileId: fileData.id2,
+        checked: checked
+      },
+      success: function (response) {
+        var data = me.decodeJSON(response.responseText);
+        if (!data.success) {
+          me.showInfo(data.msg);
+        }
+        el.unmask();
+      }
+    })
 
   },
   //选中一个用户
@@ -188,14 +210,14 @@ Ext.define("PSI.FileManager.FilePermissionForm", {
         var permissions = me.decodeJSON(response.responseText);
         var count = permissions.length;
         for (var i = 0, len = root.data.children.length; i < len; i++) {
-          if(!count){
-            root.data.children[i].checked = true;
+          if (!count) {
+            root.data.children[i].checked = false;
           }
+          root.data.children[i].checked = false;
           for (var j = 0; j < count; j++) {
-            if(root.data.children[i].type == permissions[j]["permission"]){
-              root.data.children[i].checked = false;
-            }else{
+            if (root.data.children[i].type == permissions[j]["permission_fid"]) {
               root.data.children[i].checked = true;
+              break;
             }
           }
         }
@@ -216,5 +238,10 @@ Ext.define("PSI.FileManager.FilePermissionForm", {
     var grid = me.getRoleGrid();
     grid.getSelectionModel().select(0, true);
   },
+
+  //全选
+  onCheckAll:function () {
+    
+  }
 
 })

@@ -62,4 +62,9 @@ class FileManagerlogService extends PSIBaseExService
     $dao = new FileManagerlogDAO($this->db());
     $dao->editLogRemarksById($id,$remarks);
   }
+
+  public function revokeFile($params){
+    $dao = new FileManagerlogDAO($this->db());
+    return $dao->revokeFile($params);
+  }
 }

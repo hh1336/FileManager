@@ -4,6 +4,7 @@ namespace Home\DAO;
 
 use Home\Common\FIdConst;
 use Home\Service\FileManagerlogService;
+use Home\Service\FileManagerPermissionService;
 use Home\Service\UserService;
 use Org\Util\OfficeConverter;
 use Think\Exception;
@@ -82,7 +83,16 @@ class FileManagerDAO extends PSIBaseExDAO
       $parent_data["parentDirID"] = $grand_dir[0]["id"];
 
       array_unshift($result, $parent_data);
+      if ($params["parent_dir_id"]) {
+        $permissionService = new FileManagerPermissionService();
+        $data["file_id"] = $params["parent_dir_id"];
+        if (!$permissionService->hasPermission($data, FIdConst::WJGL_INTO_DIR)) {
+          return array($parent_data);
+        }
+      }
     }
+
+
     return $result;
   }
 
@@ -302,6 +312,7 @@ class FileManagerDAO extends PSIBaseExDAO
     $rs["msg"] = "";
     $db = $this->db;
     $logService = new FileManagerlogService();
+    $permissionService = new FileManagerPermissionService();
     if (!$params['dir_name']) {
       $logService->delLog($params["log_id"]);
 
@@ -311,6 +322,16 @@ class FileManagerDAO extends PSIBaseExDAO
     $us = new UserService();
     if ($params["id"]) {//编辑
       if ($us->hasPermission(FIdConst::WJGL_EDIT_DIR)) {
+
+
+        $data["file_id"] = $params["id"];
+        if (!$permissionService->hasPermission($data, FIdConst::WJGL_EDIT_DIR)) {
+          $logService->delLog($params["log_id"]);
+          $rs["msg"] = "你没有编辑这个文件夹的权限";
+          return $rs;
+        }
+
+
         //判断这个文件夹是否存在
         $dir_info = $db->query("select * from t_dir_info where id = '%s' and is_del = 0", $params["id"]);
 
@@ -415,7 +436,17 @@ class FileManagerDAO extends PSIBaseExDAO
         if (!$params['parent_dir_id'] || !$is_parent_id[0]["count(*)"]) {
           $rootDir = $db->query('select id from t_dir_info where parent_dir_id is null');
           $data['parent_dir_id'] = $rootDir[0]['id'];
+        } else {
+          //验证单文件权限
+
+          $data["file_id"] = $params["parent_dir_id"];
+          if (!$permissionService->hasPermission($data, FIdConst::WJGL_ADD_DIR)) {
+            $logService->delLog($params["log_id"]);
+            $rs["msg"] = "你没有在此处创建文件夹的权限";
+            return $rs;
+          }
         }
+
         //构建路径
         $data["dir_path"] = $this->getFullPath($data['parent_dir_id'], $db) . $data["dir_version"] . "\\";
 //        mkdir($data["dirPath"]);
@@ -432,6 +463,7 @@ class FileManagerDAO extends PSIBaseExDAO
         }
         //插入数据
         $mkinfo = $db->execute($dir_info_sql, $data);
+
         if ($mkinfo) {
           $logData["log_id"] = $params["log_id"];
           $logData["action_type"] = "insert";
@@ -469,6 +501,14 @@ class FileManagerDAO extends PSIBaseExDAO
     if (!$us->hasPermission(FIdConst::WJGL_MOVE_FILE)) {
       $rs["msg"] = "权限不足";
       $logService->delLog($params["log_id"]);
+      return $rs;
+    }
+    //验证单文件权限
+    $permissionService = new FileManagerPermissionService();
+    $data["file_id"] = $params["mid"];
+    if (!$permissionService->hasPermission($data, FIdConst::WJGL_MOVE_DIR)) {
+      $logService->delLog($params["log_id"]);
+      $rs["msg"] = "你没有权限对这个文件夹进行移动";
       return $rs;
     }
     //判断要移动到的是否是一个文件夹
@@ -602,6 +642,15 @@ class FileManagerDAO extends PSIBaseExDAO
       $rs["msg"] = "权限不足";
       return $rs;
     }
+    //验证单文件权限
+    $permissionService = new FileManagerPermissionService();
+    $data["file_id"] = $params["id"];
+    if (!$permissionService->hasPermission($data, FIdConst::WJGL_DEL_DIR)) {
+      $logService->delLog($params["log_id"]);
+      $rs["msg"] = "权限不足";
+      return $rs;
+    }
+
     $dir_info = $db->query("select * from t_dir_info where id = '%s' AND parent_dir_id is not null", $params["id"]);
     if (!count($dir_info)) {
       $logService->delLog($params["log_id"]);
@@ -634,6 +683,14 @@ class FileManagerDAO extends PSIBaseExDAO
     $db = $this->db;
     $logService = new FileManagerlogService();
     if (!$us->hasPermission(FIdConst::WJGL_DEL_FILE)) {
+      $logService->delLog($params["log_id"]);
+      $rs["msg"] = "权限不足";
+      return $rs;
+    }
+    //验证单文件权限
+    $permissionService = new FileManagerPermissionService();
+    $data["file_id"] = $params["id"];
+    if (!$permissionService->hasPermission($data, FIdConst::WJGL_DEL_FILE)) {
       $logService->delLog($params["log_id"]);
       $rs["msg"] = "权限不足";
       return $rs;
@@ -716,6 +773,15 @@ class FileManagerDAO extends PSIBaseExDAO
                         where parent_dir_id = '%s' AND is_del = 0 AND file_name in ('%s') AND file_suffix in ('%s')",
       $param["parent_dir_id"], $param["file_name"], $param["file_suffix"]);
     if (count($file_info)) {//更新文件
+
+      //验证单文件权限
+      $permissionService = new FileManagerPermissionService();
+      $data["file_id"] = $file_info[0]['id'];
+      if (!$permissionService->hasPermission($data, FIdConst::WJGL_EDIT_FILE)) {
+        $logService->delLog($param["log_id"]);
+        $rs["msg"] = "更新文件权限不足";
+        return;
+      }
       $db->startTrans();
 
       $db->execute("update t_file_info set is_del = 1000 where id = '%s'", $file_info[0]["id"]);
@@ -735,8 +801,8 @@ class FileManagerDAO extends PSIBaseExDAO
     (id, file_name, file_path, file_size, file_suffix, parent_dir_id, file_version, file_fid, action_user_id, action_time, is_del, action_info) 
     values ('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%d','%s')";
 
-      $is_commit = $db->execute($file_info_sql,$file_info[0]);
-      if(!$is_commit){
+      $is_commit = $db->execute($file_info_sql, $file_info[0]);
+      if (!$is_commit) {
         $db->rollback();
         $rs["msg"] = "更新失败";
         $logService->delLog($param["log_id"]);
@@ -746,8 +812,8 @@ class FileManagerDAO extends PSIBaseExDAO
       $logData["action_type"] = "insert";
       $logData["file_id"] = $file_id;
       $logService->addLogAction($logData);
-      $remarks = "更新了文件[". $param["file_name"] . "." . $param["file_suffix"] . "]";
-      $logService->editLogRemarksById($param["log_id"],$remarks);
+      $remarks = "更新了文件[" . $param["file_name"] . "." . $param["file_suffix"] . "]";
+      $logService->editLogRemarksById($param["log_id"], $remarks);
       $param["data"] = $file_info[0];
       $rs["msg"] = "更新成功";
       $rs["success"] = true;
@@ -784,6 +850,16 @@ class FileManagerDAO extends PSIBaseExDAO
       $rs["msg"] = "目录不存在或选择的不是一个目录";
       $logService->delLog($param["log_id"]);
       return $rs;
+    } else {
+      //验证单文件权限
+      $permissionService = new FileManagerPermissionService();
+      $data["file_id"] = $param["parent_dir_id"];
+      if (!$permissionService->hasPermission($data, FIdConst::WJGL_UP_FILE)) {
+        $logService->delLog($param["log_id"]);
+        $rs["msg"] = "权限不足";
+        $db->rollback();
+        return;
+      }
     }
 
     $data["file_path"] = $this->getFullPath($data['parent_dir_id'], $db);
@@ -828,6 +904,14 @@ class FileManagerDAO extends PSIBaseExDAO
       $rs["msg"] = "文件已不存在";
       return $rs;
     }
+    //验证单文件权限
+    $permissionService = new FileManagerPermissionService();
+    $data["file_id"] = $params["id"];
+    if (!$permissionService->hasPermission($data, FIdConst::WJGL_YL_FILE)) {
+      $rs["msg"] = "权限不足";
+      return $rs;
+    }
+
     //为office格式
     if (in_array(strtolower($data[0]["file_suffix"]), $officeType)) {
       $path = $data[0]["file_path"] . $data[0]["file_version"] . "." . $data[0]["file_suffix"];
@@ -969,4 +1053,5 @@ class FileManagerDAO extends PSIBaseExDAO
       }
     }
   }
+
 }
