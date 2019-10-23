@@ -22,7 +22,7 @@ class FileManagerPermissionDAO extends PSIBaseExDAO
     if (count($is_file)) {
       $file_fid = $is_file[0]["file_fid"];
     } else {
-      $file_fid = $db->query("select * from t_dir_info where id = '%s'",$params['file_id'])[0]['dir_fid'];
+      $file_fid = $db->query("select * from t_dir_info where id = '%s'", $params['file_id'])[0]['dir_fid'];
     }
     $sql = "select permission_fid from t_file_permission where role_id = '%s' and file_id = '%s'";
     $data = $db->query($sql, $params["role_id"], $file_fid);
@@ -36,10 +36,12 @@ class FileManagerPermissionDAO extends PSIBaseExDAO
 
     $file_fid = "";//得到文件的外键id
     $is_file = $db->query("select file_fid from t_file_info where id = '%s'", $params['file_id']);
+
+
     if (count($is_file)) {
       $file_fid = $is_file[0]["file_fid"];
     } else {
-      $file_fid = $db->query("select dir_fid from t_dir_info where id = '%s'",$params['file_id'])[0]['dir_fid'];
+      $file_fid = $db->query("select dir_fid from t_dir_info where id = '%s'", $params['file_id'])[0]['dir_fid'];
     }
 
     $sql = "select count(*) from t_file_permission 
@@ -58,12 +60,15 @@ class FileManagerPermissionDAO extends PSIBaseExDAO
       }
     }
 
-    $dir_ids = $db->query("select id from t_dir_info where parent_dir_id = '%s' and is_del = 0",$params["file_id"]);
-    foreach ($dir_ids as $arr) {
+    $ids = $db->query("select id from t_dir_info where parent_dir_id = '%s' and is_del = 0", $params["file_id"]);
+    if ($params['file_type'] == FIdConst::WJGL_DOWN_FILE) {
+      $file_ids = $db->query("select id from t_file_info where parent_dir_id = '%s' and is_del = 0", $params["file_id"]);
+      $ids = array_merge_recursive($ids, $file_ids);
+    }
+    foreach ($ids as $arr) {
       $params["file_id"] = $arr['id'];
       $this->setRolePermission($params);
     }
-
 
 
     $rs["success"] = true;
@@ -79,7 +84,7 @@ class FileManagerPermissionDAO extends PSIBaseExDAO
     if (count($is_file)) {
       $file_fid = $is_file[0]["file_fid"];
     } else {
-      $file_fid = $db->query("select * from t_dir_info where id = '%s'",$params['file_id'])[0]['dir_fid'];
+      $file_fid = $db->query("select * from t_dir_info where id = '%s'", $params['file_id'])[0]['dir_fid'];
     }
 
     $sql = "SELECT	count(*) FROM

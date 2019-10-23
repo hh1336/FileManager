@@ -988,18 +988,29 @@ class FileManagerDAO extends PSIBaseExDAO
   {
     $db = $this->db;
     $paths = array();
+    $permissionService = new FileManagerPermissionService();
     foreach ($params as $v) {
       $dirpath = $db->query("select dir_path,dir_name from t_dir_info where id = '%s' and is_del = 0", $v);
-      if (count($dirpath)) {
 
+      //验证单文件权限
+      $data["file_id"] = $v;
+      if (!$permissionService->hasPermission($data, FIdConst::WJGL_DOWN_FILE)) {
+        return array();
+      }
+
+      if (count($dirpath)) {
         //获取显示路径
         $arr = explode("\\", $dirpath[0]['dir_path']);
         $showPath = $this->getShowPath($arr, $db);
 
-        //获取真实路径
-        array_push($paths, array(/*$dirpath[0]['dirpath'] => $dirpath[0]['dirname'],*/
-          "DirPath" => $showPath/*.$dirpath[0]['dirname']*/));
+        //得到用户所看到的路径
+        array_push($paths, array("DirPath" => $showPath));
 
+        $children_dir_id = $db->query("select id from t_dir_info where parent_dir_id = '%s' and is_del = 0",$v);
+        $children_file_id = $db->query("select id from t_file_info where parent_dir_id = '%s' and is_del = 0",$v);
+        $childrenpaths = array_merge($children_dir_id,$children_file_id);
+        $patharr = $this->getPathById($childrenpaths);
+        $paths = array_merge_recursive($paths,$patharr);
       } else {
         $fileinfo = $db->query("select * from t_file_info where id = '%s' and is_del = 0", $v);
         if (count($fileinfo)) {
@@ -1015,6 +1026,7 @@ class FileManagerDAO extends PSIBaseExDAO
     }
     $root = $db->query("select dir_path from t_dir_info where parent_dir_id is null and is_del = 0")[0]["dir_path"];
     $paths["root"] = $root;
+    //array_reduce($paths, 'array_merge', array());
     return $paths;
   }
 
