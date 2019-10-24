@@ -788,7 +788,13 @@ Ext.define('PSI.FileManager.MainForm', {
         success: function (response) {
           var rsdata = me.decodeJSON(response.responseText);
           if (rsdata.success) {
-            var url = me.URL("Public/pdfjs/web/viewer.html?file=" + me.URL("Home/FileManager/getFile/fileid/" + rsdata.id));
+            var url;
+            if(rsdata.file_suffix == "pdf") {
+              url = me.URL("Public/pdfjs/web/viewer.html?file=" + me.URL("Home/FileManager/getFile/fileid/" + rsdata.id));
+            }else {
+              url = me.URL("Home/FileManager/getFile?fileid=" + rsdata.id);
+            }
+
             window.open(url);
           } else {
             me.showInfo(rsdata.msg);
