@@ -23,10 +23,10 @@ class FileManagerlogService extends PSIBaseExService
    * @param $id
    * @param $db
    */
-  public function delLog($id)
+  public function deleteLog($id)
   {
     $dao = new FileManagerlogDAO($this->db());
-    $dao->delLog($id);
+    $dao->deleteLog($id);
   }
 
   /**添加操作记录

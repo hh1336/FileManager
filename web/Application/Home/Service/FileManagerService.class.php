@@ -56,21 +56,22 @@ class FileManagerService extends PSIBaseExService
    * @param $params
    * @return array
    */
-  public function mkDir($params)
+  public function createDir($params)
   {
     if ($this->isNotOnline()) {
       return $this->emptyResult();
     }
     $dao = new FileManagerDAO($this->db());
-    $params["log_info"] = empty($params["id"]) ? "创建文件夹[" . $params["dir_name"] . "]" : "编辑文件夹[" . $params["dir_name"] . "]";
+    $params["log_info"] = empty($params["id"]) ? "创建文件夹[" . $params["dir_name"] . "]" :
+      "编辑文件夹[" . $params["dir_name"] . "]";
     $logService = new FileManagerlogService();
     $logService->log($params);
 
-    return $dao->mkDir($params);
+    return $dao->createDir($params);
 
   }
 
-  public function Move($params)
+  public function moveFilesTo($params)
   {
     if ($this->isNotOnline()) {
       return $this->emptyResult();
@@ -79,7 +80,7 @@ class FileManagerService extends PSIBaseExService
     $params["log_info"] = "移动[" . $params["name"] . "]--->[" . $params["to_dir_name"] . "]";
     $logService = new FileManagerlogService();
     $logService->log($params);
-    return $dao->Move($params);
+    return $dao->moveFiles($params);
   }
 
   public function loadParentDirName($params)
@@ -91,7 +92,7 @@ class FileManagerService extends PSIBaseExService
     return $dao->getParentDirName($params);
   }
 
-  public function delDir($params)
+  public function deleteDir($params)
   {
     if ($this->isNotOnline()) {
       return $this->emptyResult();
@@ -100,10 +101,10 @@ class FileManagerService extends PSIBaseExService
     $params["log_info"] = "删除文件夹[" . $params["name"] . "]";
     $logService = new FileManagerlogService();
     $logService->log($params);
-    return $dao->delDir($params);
+    return $dao->deleteDir($params);
   }
 
-  public function delFile($params)
+  public function deleteFile($params)
   {
     if ($this->isNotOnline()) {
       return $this->emptyResult();
@@ -112,19 +113,19 @@ class FileManagerService extends PSIBaseExService
     $params["log_info"] = "删除文件[" . $params["name"] . "]";
     $logService = new FileManagerlogService();
     $logService->log($params);
-    return $dao->delFile($params);
+    return $dao->deleteFile($params);
   }
 
-  public function reFile($params)
+  public function cancelUpLoadFile($params)
   {
     if ($this->isNotOnline()) {
       return $this->emptyResult();
     }
     $dao = new FileManagerDAO($this->db());
-    $dao->reFile($params);
+    $dao->cancelUpLoadFile($params);
   }
 
-  public function upFile(&$params, $arr)
+  public function upLoadFile(&$params, $arr)
   {
     if ($this->isNotOnline()) {
       return $this->emptyResult();
@@ -133,7 +134,8 @@ class FileManagerService extends PSIBaseExService
     $rs["msg"] = "";
     $us = new UserService();
     $params["file_suffix"] = substr($params["path"], (strripos($params["path"], '.') + 1), strlen($params["path"]));
-    $params["file_name"] = substr($params["path"], (strripos($params["path"], '\\') + 1), (-1 - strlen($params["file_suffix"])));
+    $params["file_name"] = substr($params["path"], (strripos($params["path"], '\\') + 1),
+      (-1 - strlen($params["file_suffix"])));
     if (!$us->hasPermission(FIdConst::WJGL_UP_FILE)) {
       $rs["msg"] = "没有权限";
       return $rs;
@@ -147,7 +149,7 @@ class FileManagerService extends PSIBaseExService
     $params["log_info"] = "上传文件[" . $params["file_name"] . "." . $params["file_suffix"] . "]";
     $logService = new FileManagerlogService();
     $logService->log($params);
-    $dao->upFile($params, $rs);
+    $dao->upLoadFile($params, $rs);
     return $rs;
   }
 
@@ -211,7 +213,8 @@ class FileManagerService extends PSIBaseExService
     return $rs;
   }
 
-  public function revokeFile($params){
+  public function revokeFile($params)
+  {
     $rs["success"] = false;
     $us = new UserService();
     if ($this->isNotOnline()) {

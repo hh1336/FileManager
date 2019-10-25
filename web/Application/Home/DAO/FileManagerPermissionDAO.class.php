@@ -62,7 +62,8 @@ class FileManagerPermissionDAO extends PSIBaseExDAO
 
     $ids = $db->query("select id from t_dir_info where parent_dir_id = '%s' and is_del = 0", $params["file_id"]);
     if ($params['file_type'] == FIdConst::WJGL_DOWN_FILE) {
-      $file_ids = $db->query("select id from t_file_info where parent_dir_id = '%s' and is_del = 0", $params["file_id"]);
+      $file_ids = $db->query("select id from t_file_info 
+      where parent_dir_id = '%s' and is_del = 0", $params["file_id"]);
       $ids = array_merge_recursive($ids, $file_ids);
     }
     foreach ($ids as $arr) {
