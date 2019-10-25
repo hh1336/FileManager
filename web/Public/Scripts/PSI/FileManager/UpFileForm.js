@@ -84,8 +84,9 @@ Ext.define("PSI.FileManager.UpFileForm", {
           {
             id: "PSI_FileManager_UpFileForm_actionInfo",
             fieldLabel: "描述:",
+            xtype:"textarea",
             name: "actionInfo",
-            width: 278,
+            width: 300,
             value: "",
           }],
         buttons: [{

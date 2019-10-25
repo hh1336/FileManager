@@ -38,9 +38,9 @@ Ext.define('PSI.FileManager.MainForm', {
         handler: me.onUpFile,
         scope: me
       }, {
-        text: "预览文件",
+        text: "新窗口预览",
         disabled: me.getPreviewFile() == "0",
-        handler: me.onPreviewFile,
+        handler: me.onNewWindowPreviewFile,
         scope: me
       },
         //   {
@@ -199,24 +199,24 @@ Ext.define('PSI.FileManager.MainForm', {
           xtype: "treecolumn",
           text: "名称",
           dataIndex: "Name",
-          width: 220
+          width: "30%"
         }, {
           text: "最后操作时间",
           dataIndex: "actionTime",
-          width: 100
+          width: "22%"
         }, {
           text: "操作人",
           dataIndex: "userName",
-          width: 80
+          width: "15%"
         }, {
           text: "操作描述",
           dataIndex: "actionInfo",
-          width: 100
+          width: "20%"
         },
           {
             text: "版本号",
             dataIndex: "Version",
-            width: 100,
+            width: "13%",
             renderer: function (value) {
               return value.slice(0, 8);
             }
@@ -305,9 +305,12 @@ Ext.define('PSI.FileManager.MainForm', {
       //height: "45%",
       cls: "PSI",
       width: "55%",
+      height: "90%",
+      autoScroll: true,
       modal: true,
+      Layout: "column",
       closeAction: 'hide',
-      items: {
+      items: [{
         xtype: 'grid',
         border: false,
         sortableColumns: false,
@@ -316,6 +319,8 @@ Ext.define('PSI.FileManager.MainForm', {
           itemClick: {
             fn: function (node, record) {
               me.__selectData = record.data;
+              document.getElementById("action_info")
+                .innerHTML = record.data.action_info;
             },
             scope: me
           }
@@ -328,14 +333,30 @@ Ext.define('PSI.FileManager.MainForm', {
           },
           items: [
             {
-              text: '操作时间',
-              dataIndex: "action_time",
-              width: "15%"
+              text: '版本',
+              width: "10%",
+              dataIndex: "id",
+              renderer: function (value) {
+                var version = value.slice(0, 8);
+                var html = "<a href='#'>" + version + " </a>";
+                return html;
+              },
+              listeners: {
+                click: {
+                  fn: me.lookOldVersion,
+                  scope: me
+                }
+              }
             },
             {
               text: '名称',
               dataIndex: "name",
               width: "10%"
+            },
+            {
+              text: '操作时间',
+              dataIndex: "action_time",
+              width: "20%"
             },
             {
               text: '操作人',
@@ -345,16 +366,16 @@ Ext.define('PSI.FileManager.MainForm', {
             {
               text: '操作描述',
               dataIndex: "remarks",
-              width: "25%"
+              width: "20%"
             },
             {
               text: '操作备注',
               dataIndex: "action_info",
-              width: "25%"
+              width: "22%"
             },
             {
               text: "预览",
-              width: "5%",
+              width: "8%",
               dataIndex: "type",
               renderer: function (value) {
                 var html = "";
@@ -369,15 +390,8 @@ Ext.define('PSI.FileManager.MainForm', {
                   scope: me
                 }
               }
-            },
-            {
-              text: '版本',
-              width: "10%",
-              dataIndex: "id",
-              renderer: function (value) {
-                return value.slice(0, 8);
-              }
             }
+
           ]
         },
         store: myStore,
@@ -416,6 +430,13 @@ Ext.define('PSI.FileManager.MainForm', {
           value: "条记录"
         },],
       },
+        {
+          xtype: "panel",
+          width: "100%",
+          id:"action_panel",
+          height: 175,
+          html:"<textarea id='action_info' readonly style='border: none;width: 100%;'></textarea>"
+        }],
       buttons: [
         {
           text: "撤回到选中版本",
@@ -438,7 +459,7 @@ Ext.define('PSI.FileManager.MainForm', {
                   success: function (response) {
                     var data = me.decodeJSON(response.responseText);
                     console.log(response);
-                    if(data){
+                    if (data) {
                       me.showInfo(data.msg, function () {
                         me.freshFileGrid();
                         me.__window.close();
@@ -470,6 +491,8 @@ Ext.define('PSI.FileManager.MainForm', {
     });
     me.__window.on("hide", function () {
       me.__selectData = "";
+      document.getElementById("action_info")
+        .innerHTML = "";
     }, me);
 
     return me.__window;
@@ -767,7 +790,7 @@ Ext.define('PSI.FileManager.MainForm', {
   onLookFileLog: function () {
     var me = this;
     var data = me.getSelectNodeData();
-    if(data.fileSuffix == "dir"){
+    if (data.fileSuffix == "dir") {
       return me.showInfo("只能查看文件");
     }
     me.getWindow().child("grid").getStore().proxy.extraParams = {
@@ -789,12 +812,42 @@ Ext.define('PSI.FileManager.MainForm', {
           var rsdata = me.decodeJSON(response.responseText);
           if (rsdata.success) {
             var url;
-            if(rsdata.file_suffix == "pdf") {
+            if (rsdata.file_suffix == "pdf") {
               url = me.URL("Public/pdfjs/web/viewer.html?file=" + me.URL("Home/FileManager/getFile/fileid/" + rsdata.id));
-            }else {
+            } else {
               url = me.URL("Home/FileManager/getFile?fileid=" + rsdata.id);
             }
 
+            window.open(url);
+          } else {
+            me.showInfo(rsdata.msg);
+          }
+        }
+      });
+    }
+  },
+  //新窗口预览文件
+  onNewWindowPreviewFile: function () {
+    var me = this;
+    var data = me.getSelectNodeData();
+    if (data) {
+      if ((data.Name == "../") || (data.fileSuffix == "dir")) {
+        return me.showInfo("请选择文件");
+      }
+      me.ajax({
+        url: me.URL("Home/FileManager/convertFile"),
+        params: {
+          id: data.id2
+        },
+        success: function (response) {
+          var rsdata = me.decodeJSON(response.responseText);
+          if (rsdata.success) {
+            var url;
+            if (rsdata.file_suffix == "pdf") {
+              url = me.URL("Public/pdfjs/web/viewer.html?file=" + me.URL("Home/FileManager/getFile/fileid/" + rsdata.id));
+            } else {
+              url = me.URL("Home/FileManager/getFile?fileid=" + rsdata.id);
+            }
             window.open(url);
           } else {
             me.showInfo(rsdata.msg);

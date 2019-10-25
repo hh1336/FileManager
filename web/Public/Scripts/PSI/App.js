@@ -184,9 +184,9 @@ Ext.define("PSI.App", {
           border: 0,
           header: {
             titleAlign: "center",
-            title: "Copyright &copy; 2015-"
+            title: "Copyright &copy;"
               + year
-              + " PSI Team, All Rights Reserved"
+              + " 广西品真医学检验实验室有限公司"
           }
         }]
       }]

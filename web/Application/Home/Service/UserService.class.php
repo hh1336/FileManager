@@ -44,7 +44,7 @@ class UserService extends PSIBaseExService
             return false;
         }
 
-        $result = session("loginUserId") != null;
+        $result = session("userId") != null;
         if (!$result) {
             return false;
         }
@@ -85,7 +85,7 @@ class UserService extends PSIBaseExService
      */
     public function getLoginUserId()
     {
-        return session("loginUserId");
+        return session("userId");
     }
 
     /**
@@ -130,7 +130,7 @@ class UserService extends PSIBaseExService
         $loginUserId = $dao->doLogin($params);
 
         if ($loginUserId) {
-            session("loginUserId", $loginUserId);
+            session("userId", $loginUserId);
 
             $isH5 = $params["isH5"];
             $log = $isH5 == "1" ? "从H5端登录系统 " : "登录系统";
@@ -428,7 +428,7 @@ class UserService extends PSIBaseExService
      */
     public function clearLoginUserInSession()
     {
-        session("loginUserId", null);
+        session("userId", null);
     }
 
     /**

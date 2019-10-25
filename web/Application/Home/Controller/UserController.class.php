@@ -60,7 +60,7 @@ class UserController extends PSIBaseController
    */
   public function login()
   {
-    if (session("loginUserId")) {
+    if (session("userId")) {//loginUserId
       // 已经登录了，就返回首页
       redirect(__ROOT__."/Home/FileManager/index");
     }
