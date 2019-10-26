@@ -5,6 +5,7 @@ namespace Home\DAO;
 use Home\Common\FIdConst;
 use Home\Service\FileManagerlogService;
 use Home\Service\FileManagerPermissionService;
+use Home\Service\SuffixConfigService;
 use Home\Service\UserService;
 use Org\Util\OfficeConverter;
 use Think\Exception;
@@ -976,8 +977,9 @@ class FileManagerDAO extends PSIBaseExDAO
     $rs["success"] = false;
     $rs['msg'] = "";
     $sql = "select * from t_file_info where id = '%s'";
-    $officeType = array('doc', 'docx', 'xls', 'xlsx', 'pptx', 'ppt', 'txt');
-    $imgType = array('jpg', 'gif', 'png', 'jpeg', 'pdf');
+    $suffixService = new SuffixConfigService();
+    $officeType = $suffixService->getSuffixs('office');
+    $imgType = $suffixService->getSuffixs('picture');
     $data = $db->query($sql, $params);
     if (!$data) {
       $rs["msg"] = "文件已不存在";

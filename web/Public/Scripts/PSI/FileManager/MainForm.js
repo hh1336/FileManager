@@ -356,26 +356,26 @@ Ext.define('PSI.FileManager.MainForm', {
             {
               text: '操作时间',
               dataIndex: "action_time",
-              width: "20%"
+              width: "25%"
             },
             {
               text: '操作人',
               dataIndex: "action_user_name",
-              width: "10%"
+              width: "15%"
             },
             {
               text: '操作描述',
               dataIndex: "remarks",
-              width: "20%"
+              width: "30%"
             },
-            {
-              text: '操作备注',
-              dataIndex: "action_info",
-              width: "22%"
-            },
+            // {
+            //   text: '操作备注',
+            //   dataIndex: "action_info",
+            //   width: "22%"
+            // },
             {
               text: "预览",
-              width: "8%",
+              width: "10%",
               dataIndex: "type",
               renderer: function (value) {
                 var html = "";
@@ -433,9 +433,9 @@ Ext.define('PSI.FileManager.MainForm', {
         {
           xtype: "panel",
           width: "100%",
-          id:"action_panel",
+          id: "action_panel",
           height: 175,
-          html:"<textarea id='action_info' readonly style='border: none;width: 100%;'></textarea>"
+          html: "<textarea id='action_info' readonly style='border: none;width: 100%;height: 175px;'></textarea>"
         }],
       buttons: [
         {
@@ -830,7 +830,7 @@ Ext.define('PSI.FileManager.MainForm', {
   onNewWindowPreviewFile: function () {
     var me = this;
     var data = me.getSelectNodeData();
-    if (data) {
+    if (JSON.stringify(data) != '{}') {
       if ((data.Name == "../") || (data.fileSuffix == "dir")) {
         return me.showInfo("请选择文件");
       }
@@ -854,6 +854,8 @@ Ext.define('PSI.FileManager.MainForm', {
           }
         }
       });
+    } else {
+      me.showInfo("请选择文件");
     }
   },
   //文件或文件夹权限

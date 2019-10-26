@@ -11,7 +11,7 @@
  Target Server Version : 100137
  File Encoding         : 65001
 
- Date: 25/10/2019 17:21:48
+ Date: 26/10/2019 16:33:20
 */
 
 SET NAMES utf8mb4;
@@ -115,7 +115,7 @@ CREATE TABLE `t_biz_log`  (
   `ip_from` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL,
   `company_id` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL,
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 1010 CHARACTER SET = utf8 COLLATE = utf8_general_ci ROW_FORMAT = Compact;
+) ENGINE = InnoDB AUTO_INCREMENT = 1025 CHARACTER SET = utf8 COLLATE = utf8_general_ci ROW_FORMAT = Compact;
 
 -- ----------------------------
 -- Records of t_biz_log
@@ -1129,6 +1129,21 @@ INSERT INTO `t_biz_log` VALUES (1006, '2019-10-25 10:31:41', '编辑角色[销�
 INSERT INTO `t_biz_log` VALUES (1007, '2019-10-25 10:31:45', '通过主菜单进入模块：重新登录', '0.0.0.0', 'D18347C7-D050-11E9-8217-D8CB8AD4DC8A', '系统', '01020001', '内网IP', '4D74E1E4-A129-11E4-9B6A-782BCBD7746B');
 INSERT INTO `t_biz_log` VALUES (1008, '2019-10-25 10:31:51', '登录系统', '0.0.0.0', 'D18347C7-D050-11E9-8217-D8CB8AD4DC8A', '系统', '01020001', '内网IP', '4D74E1E4-A129-11E4-9B6A-782BCBD7746B');
 INSERT INTO `t_biz_log` VALUES (1009, '2019-10-25 10:31:57', '通过主菜单进入模块：文件管理', '0.0.0.0', 'D18347C7-D050-11E9-8217-D8CB8AD4DC8A', '系统', '01020001', '内网IP', '4D74E1E4-A129-11E4-9B6A-782BCBD7746B');
+INSERT INTO `t_biz_log` VALUES (1010, '2019-10-26 08:46:18', '登录系统', '0.0.0.0', '6C2A09CD-A129-11E4-9B6A-782BCBD7746B', '系统', '', '内网IP', '4D74E1E4-A129-11E4-9B6A-782BCBD7746B');
+INSERT INTO `t_biz_log` VALUES (1011, '2019-10-26 08:52:26', '登录系统', '0.0.0.0', 'D18347C7-D050-11E9-8217-D8CB8AD4DC8A', '系统', '', '内网IP', '4D74E1E4-A129-11E4-9B6A-782BCBD7746B');
+INSERT INTO `t_biz_log` VALUES (1012, '2019-10-26 08:58:08', '登录系统', '0.0.0.0', 'D18347C7-D050-11E9-8217-D8CB8AD4DC8A', '系统', '', '内网IP', '4D74E1E4-A129-11E4-9B6A-782BCBD7746B');
+INSERT INTO `t_biz_log` VALUES (1013, '2019-10-26 09:01:03', '登录系统', '0.0.0.0', 'D18347C7-D050-11E9-8217-D8CB8AD4DC8A', '系统', '', '内网IP', '4D74E1E4-A129-11E4-9B6A-782BCBD7746B');
+INSERT INTO `t_biz_log` VALUES (1014, '2019-10-26 09:01:07', '登录系统', '0.0.0.0', 'D18347C7-D050-11E9-8217-D8CB8AD4DC8A', '系统', '', '内网IP', '4D74E1E4-A129-11E4-9B6A-782BCBD7746B');
+INSERT INTO `t_biz_log` VALUES (1015, '2019-10-26 09:01:39', '登录系统', '0.0.0.0', 'D18347C7-D050-11E9-8217-D8CB8AD4DC8A', '系统', '', '内网IP', '4D74E1E4-A129-11E4-9B6A-782BCBD7746B');
+INSERT INTO `t_biz_log` VALUES (1016, '2019-10-26 09:24:53', '登录系统', '0.0.0.0', 'D18347C7-D050-11E9-8217-D8CB8AD4DC8A', '系统', '', '内网IP', '4D74E1E4-A129-11E4-9B6A-782BCBD7746B');
+INSERT INTO `t_biz_log` VALUES (1017, '2019-10-26 09:24:58', '登录系统', '0.0.0.0', 'D18347C7-D050-11E9-8217-D8CB8AD4DC8A', '系统', '', '内网IP', '4D74E1E4-A129-11E4-9B6A-782BCBD7746B');
+INSERT INTO `t_biz_log` VALUES (1018, '2019-10-26 09:31:34', '通过主菜单进入模块：文件管理', '0.0.0.0', 'D18347C7-D050-11E9-8217-D8CB8AD4DC8A', '系统', '01020001', '内网IP', '4D74E1E4-A129-11E4-9B6A-782BCBD7746B');
+INSERT INTO `t_biz_log` VALUES (1019, '2019-10-26 11:03:10', '登录系统', '0.0.0.0', '6C2A09CD-A129-11E4-9B6A-782BCBD7746B', '系统', '01010001', '内网IP', '4D74E1E4-A129-11E4-9B6A-782BCBD7746B');
+INSERT INTO `t_biz_log` VALUES (1020, '2019-10-26 11:03:14', '通过主菜单进入模块：文件管理', '0.0.0.0', '6C2A09CD-A129-11E4-9B6A-782BCBD7746B', '系统', '01010001', '内网IP', '4D74E1E4-A129-11E4-9B6A-782BCBD7746B');
+INSERT INTO `t_biz_log` VALUES (1021, '2019-10-26 11:03:57', '通过主菜单进入模块：权限管理', '0.0.0.0', '6C2A09CD-A129-11E4-9B6A-782BCBD7746B', '系统', '01010001', '内网IP', '4D74E1E4-A129-11E4-9B6A-782BCBD7746B');
+INSERT INTO `t_biz_log` VALUES (1022, '2019-10-26 16:15:56', '通过主菜单进入模块：文件管理', '0.0.0.0', '6C2A09CD-A129-11E4-9B6A-782BCBD7746B', '系统', '01010001', '内网IP', '4D74E1E4-A129-11E4-9B6A-782BCBD7746B');
+INSERT INTO `t_biz_log` VALUES (1023, '2019-10-26 16:27:18', '通过主菜单进入模块：业务日志', '0.0.0.0', '6C2A09CD-A129-11E4-9B6A-782BCBD7746B', '系统', '01010001', '内网IP', '4D74E1E4-A129-11E4-9B6A-782BCBD7746B');
+INSERT INTO `t_biz_log` VALUES (1024, '2019-10-26 16:27:52', '通过主菜单进入模块：文件管理', '0.0.0.0', '6C2A09CD-A129-11E4-9B6A-782BCBD7746B', '系统', '01010001', '内网IP', '4D74E1E4-A129-11E4-9B6A-782BCBD7746B');
 
 -- ----------------------------
 -- Table structure for t_cash
@@ -2026,7 +2041,7 @@ CREATE TABLE `t_log`  (
   `action_user_id` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
   `is_del` int(2) NOT NULL,
   `remarks` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NULL DEFAULT NULL,
-  `action_info` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NULL DEFAULT NULL,
+  `action_info` mediumtext CHARACTER SET utf8 COLLATE utf8_unicode_ci NULL,
   PRIMARY KEY (`id`) USING BTREE
 ) ENGINE = InnoDB CHARACTER SET = utf8 COLLATE = utf8_unicode_ci ROW_FORMAT = Compact;
 
@@ -2602,11 +2617,11 @@ CREATE TABLE `t_recent_fid`  (
 -- Records of t_recent_fid
 -- ----------------------------
 INSERT INTO `t_recent_fid` VALUES ('-8999', '6C2A09CD-A129-11E4-9B6A-782BCBD7746B', 60);
-INSERT INTO `t_recent_fid` VALUES ('-8996', '6C2A09CD-A129-11E4-9B6A-782BCBD7746B', 44);
+INSERT INTO `t_recent_fid` VALUES ('-8996', '6C2A09CD-A129-11E4-9B6A-782BCBD7746B', 45);
 INSERT INTO `t_recent_fid` VALUES ('1003', '6C2A09CD-A129-11E4-9B6A-782BCBD7746B', 6);
 INSERT INTO `t_recent_fid` VALUES ('1002', '6C2A09CD-A129-11E4-9B6A-782BCBD7746B', 2);
 INSERT INTO `t_recent_fid` VALUES ('1001', '6C2A09CD-A129-11E4-9B6A-782BCBD7746B', 14);
-INSERT INTO `t_recent_fid` VALUES ('-8997', '6C2A09CD-A129-11E4-9B6A-782BCBD7746B', 12);
+INSERT INTO `t_recent_fid` VALUES ('-8997', '6C2A09CD-A129-11E4-9B6A-782BCBD7746B', 13);
 INSERT INTO `t_recent_fid` VALUES ('2001', '6C2A09CD-A129-11E4-9B6A-782BCBD7746B', 28);
 INSERT INTO `t_recent_fid` VALUES ('1004', '6C2A09CD-A129-11E4-9B6A-782BCBD7746B', 3);
 INSERT INTO `t_recent_fid` VALUES ('2005', '6C2A09CD-A129-11E4-9B6A-782BCBD7746B', 11);
@@ -2617,7 +2632,7 @@ INSERT INTO `t_recent_fid` VALUES ('2009', '6C2A09CD-A129-11E4-9B6A-782BCBD7746B
 INSERT INTO `t_recent_fid` VALUES ('-9997', '6C2A09CD-A129-11E4-9B6A-782BCBD7746B', 37);
 INSERT INTO `t_recent_fid` VALUES ('-9999', '6C2A09CD-A129-11E4-9B6A-782BCBD7746B', 37);
 INSERT INTO `t_recent_fid` VALUES ('-9996', '6C2A09CD-A129-11E4-9B6A-782BCBD7746B', 3);
-INSERT INTO `t_recent_fid` VALUES ('-9998', '6C2A09CD-A129-11E4-9B6A-782BCBD7746B', 135);
+INSERT INTO `t_recent_fid` VALUES ('-9998', '6C2A09CD-A129-11E4-9B6A-782BCBD7746B', 138);
 INSERT INTO `t_recent_fid` VALUES ('2027', '6C2A09CD-A129-11E4-9B6A-782BCBD7746B', 25);
 INSERT INTO `t_recent_fid` VALUES ('-9997', 'BDBE4525-D044-11E9-8217-D8CB8AD4DC8A', 3);
 INSERT INTO `t_recent_fid` VALUES ('2027', 'BDBE4525-D044-11E9-8217-D8CB8AD4DC8A', 2);
@@ -2636,7 +2651,7 @@ INSERT INTO `t_recent_fid` VALUES ('2026', '6C2A09CD-A129-11E4-9B6A-782BCBD7746B
 INSERT INTO `t_recent_fid` VALUES ('2002', '6C2A09CD-A129-11E4-9B6A-782BCBD7746B', 10);
 INSERT INTO `t_recent_fid` VALUES ('2028', '6C2A09CD-A129-11E4-9B6A-782BCBD7746B', 14);
 INSERT INTO `t_recent_fid` VALUES ('2034', '6C2A09CD-A129-11E4-9B6A-782BCBD7746B', 3);
-INSERT INTO `t_recent_fid` VALUES ('2008', '6C2A09CD-A129-11E4-9B6A-782BCBD7746B', 13);
+INSERT INTO `t_recent_fid` VALUES ('2008', '6C2A09CD-A129-11E4-9B6A-782BCBD7746B', 16);
 INSERT INTO `t_recent_fid` VALUES ('2032', 'DB7B80D6-D050-11E9-8217-D8CB8AD4DC8A', 3);
 INSERT INTO `t_recent_fid` VALUES ('2028', 'DB7B80D6-D050-11E9-8217-D8CB8AD4DC8A', 3);
 INSERT INTO `t_recent_fid` VALUES ('-9999', 'DB7B80D6-D050-11E9-8217-D8CB8AD4DC8A', 3);
@@ -2678,7 +2693,7 @@ INSERT INTO `t_recent_fid` VALUES ('-7995', '6C2A09CD-A129-11E4-9B6A-782BCBD7746
 INSERT INTO `t_recent_fid` VALUES ('-9994', '6C2A09CD-A129-11E4-9B6A-782BCBD7746B', 1);
 INSERT INTO `t_recent_fid` VALUES ('1003', 'A46D2CC6-D050-11E9-8217-D8CB8AD4DC8A', 2);
 INSERT INTO `t_recent_fid` VALUES ('2016', '6C2A09CD-A129-11E4-9B6A-782BCBD7746B', 1);
-INSERT INTO `t_recent_fid` VALUES ('-9998', 'D18347C7-D050-11E9-8217-D8CB8AD4DC8A', 17);
+INSERT INTO `t_recent_fid` VALUES ('-9998', 'D18347C7-D050-11E9-8217-D8CB8AD4DC8A', 18);
 INSERT INTO `t_recent_fid` VALUES ('-7999', '6C2A09CD-A129-11E4-9B6A-782BCBD7746B', 3);
 INSERT INTO `t_recent_fid` VALUES ('-7994', '6C2A09CD-A129-11E4-9B6A-782BCBD7746B', 3);
 INSERT INTO `t_recent_fid` VALUES ('-8997', 'D18347C7-D050-11E9-8217-D8CB8AD4DC8A', 1);
@@ -3513,6 +3528,57 @@ CREATE TABLE `t_sysdict_record_status`  (
 -- ----------------------------
 INSERT INTO `t_sysdict_record_status` VALUES ('9B90C56E-696E-11E9-B2BF-782BCBD7746B', '1000', 1000, '启用', 'QY', '记录处于启用状态', 1);
 INSERT INTO `t_sysdict_record_status` VALUES ('AC7F3FAB-696E-11E9-B2BF-782BCBD7746B', '0', 0, '停用', 'TY', '记录处于停用状态', 2);
+
+-- ----------------------------
+-- Table structure for t_upload_type
+-- ----------------------------
+DROP TABLE IF EXISTS `t_upload_type`;
+CREATE TABLE `t_upload_type`  (
+  `suffix` varchar(50) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
+  `classify` varchar(50) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL
+) ENGINE = InnoDB CHARACTER SET = utf8 COLLATE = utf8_general_ci ROW_FORMAT = Compact;
+
+-- ----------------------------
+-- Records of t_upload_type
+-- ----------------------------
+INSERT INTO `t_upload_type` VALUES ('doc', 'office');
+INSERT INTO `t_upload_type` VALUES ('docx', 'office');
+INSERT INTO `t_upload_type` VALUES ('xls', 'office');
+INSERT INTO `t_upload_type` VALUES ('xlsx', 'office');
+INSERT INTO `t_upload_type` VALUES ('ppt', 'office');
+INSERT INTO `t_upload_type` VALUES ('pptx', 'office');
+INSERT INTO `t_upload_type` VALUES ('pdf', 'office');
+INSERT INTO `t_upload_type` VALUES ('jpg', 'picture');
+INSERT INTO `t_upload_type` VALUES ('gif', 'picture');
+INSERT INTO `t_upload_type` VALUES ('png', 'picture');
+INSERT INTO `t_upload_type` VALUES ('jpeg', 'picture');
+INSERT INTO `t_upload_type` VALUES ('mp4', 'other');
+INSERT INTO `t_upload_type` VALUES ('avi', 'other');
+INSERT INTO `t_upload_type` VALUES ('mov', 'other');
+INSERT INTO `t_upload_type` VALUES ('rmvb', 'other');
+INSERT INTO `t_upload_type` VALUES ('flv', 'other');
+INSERT INTO `t_upload_type` VALUES ('3gp', 'other');
+INSERT INTO `t_upload_type` VALUES ('mpeg', 'other');
+INSERT INTO `t_upload_type` VALUES ('wmv', 'other');
+INSERT INTO `t_upload_type` VALUES ('asf', 'other');
+INSERT INTO `t_upload_type` VALUES ('mkv', 'other');
+INSERT INTO `t_upload_type` VALUES ('rm', 'other');
+INSERT INTO `t_upload_type` VALUES ('mp3', 'other');
+INSERT INTO `t_upload_type` VALUES ('wma', 'other');
+INSERT INTO `t_upload_type` VALUES ('m4a', 'other');
+INSERT INTO `t_upload_type` VALUES ('flac', 'other');
+INSERT INTO `t_upload_type` VALUES ('ape', 'other');
+INSERT INTO `t_upload_type` VALUES ('wav', 'other');
+INSERT INTO `t_upload_type` VALUES ('aac', 'other');
+INSERT INTO `t_upload_type` VALUES ('iso', 'other');
+INSERT INTO `t_upload_type` VALUES ('html', 'other');
+INSERT INTO `t_upload_type` VALUES ('exe', 'other');
+INSERT INTO `t_upload_type` VALUES ('txt', 'other');
+INSERT INTO `t_upload_type` VALUES ('apk', 'other');
+INSERT INTO `t_upload_type` VALUES ('bat', 'other');
+INSERT INTO `t_upload_type` VALUES ('zip', 'other');
+INSERT INTO `t_upload_type` VALUES ('rar', 'other');
+INSERT INTO `t_upload_type` VALUES ('7z', 'other');
 
 -- ----------------------------
 -- Table structure for t_user

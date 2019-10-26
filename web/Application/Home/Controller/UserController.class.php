@@ -139,8 +139,8 @@ class UserController extends PSIBaseController
       $ip = get_client_ip();
       $ipFrom = (new IPService())->toRegion($ip);
 
-      session("PSI_login_user_ip", $ip);
-      session("PSI_login_user_ip_from", $ipFrom);
+      session("FileManager_login_user_ip", $ip);
+      session("FileManager_login_user_ip_from", $ipFrom);
 
       $params = array(
         "loginName" => I("post.loginName"),

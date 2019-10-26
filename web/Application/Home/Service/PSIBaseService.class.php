@@ -111,7 +111,7 @@ class PSIBaseService
    */
   protected function isNotOnline()
   {
-    $userId = session("loginUserId");
+    $userId = session("userId");
     if ($userId == null) {
       return true;
     } else {

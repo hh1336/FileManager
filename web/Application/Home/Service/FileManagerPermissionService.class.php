@@ -59,7 +59,7 @@ class FileManagerPermissionService extends PSIBaseExService
     public function hasPermission($params, $fid)
     {
 
-        $result = session("loginUserId") != null;
+        $result = session("userId") != null;
         if (!$result) {
             return false;
         }

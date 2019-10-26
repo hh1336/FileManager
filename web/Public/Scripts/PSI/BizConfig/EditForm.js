@@ -22,12 +22,12 @@ Ext.define("PSI.BizConfig.EditForm", {
       },
       scope: me
     }, {
-        text: "取消",
-        handler: function () {
-          me.close();
-        },
-        scope: me
-      });
+      text: "取消",
+      handler: function () {
+        me.close();
+      },
+      scope: me
+    });
 
     var modelName = "PSIWarehouse";
     Ext.define(modelName, {
@@ -99,327 +99,384 @@ Ext.define("PSI.BizConfig.EditForm", {
             id: "editValue9000-05",
             xtype: "textfield"
           }]
-        }, {
-          title: "采购",
-          border: 0,
-          layout: "form",
-          iconCls: "PSI-fid2001",
-          items: [{
-            id: "editName2001-01",
-            xtype: "displayfield"
-          }, {
-            id: "editValue2001-01",
-            xtype: "combo",
-            queryMode: "local",
-            editable: false,
-            valueField: "id",
-            displayField: "name",
-            store: storePW,
-            name: "value2001-01"
-          }, {
-            id: "editName2001-02",
-            xtype: "displayfield"
-          }, {
-            id: "editValue2001-02",
-            xtype: "combo",
-            queryMode: "local",
-            editable: false,
-            valueField: "id",
-            store: Ext.create(
-              "Ext.data.ArrayStore", {
-                fields: ["id", "text"],
-                data: [["0", "记应付账款"],
-                ["1", "现金付款"],
-                ["2", "预付款"]]
-              }),
-            value: "0"
-          }, {
-            id: "editName2001-03",
-            xtype: "displayfield"
-          }, {
-            id: "editValue2001-03",
-            xtype: "combo",
-            queryMode: "local",
-            editable: false,
-            valueField: "id",
-            store: Ext.create(
-              "Ext.data.ArrayStore", {
-                fields: ["id", "text"],
-                data: [["0", "记应付账款"],
-                ["1", "现金付款"],
-                ["2", "预付款"]]
-              }),
-            value: "0"
-          }, {
-            id: "editName2001-04",
-            xtype: "displayfield"
-          }, {
-            id: "editValue2001-04",
-            xtype: "combo",
-            queryMode: "local",
-            editable: false,
-            valueField: "id",
-            store: Ext.create(
-              "Ext.data.ArrayStore", {
-                fields: ["id", "text"],
-                data: [
-                  ["0", "不做限制"],
-                  ["1",
-                    "不能超过采购订单未入库量"]]
-              }),
-            value: "0"
-          }]
-        }, {
-          title: "销售",
-          border: 0,
-          layout: "form",
-          iconCls: "PSI-fid2002",
-          items: [{
-            id: "editName2002-02",
-            xtype: "displayfield"
-          }, {
-            id: "editValue2002-02",
-            xtype: "combo",
-            queryMode: "local",
-            editable: false,
-            valueField: "id",
-            displayField: "name",
-            store: storeWS,
-            name: "value2002-02"
-          }, {
-            id: "editName2002-01",
-            xtype: "displayfield"
-          }, {
-            id: "editValue2002-01",
-            xtype: "combo",
-            queryMode: "local",
-            editable: false,
-            valueField: "id",
-            store: Ext.create(
-              "Ext.data.ArrayStore", {
-                fields: ["id", "text"],
-                data: [["0", "不允许编辑销售单价"],
-                ["1", "允许编辑销售单价"]]
-              }),
-            name: "value2002-01"
-          }, {
-            id: "editName2002-03",
-            xtype: "displayfield"
-          }, {
-            id: "editValue2002-03",
-            xtype: "combo",
-            queryMode: "local",
-            editable: false,
-            valueField: "id",
-            store: Ext.create(
-              "Ext.data.ArrayStore", {
-                fields: ["id", "text"],
-                data: [["0", "记应收账款"],
-                ["1", "现金收款"],
-                ["2", "用预收款支付"]]
-              }),
-            value: "0"
-          }, {
-            id: "editName2002-04",
-            xtype: "displayfield"
-          }, {
-            id: "editValue2002-04",
-            xtype: "combo",
-            queryMode: "local",
-            editable: false,
-            valueField: "id",
-            store: Ext.create(
-              "Ext.data.ArrayStore", {
-                fields: ["id", "text"],
-                data: [["0", "记应收账款"],
-                ["1", "现金收款"]]
-              }),
-            value: "0"
-          }, {
-            id: "editName2002-05",
-            xtype: "displayfield"
-          }, {
-            id: "editValue2002-05",
-            xtype: "combo",
-            queryMode: "local",
-            editable: false,
-            valueField: "id",
-            store: Ext.create(
-              "Ext.data.ArrayStore", {
-                fields: ["id", "text"],
-                data: [
-                  ["0", "不做限制"],
-                  ["1",
-                    "不能超过销售订单未出库量"]]
-              }),
-            value: "0"
-          }]
-        }, {
-          title: "存货",
-          border: 0,
-          layout: "form",
-          iconCls: "PSI-fid1003",
-          items: [{
-            id: "editName1003-02",
-            xtype: "displayfield"
-          }, {
-            id: "editValue1003-02",
-            xtype: "combo",
-            queryMode: "local",
-            editable: false,
-            valueField: "id",
-            store: Ext.create(
-              "Ext.data.ArrayStore", {
-                fields: ["id", "text"],
-                data: [["0", "移动平均法"],
-                ["1", "先进先出法"]]
-              }),
-            name: "value1003-01"
-          }]
-        }, {
-          title: "财务",
-          border: 0,
-          iconCls: "PSI-fid2024",
-          layout: "form",
-          items: [{
-            id: "editName9001-01",
-            xtype: "displayfield"
-          }, {
-            id: "editValue9001-01",
-            xtype: "numberfield",
-            hideTrigger: true,
-            allowDecimals: false
-          }]
-        }, {
-          title: "单号前缀",
-          border: 0,
-          layout: {
-            type: "table",
-            columns: 2
+        },
+          {
+            title: "采购",
+            border: 0,
+            layout: "form",
+            iconCls: "PSI-fid2001",
+            items: [{
+              id: "editName2001-01",
+              xtype: "displayfield"
+            }, {
+              id: "editValue2001-01",
+              xtype: "combo",
+              queryMode: "local",
+              editable: false,
+              valueField: "id",
+              displayField: "name",
+              store: storePW,
+              name: "value2001-01"
+            }, {
+              id: "editName2001-02",
+              xtype: "displayfield"
+            }, {
+              id: "editValue2001-02",
+              xtype: "combo",
+              queryMode: "local",
+              editable: false,
+              valueField: "id",
+              store: Ext.create(
+                "Ext.data.ArrayStore", {
+                  fields: ["id", "text"],
+                  data: [["0", "记应付账款"],
+                    ["1", "现金付款"],
+                    ["2", "预付款"]]
+                }),
+              value: "0"
+            }, {
+              id: "editName2001-03",
+              xtype: "displayfield"
+            }, {
+              id: "editValue2001-03",
+              xtype: "combo",
+              queryMode: "local",
+              editable: false,
+              valueField: "id",
+              store: Ext.create(
+                "Ext.data.ArrayStore", {
+                  fields: ["id", "text"],
+                  data: [["0", "记应付账款"],
+                    ["1", "现金付款"],
+                    ["2", "预付款"]]
+                }),
+              value: "0"
+            }, {
+              id: "editName2001-04",
+              xtype: "displayfield"
+            }, {
+              id: "editValue2001-04",
+              xtype: "combo",
+              queryMode: "local",
+              editable: false,
+              valueField: "id",
+              store: Ext.create(
+                "Ext.data.ArrayStore", {
+                  fields: ["id", "text"],
+                  data: [
+                    ["0", "不做限制"],
+                    ["1",
+                      "不能超过采购订单未入库量"]]
+                }),
+              value: "0"
+            }]
           },
-          items: [{
-            id: "editName9003-01",
-            xtype: "displayfield"
-          }, {
-            id: "editValue9003-01",
-            xtype: "textfield"
-          }, {
-            id: "editName9003-02",
-            xtype: "displayfield"
-          }, {
-            id: "editValue9003-02",
-            xtype: "textfield"
-          }, {
-            id: "editName9003-03",
-            xtype: "displayfield"
-          }, {
-            id: "editValue9003-03",
-            xtype: "textfield"
-          }, {
-            id: "editName9003-04",
-            xtype: "displayfield"
-          }, {
-            id: "editValue9003-04",
-            xtype: "textfield"
-          }, {
-            id: "editName9003-05",
-            xtype: "displayfield"
-          }, {
-            id: "editValue9003-05",
-            xtype: "textfield"
-          }, {
-            id: "editName9003-06",
-            xtype: "displayfield"
-          }, {
-            id: "editValue9003-06",
-            xtype: "textfield"
-          }, {
-            id: "editName9003-07",
-            xtype: "displayfield"
-          }, {
-            id: "editValue9003-07",
-            xtype: "textfield"
-          }, {
-            id: "editName9003-08",
-            xtype: "displayfield"
-          }, {
-            id: "editValue9003-08",
-            xtype: "textfield"
-          }, {
-            id: "editName9003-09",
-            xtype: "displayfield"
-          }, {
-            id: "editValue9003-09",
-            xtype: "textfield"
-          }, {
-            id: "editName9003-10",
-            xtype: "displayfield"
-          }, {
-            id: "editValue9003-10",
-            xtype: "textfield"
-          }, {
-            id: "editName9003-11",
-            xtype: "displayfield"
-          }, {
-            id: "editValue9003-11",
-            xtype: "textfield"
-          }, {
-            id: "editName9003-12",
-            xtype: "displayfield"
-          }, {
-            id: "editValue9003-12",
-            xtype: "textfield"
-          }]
-        }, {
-          title: "系统",
-          border: 0,
-          iconCls: "PSI-fid-9994",
-          layout: "form",
-          items: [{
-            id: "editName9002-01",
-            xtype: "displayfield"
-          }, {
-            id: "editValue9002-01",
-            xtype: "textfield"
-          }, {
-            id: "editName9002-02",
-            xtype: "displayfield"
-          }, {
-            id: "editValue9002-02",
-            xtype: "combo",
-            queryMode: "local",
-            editable: false,
-            valueField: "id",
-            store: Ext.create(
-              "Ext.data.ArrayStore", {
-                fields: ["id", "text"],
-                data: [["0", "原窗口打开"],
-                ["1", "新窗口打开"]]
-              })
-          }, {
-            id: "editName9002-03",
-            xtype: "displayfield"
-          }, {
-            id: "editValue9002-03",
-            xtype: "combo",
-            queryMode: "local",
-            editable: false,
-            valueField: "id",
-            store: Ext.create(
-              "Ext.data.ArrayStore", {
-                fields: ["id", "text"],
-                data: [["0", "整数"],
-                ["1", "1位小数"],
-                ["2", "2位小数"],
-                ["3", "3位小数"],
-                ["4", "4位小数"],
-                ["5", "5位小数"],
-                ["6", "6位小数"],
-                ["7", "7位小数"],
-                ["8", "8位小数"]]
-              })
-          }]
-        }],
+
+          {
+            title: "销售",
+            border: 0,
+            layout: "form",
+            iconCls: "PSI-fid2002",
+            items: [{
+              id: "editName2002-02",
+              xtype: "displayfield"
+            }, {
+              id: "editValue2002-02",
+              xtype: "combo",
+              queryMode: "local",
+              editable: false,
+              valueField: "id",
+              displayField: "name",
+              store: storeWS,
+              name: "value2002-02"
+            }, {
+              id: "editName2002-01",
+              xtype: "displayfield"
+            }, {
+              id: "editValue2002-01",
+              xtype: "combo",
+              queryMode: "local",
+              editable: false,
+              valueField: "id",
+              store: Ext.create(
+                "Ext.data.ArrayStore", {
+                  fields: ["id", "text"],
+                  data: [["0", "不允许编辑销售单价"],
+                    ["1", "允许编辑销售单价"]]
+                }),
+              name: "value2002-01"
+            }, {
+              id: "editName2002-03",
+              xtype: "displayfield"
+            }, {
+              id: "editValue2002-03",
+              xtype: "combo",
+              queryMode: "local",
+              editable: false,
+              valueField: "id",
+              store: Ext.create(
+                "Ext.data.ArrayStore", {
+                  fields: ["id", "text"],
+                  data: [["0", "记应收账款"],
+                    ["1", "现金收款"],
+                    ["2", "用预收款支付"]]
+                }),
+              value: "0"
+            }, {
+              id: "editName2002-04",
+              xtype: "displayfield"
+            }, {
+              id: "editValue2002-04",
+              xtype: "combo",
+              queryMode: "local",
+              editable: false,
+              valueField: "id",
+              store: Ext.create(
+                "Ext.data.ArrayStore", {
+                  fields: ["id", "text"],
+                  data: [["0", "记应收账款"],
+                    ["1", "现金收款"]]
+                }),
+              value: "0"
+            }, {
+              id: "editName2002-05",
+              xtype: "displayfield"
+            }, {
+              id: "editValue2002-05",
+              xtype: "combo",
+              queryMode: "local",
+              editable: false,
+              valueField: "id",
+              store: Ext.create(
+                "Ext.data.ArrayStore", {
+                  fields: ["id", "text"],
+                  data: [
+                    ["0", "不做限制"],
+                    ["1",
+                      "不能超过销售订单未出库量"]]
+                }),
+              value: "0"
+            }]
+          },
+
+          {
+            title: "存货",
+            border: 0,
+            layout: "form",
+            iconCls: "PSI-fid1003",
+            items: [{
+              id: "editName1003-02",
+              xtype: "displayfield"
+            }, {
+              id: "editValue1003-02",
+              xtype: "combo",
+              queryMode: "local",
+              editable: false,
+              valueField: "id",
+              store: Ext.create(
+                "Ext.data.ArrayStore", {
+                  fields: ["id", "text"],
+                  data: [["0", "移动平均法"],
+                    ["1", "先进先出法"]]
+                }),
+              name: "value1003-01"
+            }]
+          },
+          {
+            title: "财务",
+            border: 0,
+            iconCls: "PSI-fid2024",
+            layout: "form",
+            items: [{
+              id: "editName9001-01",
+              xtype: "displayfield"
+            }, {
+              id: "editValue9001-01",
+              xtype: "numberfield",
+              hideTrigger: true,
+              allowDecimals: false
+            }]
+          },
+
+          {
+            title: "单号前缀",
+            border: 0,
+            layout: {
+              type: "table",
+              columns: 2
+            },
+            items: [{
+              id: "editName9003-01",
+              xtype: "displayfield"
+            }, {
+              id: "editValue9003-01",
+              xtype: "textfield"
+            }, {
+              id: "editName9003-02",
+              xtype: "displayfield"
+            }, {
+              id: "editValue9003-02",
+              xtype: "textfield"
+            }, {
+              id: "editName9003-03",
+              xtype: "displayfield"
+            }, {
+              id: "editValue9003-03",
+              xtype: "textfield"
+            }, {
+              id: "editName9003-04",
+              xtype: "displayfield"
+            }, {
+              id: "editValue9003-04",
+              xtype: "textfield"
+            }, {
+              id: "editName9003-05",
+              xtype: "displayfield"
+            }, {
+              id: "editValue9003-05",
+              xtype: "textfield"
+            }, {
+              id: "editName9003-06",
+              xtype: "displayfield"
+            }, {
+              id: "editValue9003-06",
+              xtype: "textfield"
+            }, {
+              id: "editName9003-07",
+              xtype: "displayfield"
+            }, {
+              id: "editValue9003-07",
+              xtype: "textfield"
+            }, {
+              id: "editName9003-08",
+              xtype: "displayfield"
+            }, {
+              id: "editValue9003-08",
+              xtype: "textfield"
+            }, {
+              id: "editName9003-09",
+              xtype: "displayfield"
+            }, {
+              id: "editValue9003-09",
+              xtype: "textfield"
+            }, {
+              id: "editName9003-10",
+              xtype: "displayfield"
+            }, {
+              id: "editValue9003-10",
+              xtype: "textfield"
+            }, {
+              id: "editName9003-11",
+              xtype: "displayfield"
+            }, {
+              id: "editValue9003-11",
+              xtype: "textfield"
+            }, {
+              id: "editName9003-12",
+              xtype: "displayfield"
+            }, {
+              id: "editValue9003-12",
+              xtype: "textfield"
+            }]
+          },
+          {
+            title: "系统",
+            border: 0,
+            iconCls: "PSI-fid-9994",
+            layout: "form",
+            items: [{
+              id: "editName9002-01",
+              xtype: "displayfield"
+            }, {
+              id: "editValue9002-01",
+              xtype: "textfield"
+            }, {
+              id: "editName9002-02",
+              xtype: "displayfield"
+            }, {
+              id: "editValue9002-02",
+              xtype: "combo",
+              queryMode: "local",
+              editable: false,
+              valueField: "id",
+              store: Ext.create(
+                "Ext.data.ArrayStore", {
+                  fields: ["id", "text"],
+                  data: [["0", "原窗口打开"],
+                    ["1", "新窗口打开"]]
+                })
+            }, {
+              id: "editName9002-03",
+              xtype: "displayfield"
+            }, {
+              id: "editValue9002-03",
+              xtype: "combo",
+              queryMode: "local",
+              editable: false,
+              valueField: "id",
+              store: Ext.create(
+                "Ext.data.ArrayStore", {
+                  fields: ["id", "text"],
+                  data: [["0", "整数"],
+                    ["1", "1位小数"],
+                    ["2", "2位小数"],
+                    ["3", "3位小数"],
+                    ["4", "4位小数"],
+                    ["5", "5位小数"],
+                    ["6", "6位小数"],
+                    ["7", "7位小数"],
+                    ["8", "8位小数"]]
+                })
+            }]
+          },
+          ///------------
+          {
+            title: "文件后缀限定",
+            border: 0,
+            layout: "form",
+            tbar: [{
+              xtype: "panel",
+              width: "100%",
+              border: 0,
+              html: "<div><span style='color: red'>*</span>不区分大小写，使用'-'分割</div>"
+            }]
+            ,
+            items: [
+              {
+                xtype: "panel",
+                width: "100%",
+                border: 0,
+                html: "<div class='x-form-display-field'>office类型</div>"
+              },
+              {
+                id: "officeSuffix",
+                xtype: "textarea"
+              },
+              {
+                xtype: "panel",
+                width: "100%",
+                border: 0,
+                html: "<div class='x-form-display-field'>图片类型</div>"
+              },
+              {
+                id: "pictureSuffix",
+                xtype: "textarea"
+              },
+              {
+                xtype: "panel",
+                width: "100%",
+                border: 0,
+                html: "<div class='x-form-display-field'>其他类型</div>"
+              },
+              {
+                id: "otherSuffix",
+                xtype: "textarea"
+              },
+
+            ]
+          }
+
+        ],
         buttons: buttons
       }],
       listeners: {
@@ -433,10 +490,27 @@ Ext.define("PSI.BizConfig.EditForm", {
         }
       }
     });
-
+    me.onloadSuffix();
     me.callParent(arguments);
   },
+  onloadSuffix: function () {
+    var me = this;
+    // Ext.getCmp("officeSuffix").getValue()
+    // Ext.getCmp("pictureSuffix").getValue()
+    // Ext.getCmp("otherSuffix").getValue()
 
+    me.ajax({
+      url: me.URL("Home/SuffixConfig/loadSuffix"),
+      success: function (response) {
+        var data = me.decodeJSON(response.responseText);
+        Ext.getCmp("officeSuffix").setValue(data["office"]);
+        Ext.getCmp("pictureSuffix").setValue(data["picture"]);
+        Ext.getCmp("otherSuffix").setValue(data["other"]);
+      }
+    });
+
+
+  },
   getSaveData: function () {
     var me = this;
 
@@ -481,6 +555,7 @@ Ext.define("PSI.BizConfig.EditForm", {
   onOK: function (thenAdd) {
     var me = this;
     Ext.getBody().mask("正在保存中...");
+    me.onSaveSuffix(me);
     Ext.Ajax.request({
       url: PSI.Const.BASE_URL + "Home/BizConfig/edit",
       method: "POST",
@@ -501,6 +576,25 @@ Ext.define("PSI.BizConfig.EditForm", {
         }
       }
     });
+  },
+
+  //保存文件类型
+  onSaveSuffix: function (me) {
+    var params = {
+      "office": Ext.getCmp("officeSuffix").getValue(),
+      "picture": Ext.getCmp("pictureSuffix").getValue(),
+      "other": Ext.getCmp("otherSuffix").getValue()
+    }
+    me.ajax({
+      url: PSI.Const.BASE_URL + "Home/SuffixConfig/SaveSuffix",
+      params: params,
+      success: function (response) {
+        var data = me.decodeJSON(response.responseText);
+        if (!data.success) {
+          me.showInfo(data.msg);
+        }
+      }
+    })
   },
 
   onWindowBeforeUnload: function (e) {

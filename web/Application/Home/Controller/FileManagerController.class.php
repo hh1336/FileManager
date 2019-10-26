@@ -4,9 +4,9 @@ namespace Home\Controller;
 
 use Home\Common\FIdConst;
 use Home\Service\FileManagerPermissionService;
+use Home\Service\SuffixConfigService;
 use Home\Service\UserService;
 use Home\Service\FileManagerService;
-use Org\Util\Date;
 
 class FileManagerController extends PSIBaseController
 {
@@ -133,12 +133,8 @@ class FileManagerController extends PSIBaseController
         "action_info" => I("post.actionInfo")
       ];
 
-      $upType = array('zip', 'rar', '7z',
-        'jpg', 'gif', 'png', 'jpeg',
-        'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'pdf',
-        'mp4', 'avi', 'mov', 'rmvb', 'flv', '3gp', 'mpeg', 'wmv', 'asf', 'mkv', 'rm',
-        'mp3', 'wma', 'm4a', 'flac', 'ape', 'wav', 'aac',
-        'iso', 'html', 'exe', 'txt', 'apk', 'bat');
+      $suffixService = new SuffixConfigService();
+      $upType = $suffixService->getSuffixs();
 
       $fms = new FileManagerService();
       $rs = $fms->upLoadFile($params, $upType);
@@ -187,8 +183,9 @@ class FileManagerController extends PSIBaseController
   {
     $us = new UserService();
     if ($us->hasPermission(FIdConst::WJGL_YL_FILE)) {
-      $imgType = array('jpg', 'gif', 'png', 'jpeg');
-      $officeType = array('doc', 'docx', 'xls', 'xlsx', 'pptx', 'ppt', 'txt');
+      $suffixService = new SuffixConfigService();
+      $imgType = $suffixService->getSuffixs('picture');
+      $officeType = $suffixService->getSuffixs('office');
       $params = [
         "file_id" => I("fileid")
       ];

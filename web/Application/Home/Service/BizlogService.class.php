@@ -54,12 +54,12 @@ class BizlogService extends PSIBaseExService
       return;
     }
 
-    $ip = session("PSI_login_user_ip");
+    $ip = session("FileManager_login_user_ip");
     if ($ip == null || $ip == "") {
       $ip = $this->getClientIP();
     }
 
-    $ipFrom = session("PSI_login_user_ip_from");
+    $ipFrom = session("FileManager_login_user_ip_from");
 
     $db = $this->db;
 
