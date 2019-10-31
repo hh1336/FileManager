@@ -154,7 +154,7 @@ class FileManagerController extends PSIBaseController
       $info = $upload->upload();
 
       if (!$info) {// 上传错误提示错误信息
-        $rs["msg"] = "上传[".$params["data"]['file_name']."]，出现了：" . $upload->getError();
+        $rs["msg"] = "上传[" . $params["data"]['file_name'] . "]，出现了：" . $upload->getError();
         $del_params["id"] = $params["data"]["id"];
         $del_params["login_user_id"] = $params["login_user_id"];
         $del_params["log_id"] = $params['log_id'];
@@ -170,29 +170,36 @@ class FileManagerController extends PSIBaseController
     }
   }
 
-  public function uploadMultiple()
+
+  public function editFile()
   {
     if (IS_POST) {
+      $params = [
+        "id" => I("post.fileId"),
+        "action_info" => I("post.actionInfo"),
+        "path" => I("post.path"),
+        "file_name" => I("post.fileName")
+      ];
+
+      $info = "";
+
       $suffixService = new SuffixConfigService();
       $upType = $suffixService->getSuffixs();
+      if(!empty($params["path"])){
+        $upload = new \Think\Upload();// 实例化上传类
+        $upload->maxSize = 20971520;// 设置附件上传大小 5M
+        $upload->exts = $upType;// 设置附件上传类型
+        $upload->savePath = ''; // 设置附件上传（子）目录
+        $upload->autoSub = false;
+        $upload->hash = false;
+        $upload->rootPath = "Uploads"; // 设置附件上传根目录
 
-      $upload = new \Think\Upload();// 实例化上传类
-      $upload->maxSize = 209715200;// 设置附件上传大小 200M
-      $upload->exts = $upType;// 设置附件上传类型
-      $upload->savePath = ''; // 设置附件上传（子）目录
-      $upload->autoSub = false;
-      $upload->hash = false;
-      $upload->rootPath = "Uploads/"; // 设置附件上传根目录
-      //$upload->saveName = $params["data"]["file_version"];
-      $info = $upload->upload();
-      if (!$info) {//上传失败
-        $rs["msg"] = $upload->getError();
-        $rs["success"] = false;
-        $this->ajaxReturn($rs);
-      } else {
-        $rs["success"] = true;
-        $this->ajaxReturn($rs);
+        $info = $upload->upload();
       }
+
+      $fms = new FileManagerService();
+      $rs = $fms->editFile($params,$info);
+      $this->ajaxReturn($rs);
     }
   }
 

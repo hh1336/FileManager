@@ -43,12 +43,12 @@ Ext.define('PSI.FileManager.MainForm', {
         handler: me.onNewWindowPreviewFile,
         scope: me
       },
-        //   {
-        //   text: "编辑文件",
-        //   disabled: me.getEditFile() == "0",
-        //   handler: me.onEditFile,
-        //   scope: me
-        // },
+          {
+          text: "编辑文件",
+          disabled: me.getEditFile() == "0",
+          handler: me.onEditFile,
+          scope: me
+        },
         {
           text: "删除文件",
           disabled: me.getDeleteFile() == "0",
@@ -581,21 +581,22 @@ Ext.define('PSI.FileManager.MainForm', {
     });
   }
   ,
-  //上传文件
-  onUpFile: function () {
+  //编辑文件
+  onEditFile: function () {
     var me = this;
-    if (me.getUpFile() == "0") {
+    if (me.getEditFile() == "0") {
       return me.showInfo("没有权限");
     }
     var data = me.getSelectNodeData();
-    if (data.fileSuffix == "dir") {
-      var form = Ext.create("PSI.FileManager.UpFileForm", {
+    console.log(data);
+    if (data.fileSuffix != "dir" && data.Name != "../") {
+      var form = Ext.create("PSI.FileManager.EditFileForm", {
         parentForm: me,
         entity: data
       });
       return form.show();
     }
-    me.showInfo("请选择文件夹作为上传目录");
+    me.showInfo("请选择要修改的文件");
   },
   //多文件上传
   onUploadMultipleFile: function () {
@@ -734,13 +735,6 @@ Ext.define('PSI.FileManager.MainForm', {
     Ext.getCmp("pagingToobar").doRefresh();
   },
 
-  //编辑文件
-  onEditFile: function () {
-    var me = this;
-    if (me.getEditFile() == "0") {
-      return me.showInfo("没有权限");
-    }
-  },
   //刷新树
   freshFileGrid: function () {
     var me = this;

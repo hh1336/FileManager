@@ -56,14 +56,61 @@ Ext.define("PSI.BizConfig.EditForm", {
         height: 40,
         iconCls: "PSI-button-edit"
       },
-      width: 500,
+      width: 800,
       height: 520,
       layout: "fit",
       items: [{
         xtype: "tabpanel",
         bodyPadding: 5,
         border: 0,
-        items: [{
+        items: [
+          ///------------
+          {
+            title: "文件后缀限定",
+            border: 0,
+            layout: "form",
+            tbar: [{
+              xtype: "panel",
+              width: "100%",
+              border: 0,
+              html: "<div><span style='color: red'>*</span>不区分大小写，使用'-'分割</div>"
+            }]
+            ,
+            items: [
+              {
+                xtype: "panel",
+                width: "100%",
+                border: 0,
+                html: "<div class='x-form-display-field'>office类型</div>"
+              },
+              {
+                id: "officeSuffix",
+                xtype: "textarea"
+              },
+              {
+                xtype: "panel",
+                width: "100%",
+                border: 0,
+                html: "<div class='x-form-display-field'>图片类型</div>"
+              },
+              {
+                id: "pictureSuffix",
+                xtype: "textarea"
+              },
+              {
+                xtype: "panel",
+                width: "100%",
+                border: 0,
+                html: "<div class='x-form-display-field'>其他类型</div>"
+              },
+              {
+                id: "otherSuffix",
+                xtype: "textarea"
+              },
+
+            ]
+          },
+          {
           title: "公司",
           border: 0,
           layout: "form",
@@ -428,54 +475,7 @@ Ext.define("PSI.BizConfig.EditForm", {
                     ["8", "8位小数"]]
                 })
             }]
-          },
-          ///------------
-          {
-            title: "文件后缀限定",
-            border: 0,
-            layout: "form",
-            tbar: [{
-              xtype: "panel",
-              width: "100%",
-              border: 0,
-              html: "<div><span style='color: red'>*</span>不区分大小写，使用'-'分割</div>"
-            }]
-            ,
-            items: [
-              {
-                xtype: "panel",
-                width: "100%",
-                border: 0,
-                html: "<div class='x-form-display-field'>office类型</div>"
-              },
-              {
-                id: "officeSuffix",
-                xtype: "textarea"
-              },
-              {
-                xtype: "panel",
-                width: "100%",
-                border: 0,
-                html: "<div class='x-form-display-field'>图片类型</div>"
-              },
-              {
-                id: "pictureSuffix",
-                xtype: "textarea"
-              },
-              {
-                xtype: "panel",
-                width: "100%",
-                border: 0,
-                html: "<div class='x-form-display-field'>其他类型</div>"
-              },
-              {
-                id: "otherSuffix",
-                xtype: "textarea"
-              },
-
-            ]
           }
-
         ],
         buttons: buttons
       }],
@@ -495,9 +495,6 @@ Ext.define("PSI.BizConfig.EditForm", {
   },
   onloadSuffix: function () {
     var me = this;
-    // Ext.getCmp("officeSuffix").getValue()
-    // Ext.getCmp("pictureSuffix").getValue()
-    // Ext.getCmp("otherSuffix").getValue()
 
     me.ajax({
       url: me.URL("Home/SuffixConfig/loadSuffix"),
