@@ -35,7 +35,7 @@ Ext.define('PSI.FileManager.MainForm', {
       }, "-", {
         text: "上传文件",
         disabled: me.getUpFile() == "0",
-        handler: me.onUpFile,
+        handler: me.onUploadMultipleFile,
         scope: me
       }, {
         text: "新窗口预览",
@@ -74,7 +74,7 @@ Ext.define('PSI.FileManager.MainForm', {
         xtype: "panel",
         region: "west",
         layout: "fit",
-        width: 600,
+        width: "50%",
         split: true,
         collapsible: true,
         header: false,
@@ -99,18 +99,11 @@ Ext.define('PSI.FileManager.MainForm', {
     if (me.__fileGrid) {
       return me.__fileGrid;
     }
-    var modelName = "PSIFileModel";
+    var modelName = "FileModel";
     Ext.define(modelName, {
       extend: "Ext.data.Model",
-      fields: ["id", "id2",
-        "children", "actionUserID",
-        "actionTime", "parentDirID",
-        "userName", "actionInfo",
-        "leaf", "Version",
-        "Name",
-        //文件
-        "fileSize", "fileSuffix"
-
+      fields: ["id", "id2", "children", "actionUserID", "actionTime", "parentDirID",
+        "userName", "actionInfo", "leaf", "Version", "Name", "fileSize", "fileSuffix"
       ]
     });
 
@@ -212,16 +205,14 @@ Ext.define('PSI.FileManager.MainForm', {
           text: "操作描述",
           dataIndex: "actionInfo",
           width: "20%"
-        },
-          {
-            text: "版本号",
-            dataIndex: "Version",
-            width: "13%",
-            renderer: function (value) {
-              return value.slice(0, 8);
-            }
-          },
-        ]
+        }, {
+          text: "版本号",
+          dataIndex: "Version",
+          width: "13%",
+          renderer: function (value) {
+            return value.slice(0, 8);
+          }
+        }]
       }
     });
 
@@ -231,18 +222,17 @@ Ext.define('PSI.FileManager.MainForm', {
     if (!(me.getFilePermission() == "0")) {
       itemmenu.add("-", {text: "权限设置", handler: me.onFilePermission, scope: me});
     }
-
+    itemmenu.add("-", {text: "刷新", handler: me.freshFileGrid, scope: me});
 
     var treemenu = new Ext.menu.Menu();
     treemenu.add({text: "新建文件夹", handler: me.containercontext, scope: me, cls: "PSI"}, "-");
     treemenu.add({
       text: "上传文件", handler: function () {
         me.onfileStoryLoad();
-        me.onUpFile();
+        me.onUploadMultipleFile();
       }, scope: me
     }, "-");
     treemenu.add({text: "刷新", handler: me.freshFileGrid, scope: me});
-
 
     //右击菜单
     fileTree.on("itemcontextmenu", function (node, record, item, index, e) {
@@ -297,7 +287,7 @@ Ext.define('PSI.FileManager.MainForm', {
           root: 'dataList',
           totalProperty: 'totalCount'
         }
-      },
+      }
     });
 
     me.__window = Ext.create('Ext.window.Window', {
@@ -416,9 +406,7 @@ Ext.define('PSI.FileManager.MainForm', {
           listeners: {
             change: {
               fn: function () {
-                myStore.pageSize = Ext
-                  .getCmp("comboCountPerPage")
-                  .getValue();
+                myStore.pageSize = Ext.getCmp("comboCountPerPage").getValue();
                 myStore.currentPage = 1;
                 Ext.getCmp("pagingToobar").doRefresh();
               },
@@ -428,7 +416,7 @@ Ext.define('PSI.FileManager.MainForm', {
         }, {
           xtype: "displayfield",
           value: "条记录"
-        },],
+        }]
       },
         {
           xtype: "panel",
@@ -608,8 +596,23 @@ Ext.define('PSI.FileManager.MainForm', {
       return form.show();
     }
     me.showInfo("请选择文件夹作为上传目录");
-  }
-  ,
+  },
+  //多文件上传
+  onUploadMultipleFile: function () {
+    var me = this;
+    if (me.getUpFile() == "0") {
+      return me.showInfo("没有权限");
+    }
+    var data = me.getSelectNodeData();
+    if (data.fileSuffix == "dir") {
+      var form = Ext.create("PSI.FileManager.UploadMultipleFile", {
+        parentForm: me,
+        entity: data
+      });
+      return form.show();
+    }
+    me.showInfo("请选择文件夹作为上传目录");
+  },
   //点击下载按钮
   onDownLoad: function () {
     var me = this;
@@ -726,7 +729,7 @@ Ext.define('PSI.FileManager.MainForm', {
     }
     me.getWindow().child("grid").getStore().proxy.extraParams = {
       id: ""
-    }
+    };
     me.getWindow().show();
     Ext.getCmp("pagingToobar").doRefresh();
   },
@@ -769,7 +772,7 @@ Ext.define('PSI.FileManager.MainForm', {
     var data = me.getSelectNodeData();
     if (!(data.Name == "../")) {
       var temp = me.__fileGrid.getSelectionModel().selected.map;
-      me.__fileGrid.getSelectionModel().selected.map = {}
+      me.__fileGrid.getSelectionModel().selected.map = {};
       me.onAddDir();
       me.__fileGrid.getSelectionModel().selected.map = temp;
       return false;
@@ -783,7 +786,7 @@ Ext.define('PSI.FileManager.MainForm', {
     var data = me.getSelectNodeData();
     me.getFileGrid().getStore().proxy.extraParams = {
       parentDirID: data.id2
-    }
+    };
     me.freshFileGrid();
   },
   //查看文件版本
@@ -795,7 +798,7 @@ Ext.define('PSI.FileManager.MainForm', {
     }
     me.getWindow().child("grid").getStore().proxy.extraParams = {
       id: data.id
-    }
+    };
     me.getWindow().show();
     Ext.getCmp("pagingToobar").doRefresh();
   },

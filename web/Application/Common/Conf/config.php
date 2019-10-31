@@ -78,10 +78,8 @@
 
 // return $psiConfig;
 
-/*
 
 // 也可以把上面的代码都删除掉，然后按下面的写法来配置
-
 return array(
 		'URL_CASE_INSENSITIVE' => false,
 		'SHOW_ERROR_MSG' => true,
@@ -92,5 +90,3 @@ return array(
 		'DB_PWD' => '', // 密码
 		'DB_PORT' => 3306 // 端口
 );
- 
- */

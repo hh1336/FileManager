@@ -128,7 +128,7 @@ class FileManagerController extends PSIBaseController
   {
     if (IS_POST) {
       $params = [
-        "path" => I("post.path"),
+        "path" => I("post.name"),
         "parent_dir_id" => I("post.parentDirID"),
         "action_info" => I("post.actionInfo")
       ];
@@ -154,14 +154,43 @@ class FileManagerController extends PSIBaseController
       $info = $upload->upload();
 
       if (!$info) {// 上传错误提示错误信息
-        $rs["msg"] = "上传错误，出现了：" . $upload->getError();
+        $rs["msg"] = "上传[".$params["data"]['file_name']."]，出现了：" . $upload->getError();
         $del_params["id"] = $params["data"]["id"];
         $del_params["login_user_id"] = $params["login_user_id"];
         $del_params["log_id"] = $params['log_id'];
         $fms->cancelUpLoadFile($del_params);
         $this->ajaxReturn($rs);
       } else {// 上传成功
+        $rs["success"] = true;
+        $rs["fileId"] = $params["data"]["id"];
         $fms->setFileSize($params["data"]["id"], $info["file"]["size"]);
+        $this->ajaxReturn($rs);
+
+      }
+    }
+  }
+
+  public function uploadMultiple()
+  {
+    if (IS_POST) {
+      $suffixService = new SuffixConfigService();
+      $upType = $suffixService->getSuffixs();
+
+      $upload = new \Think\Upload();// 实例化上传类
+      $upload->maxSize = 209715200;// 设置附件上传大小 200M
+      $upload->exts = $upType;// 设置附件上传类型
+      $upload->savePath = ''; // 设置附件上传（子）目录
+      $upload->autoSub = false;
+      $upload->hash = false;
+      $upload->rootPath = "Uploads/"; // 设置附件上传根目录
+      //$upload->saveName = $params["data"]["file_version"];
+      $info = $upload->upload();
+      if (!$info) {//上传失败
+        $rs["msg"] = $upload->getError();
+        $rs["success"] = false;
+        $this->ajaxReturn($rs);
+      } else {
+        $rs["success"] = true;
         $this->ajaxReturn($rs);
       }
     }

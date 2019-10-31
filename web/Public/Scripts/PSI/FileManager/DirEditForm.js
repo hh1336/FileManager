@@ -1,7 +1,6 @@
 /**
  * 新增或编辑文件夹
  **/
-
 Ext.define("PSI.FileManager.DirEditForm", {
   extend: "PSI.AFX.BaseDialogForm",
   initComponent: function () {
@@ -59,7 +58,7 @@ Ext.define("PSI.FileManager.DirEditForm", {
           value: entity["action"] == "add" ? null : entity["id2"]
         }, {
           id: "PSI_FileManager_DirEditForm_editName",
-          fieldLabel: "文件名",
+          fieldLabel: "文件夹名",
           allowBlank: false,
           blankText: "没有输入文件名",
           beforeLabelTextTpl: PSI.Const.REQUIRED,
@@ -83,13 +82,13 @@ Ext.define("PSI.FileManager.DirEditForm", {
           xtype: "hidden",
           name: "parentDirID",
           value: ((entity["action"] == "add") && (entity["Name"] != "../")) ? entity["id2"] : entity["parentDirID"]
-        },
-          {
-            id: "PSI_FileManager_DirEditForm_editActionInfo",
-            fieldLabel: "描述",
-            name: "actionInfo",
-            value: entity["action"] == "add" ? null : entity["actionInfo"],
-          }],
+        }, {
+          id: "PSI_FileManager_DirEditForm_editActionInfo",
+          fieldLabel: "描述",
+          name: "actionInfo",
+          width: 370,
+          value: entity["action"] == "add" ? null : entity["actionInfo"]
+        }],
         buttons: [{
           text: "确定",
           formBind: true,
@@ -166,7 +165,7 @@ Ext.define("PSI.FileManager.DirEditForm", {
     } else {
       el.unmask();
       //me.editParentDirId.setValue(entity["id2"]);
-      me.editParentDir.setValue(entity["Name"]||"根目录");
+      me.editParentDir.setValue(entity["Name"] || "根目录");
     }
 
 
@@ -197,5 +196,5 @@ Ext.define("PSI.FileManager.DirEditForm", {
         });
       }
     });
-  },
+  }
 });

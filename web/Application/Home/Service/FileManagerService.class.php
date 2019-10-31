@@ -133,9 +133,9 @@ class FileManagerService extends PSIBaseExService
     $rs["success"] = false;
     $rs["msg"] = "";
     $us = new UserService();
-    $params["file_suffix"] = substr($params["path"], (strripos($params["path"], '.') + 1), strlen($params["path"]));
-    $params["file_name"] = substr($params["path"], (strripos($params["path"], '\\') + 1),
-      (-1 - strlen($params["file_suffix"])));
+    $params["file_suffix"] = substr($params["path"],
+      (strripos($params["path"], '.') + 1), strlen($params["path"]));
+    $params["file_name"] = substr($params["path"], 0, (-1 - strlen($params["file_suffix"])));
     if (!$us->hasPermission(FIdConst::WJGL_UP_FILE)) {
       $rs["msg"] = "没有权限";
       return $rs;
