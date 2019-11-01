@@ -164,10 +164,8 @@ class FileManagerService extends PSIBaseExService
       $rs["msg"] = "没有权限";
       return $rs;
     }
-    $suffix = substr($params["path"],
-      (strripos($params["path"], '.') + 1), strlen($params["path"]));
-    $file_name = substr($params["path"], 0, (-1 - strlen($suffix)));
-    $params["log_info"] = "编辑文件[" . $file_name . "." . $suffix . "]";
+
+    $params["log_info"] = "编辑文件[" .$params["file_name"]. "]";
     $logService = new FileManagerlogService();
     $logService->log($params);
     $dao = new FileManagerDAO($this->db());

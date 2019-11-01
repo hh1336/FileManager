@@ -43,7 +43,7 @@ Ext.define('PSI.FileManager.MainForm', {
         handler: me.onNewWindowPreviewFile,
         scope: me
       },
-          {
+        {
           text: "编辑文件",
           disabled: me.getEditFile() == "0",
           handler: me.onEditFile,
@@ -290,6 +290,93 @@ Ext.define('PSI.FileManager.MainForm', {
       }
     });
 
+    var wgrid = Ext.create('Ext.grid.Panel', {
+      border: false,
+      sortableColumns: false,
+      autoScroll: true,
+      listeners: {
+        itemClick: {
+          fn: function (node, record) {
+            me.__selectData = record.data;
+            document.getElementById("action_info")
+              .innerHTML = record.data.action_info;
+          },
+          scope: me
+        }
+      },
+      columns: {
+        defaults: {
+          sortable: false,
+          menuDisabled: true,
+          draggable: false
+        },
+        items: [
+          {
+            text: '版本号',
+            width: "15%",
+            dataIndex: "id",
+            renderer: function (value) {
+              var version = value.slice(0, 8);
+              return version;
+            },
+          },
+          {
+            text: '操作时间',
+            dataIndex: "action_time",
+            width: "22%"
+          },
+          {
+            text: '操作人',
+            dataIndex: "action_user_name",
+            width: "18%"
+          },
+          {
+            text: '操作描述',
+            dataIndex: "remarks",
+            width: "45%"
+          }
+        ]
+      },
+      store: myStore,
+      bbar: ["->", {
+        id: "pagingToobar",
+        xtype: "pagingtoolbar",
+        border: 0,
+        store: myStore
+      }, "-", {
+        xtype: "displayfield",
+        value: "每页显示"
+      }, {
+        id: "comboCountPerPage",
+        xtype: "combobox",
+        editable: false,
+        width: 60,
+        store: Ext.create("Ext.data.ArrayStore", {
+          fields: ["text"],
+          data: [["5"], ["15"], ["50"], ["100"]]
+        }),
+        value: 15,
+        listeners: {
+          change: {
+            fn: function () {
+              myStore.pageSize = Ext.getCmp("comboCountPerPage").getValue();
+              myStore.currentPage = 1;
+              Ext.getCmp("pagingToobar").doRefresh();
+            },
+            scope: me
+          }
+        }
+      }, {
+        xtype: "displayfield",
+        value: "条记录"
+      }]
+    });
+
+    var cpanel = Ext.create("Ext.panel.Panel", {
+      width: "100%",
+      height: 175,
+      html: "<textarea id='action_info' readonly style='border: none;width: 100%;height: 175px;'></textarea>"
+    })
     me.__window = Ext.create('Ext.window.Window', {
       title: '操作记录',
       //height: "45%",
@@ -300,131 +387,7 @@ Ext.define('PSI.FileManager.MainForm', {
       modal: true,
       Layout: "column",
       closeAction: 'hide',
-      items: [{
-        xtype: 'grid',
-        border: false,
-        sortableColumns: false,
-        autoScroll: true,
-        listeners: {
-          itemClick: {
-            fn: function (node, record) {
-              me.__selectData = record.data;
-              document.getElementById("action_info")
-                .innerHTML = record.data.action_info;
-            },
-            scope: me
-          }
-        },
-        columns: {
-          defaults: {
-            sortable: false,
-            menuDisabled: true,
-            draggable: false
-          },
-          items: [
-            {
-              text: '版本',
-              width: "10%",
-              dataIndex: "id",
-              renderer: function (value) {
-                var version = value.slice(0, 8);
-                var html = "<a href='#'>" + version + " </a>";
-                return html;
-              },
-              listeners: {
-                click: {
-                  fn: me.lookOldVersion,
-                  scope: me
-                }
-              }
-            },
-            {
-              text: '名称',
-              dataIndex: "name",
-              width: "10%"
-            },
-            {
-              text: '操作时间',
-              dataIndex: "action_time",
-              width: "25%"
-            },
-            {
-              text: '操作人',
-              dataIndex: "action_user_name",
-              width: "15%"
-            },
-            {
-              text: '操作描述',
-              dataIndex: "remarks",
-              width: "30%"
-            },
-            // {
-            //   text: '操作备注',
-            //   dataIndex: "action_info",
-            //   width: "22%"
-            // },
-            {
-              text: "预览",
-              width: "10%",
-              dataIndex: "type",
-              renderer: function (value) {
-                var html = "";
-                if (value == "file") {
-                  html = "<img src='' width='50%' height='50%' class='PSI-fid-2003'/>";
-                }
-                return html;
-              },
-              listeners: {
-                click: {
-                  fn: me.lookOldVersion,
-                  scope: me
-                }
-              }
-            }
-
-          ]
-        },
-        store: myStore,
-        bbar: ["->", {
-          id: "pagingToobar",
-          xtype: "pagingtoolbar",
-          border: 0,
-          store: myStore
-        }, "-", {
-          xtype: "displayfield",
-          value: "每页显示"
-        }, {
-          id: "comboCountPerPage",
-          xtype: "combobox",
-          editable: false,
-          width: 60,
-          store: Ext.create("Ext.data.ArrayStore", {
-            fields: ["text"],
-            data: [["5"], ["15"], ["50"], ["100"]]
-          }),
-          value: 15,
-          listeners: {
-            change: {
-              fn: function () {
-                myStore.pageSize = Ext.getCmp("comboCountPerPage").getValue();
-                myStore.currentPage = 1;
-                Ext.getCmp("pagingToobar").doRefresh();
-              },
-              scope: me
-            }
-          }
-        }, {
-          xtype: "displayfield",
-          value: "条记录"
-        }]
-      },
-        {
-          xtype: "panel",
-          width: "100%",
-          id: "action_panel",
-          height: 175,
-          html: "<textarea id='action_info' readonly style='border: none;width: 100%;height: 175px;'></textarea>"
-        }],
+      items: [wgrid, cpanel],
       buttons: [
         {
           text: "撤回到选中版本",
@@ -436,28 +399,6 @@ Ext.define('PSI.FileManager.MainForm', {
               return me.showInfo("请选择对应版本");
             }
             var data = me.__selectData;
-            if (data.type) {
-              return me.confirm("是否撤回[" + data.id.slice(0, 8) + "]版本", function () {
-                Ext.Ajax.request({
-                  url: me.URL("Home/FileManager/revokeFile"),
-                  params: {
-                    id: data.id,
-                    fileName: data.name
-                  },
-                  success: function (response) {
-                    var data = me.decodeJSON(response.responseText);
-                    console.log(response);
-                    if (data) {
-                      me.showInfo(data.msg, function () {
-                        me.freshFileGrid();
-                        me.__window.close();
-                      });
-                    }
-
-                  }
-                })
-              });
-            }
             me.confirm("是否回到[" + data.id.slice(0, 8) + "],该版本之后的所有操作将被撤销。", function () {
               Ext.Ajax.request({
                 url: me.URL("Home/FileManager/backVersion"),
@@ -477,10 +418,21 @@ Ext.define('PSI.FileManager.MainForm', {
         }
       ]
     });
+    // me.__window.on("beforeclose", function () {
+    //   // wgrid.close();
+    //   // cpanel.close();
+    //   myStore.reload();
+    // });
     me.__window.on("hide", function () {
       me.__selectData = "";
       document.getElementById("action_info")
         .innerHTML = "";
+      // me.__window.child("grid").getStore().proxy.extraParams = {
+      //   id: "",
+      //   page:1,
+      //   start:0,
+      //   limit:15
+      // };
     }, me);
 
     return me.__window;
@@ -588,7 +540,6 @@ Ext.define('PSI.FileManager.MainForm', {
       return me.showInfo("没有权限");
     }
     var data = me.getSelectNodeData();
-    console.log(data);
     if (data.fileSuffix != "dir" && data.Name != "../") {
       var form = Ext.create("PSI.FileManager.EditFileForm", {
         parentForm: me,
@@ -657,6 +608,23 @@ Ext.define('PSI.FileManager.MainForm', {
       return me.showInfo("没有权限");
     }
     var data = me.getSelectNodeData();
+    if (data.Name == "../") {
+      return me.showInfo("请选择要下载的文件或文件夹");
+    }
+    var arr = [data.id2];
+    me.ajax({
+      url: me.URL("Home/FileManager/downLoad"),
+      params: {
+        str: arr
+      },
+      success: function (response) {
+        var rsdata = me.decodeJSON(response.responseText);
+        if (!rsdata.success) {
+          return me.showInfo(rsdata.msg);
+        }
+        window.open(rsdata.url);
+      }
+    });
   },
 
   //删除文件
@@ -728,10 +696,11 @@ Ext.define('PSI.FileManager.MainForm', {
     if (me.getLookActionLog() == "0") {
       return me.showInfo("没有权限");
     }
-    me.getWindow().child("grid").getStore().proxy.extraParams = {
-      id: ""
-    };
+
     me.getWindow().show();
+    // me.getWindow().child("grid").getStore().proxy.extraParams = {
+    //   id: ""
+    // };
     Ext.getCmp("pagingToobar").doRefresh();
   },
 
@@ -790,38 +759,15 @@ Ext.define('PSI.FileManager.MainForm', {
     if (data.fileSuffix == "dir") {
       return me.showInfo("只能查看文件");
     }
-    me.getWindow().child("grid").getStore().proxy.extraParams = {
-      id: data.id
-    };
-    me.getWindow().show();
-    Ext.getCmp("pagingToobar").doRefresh();
-  },
-  //预览旧文件
-  lookOldVersion: function (node, el, index) {
-    var me = this;
-    if (node.getStore().getAt(index).data.type == "file") {
-      Ext.Ajax.request({
-        url: me.URL("Home/FileManager/convertFile"),
-        params: {
-          id: node.getStore().getAt(index).data.id
-        },
-        success: function (response) {
-          var rsdata = me.decodeJSON(response.responseText);
-          if (rsdata.success) {
-            var url;
-            if (rsdata.file_suffix == "pdf") {
-              url = me.URL("Public/pdfjs/web/viewer.html?file=" + me.URL("Home/FileManager/getFile/fileid/" + rsdata.id));
-            } else {
-              url = me.URL("Home/FileManager/getFile?fileid=" + rsdata.id);
-            }
-
-            window.open(url);
-          } else {
-            me.showInfo(rsdata.msg);
-          }
-        }
-      });
+    if (data.Name == "../") {
+      return me.showInfo("请选择文件");
     }
+    var __window = Ext.create("PSI.FileManager.FileActionLogForm", {
+      parentForm: me,
+      entity: data
+    });
+    __window.show();
+    Ext.getCmp("filePagingToobar").doRefresh();
   },
   //新窗口预览文件
   onNewWindowPreviewFile: function () {
@@ -867,6 +813,14 @@ Ext.define('PSI.FileManager.MainForm', {
       entity: data
     });
     return form.show();
+  },
+  onWndClose: function () {
+    var me = this;
+
+    Ext.get(window).un('beforeunload', me.onWindowBeforeUnload);
+  },
+  onWindowBeforeUnload: function (e) {
+    return (window.event.returnValue = e.returnValue = '确认离开当前页面？');
   }
 
 })

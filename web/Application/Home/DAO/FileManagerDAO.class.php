@@ -959,7 +959,108 @@ class FileManagerDAO extends PSIBaseExDAO
    * @param $params
    * @param $info
    */
-  public function editFile($params,$info){
+  public function editFile($params, $info)
+  {
+    $db = $this->db;
+    $rs["success"] = false;
+    $fmps = new FileManagerPermissionService();
+    $logService = new FileManagerlogService();
+    $file_info = $db->query("select * from t_file_info 
+            where id = '%s' and is_del = 0", $params["id"]);
+    if (!count($file_info)) {
+      $rs["msg"] = "找不到数据";
+      return $rs;
+    }
+    $pdata["file_id"] = $params["id"];
+    if (!$fmps->hasPermission($pdata, FIdConst::WJGL_EDIT_FILE)) {
+      $rs["msg"] = "没有权限";
+      return $rs;
+    }
+
+    $db->startTrans();
+    $new_id = $this->newId();
+    $old_version = $file_info[0]["file_version"];
+    $db->execute("update t_file_info set is_del = 1000 where id = '%s'", $params["id"]);
+
+    $log_data["action_type"] = "delete";
+    $log_data["file_type"] = "file";
+    $log_data["file_id"] = $params["id"];
+    $log_data["log_id"] = $params["log_id"];
+    $logService->addLogAction($log_data);
+
+    $insert_sql = "INSERT INTO 
+            t_file_info(id, file_name, file_path, file_size, file_suffix, parent_dir_id,
+            file_version, file_fid, action_user_id, action_time, is_del, action_info) 
+            VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s')";
+
+    if (empty($params["path"])) {//没有上传新的文件
+
+      $file_info[0]["id"] = $new_id;
+      $file_info[0]["file_version"] = $this->newId();
+      $file_info[0]["action_time"] = Date("Y-m-d H:i:s");
+      $file_info[0]["action_user_id"] = $params["login_user_id"];
+      $file_info[0]["action_info"] = $params["action_info"];
+      $rs_info = $db->execute($insert_sql, $file_info[0]);
+      if (!$rs_info) {
+        $db->rollback();
+        $logService->deleteLog($params["log_id"]);
+        $rs["msg"] = "数据插入失败";
+        return $rs;
+      }
+
+      copy($file_info[0]["file_path"] . $old_version . "." . $file_info[0]["file_suffix"],
+        $file_info[0]["file_path"] . $file_info[0]["file_version"] . "." . $file_info[0]["file_suffix"]);
+
+    } else {//上传了新的文件
+
+      $file_name = substr($info["file"]["name"], 0,
+        (-1 - strlen($info["file"]["ext"])));
+      //验证名称
+      $is_container = $db->query("select * from t_file_info
+                        where parent_dir_id = '%s' AND is_del = 0 AND file_name in ('%s') AND file_suffix in ('%s')",
+        $file_info[0]["parent_dir_id"], $file_name, $info["file"]["ext"]);
+      if(count($is_container)){
+        $db->rollback();
+        $logService->deleteLog($params["log_id"]);
+        unlink("Uploads/" . $info["file"]["savename"]);
+        $rs["msg"] = "上传的文件与其他文件发生冲突";
+        return $rs;
+      }
+
+      $file_info[0]["id"] = $new_id;
+      $file_info[0]["file_name"] = $file_name;
+      $file_info[0]["file_size"] = $info["file"]["size"];
+      $file_info[0]["file_suffix"] = $info["file"]["ext"];
+      $file_info[0]["file_version"] = $this->newId();
+      $file_info[0]["action_time"] = Date("Y-m-d H:i:s");
+      $file_info[0]["action_user_id"] = $params["login_user_id"];
+      $file_info[0]["action_info"] = $params["action_info"];
+
+      $rs_info = $db->execute($insert_sql, $file_info[0]);
+      if (!$rs_info) {
+        $db->rollback();
+        $logService->deleteLog($params["log_id"]);
+        $rs["msg"] = "数据插入失败";
+        return $rs;
+      }
+
+      copy("Uploads/" . $info["file"]["savename"],
+        $file_info[0]["file_path"] . $file_info[0]["file_version"] . "." . $file_info[0]["file_suffix"]);
+      unlink("Uploads/" . $info["file"]["savename"]);
+
+      $convert_data["id"] = $file_info[0]["id"];
+      $this->convertFile($convert_data);
+    }
+
+    $log_data["action_type"] = "insert";
+    $log_data["file_id"] = $new_id;
+    $logService->addLogAction($log_data);
+
+    $rs["success"] = true;
+    $rs["msg"] = "修改成功";
+    $db->commit();
+
+    return $rs;
 
   }
 

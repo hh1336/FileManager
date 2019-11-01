@@ -142,8 +142,10 @@ class FileManagerlogDAO extends PSIBaseExDAO
   private function backAction($params, &$db)
   {
     $action_sql = "update %s set is_del = ";
+    $move_mark = "";
     if ($params["action_type"] == "insert") {//撤回插入操作
       $action_sql .= "1000";
+      $move_mark = 1;
     } else {
       $action_sql .= "0,action_time = '" . Date("Y-m-d H:i:s") . "' ";
     }
@@ -154,6 +156,26 @@ class FileManagerlogDAO extends PSIBaseExDAO
     } else {
       $db->execute($action_sql, "t_dir_info", $params["file_id"]);
     }
+
+    if ($move_mark == 1) {
+      $info = "";
+      if ($params["file_type"] == "file") {
+        $info = $db->query("select * from t_file_info where id = '%s'", $params['file_id']);
+      }
+      if ($info) {
+        $db->execute("delete from t_file_info where id = '%s'", $params["file_id"]);
+        $sql = "insert into t_useless_data
+            (id, file_name, file_path, file_size, file_suffix, parent_dir_id, file_version,
+            file_fid, action_user_id, action_time, is_del, action_info) 
+            values ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s')";
+
+        $rs_info = $db->execute($sql,$info[0]);
+        if(!$rs_info){
+          $db->rollback();
+        }
+      }
+    }
+
   }
 
   public function editLogRemarksById($id, $remarks)
@@ -203,7 +225,7 @@ class FileManagerlogDAO extends PSIBaseExDAO
       } else {
         copy($old_file_path . $old_file_version . "." . $old_file_info[0]["file_suffix"],
           $now_file_info[0]["file_path"] . $old_file_info[0]["file_version"] .
-              "." . $old_file_info[0]["file_suffix"]);
+          "." . $old_file_info[0]["file_suffix"]);
         $data["action_type"] = "insert";
         $data["file_type"] = "file";
         $data["file_id"] = $old_file_info[0]["id"];
