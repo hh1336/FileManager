@@ -453,8 +453,8 @@ Ext.define('PSI.FileManager.MainForm', {
         title: me.formatGridHeaderTitle("文件预览")
       },
       layout: "column",
-      //html: "<iframe id='mainframe' src='' frameborder='0' width='100%' height='100%'></iframe>"
-      html: "<embed id='mainframe' src='' width='100%' height='100%' type='application/pdf'>"
+      html: "<iframe id='mainframe' src='' frameborder='0' width='100%' height='100%'></iframe>"
+      //html: "<embed id='mainframe' src='' width='100%' height='100%' type='application/pdf'>"
     });
     return me.__filePanel;
   },
