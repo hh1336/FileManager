@@ -56,24 +56,24 @@ class FileManagerlogDAO extends PSIBaseExDAO
       $is_dir = $db->query("select * from t_dir where id = '%s'", $params["id"]);
       $data = [];
       if (!count($is_dir)) {//查看文件历史
-        $sql = "SELECT	fi.id,concat(fi.file_name,'.',fi.file_suffix) as name,
+        $sql = "select	fi.id,concat(fi.file_name,'.',fi.file_suffix) as name,
 	      fi.action_time,	fi.action_user_id,	fi.action_info,	u.name as action_user_name,	'file' as type, fi.is_del
-        FROM	t_file_info AS fi 
-        LEFT JOIN t_user as u on fi.action_user_id = u.id
-        WHERE	fi.file_fid = '%s' 
-        ORDER BY	fi.is_del,fi.action_time DESC
-        LIMIT %d,%d";
+        from	t_file_info as fi 
+        left join t_user as u on fi.action_user_id = u.id
+        where	fi.file_fid = '%s' 
+        order by	fi.is_del,fi.action_time desc
+        limit %d,%d";
         $data = $db->query($sql, $params["id"], $params["start"], $params["limit"]);
         $rs["totalCount"] = $db->query("select count(*) from t_file_info 
         where file_fid = '%s'", $params["id"])[0]["count(*)"];
       } else {
-        $sql = "SELECT	di.id,di.dir_name as name,	di.action_time,	di.action_user_id,
+        $sql = "select	di.id,di.dir_name as name,	di.action_time,	di.action_user_id,
 	      di.action_info,	u.name as action_user_name,'dir' as type, di.is_del
-        FROM	t_dir_info AS di 
-        LEFT JOIN t_user as u on di.action_user_id = u.id
-        WHERE	di.dir_fid = '%s' 
-        ORDER BY	di.is_del,di.action_time DESC
-        LIMIT %d,%d";
+        from	t_dir_info as di 
+        left join t_user as u on di.action_user_id = u.id
+        where	di.dir_fid = '%s' 
+        order by	di.is_del,di.action_time desc
+        limit %d,%d";
         $data = $db->query($sql, $params["id"], $params["start"], $params["limit"]);
         $rs["totalCount"] = count($is_dir);
       }
@@ -85,12 +85,12 @@ class FileManagerlogDAO extends PSIBaseExDAO
     }
 
 
-    $data = $db->query("SELECT	l.id,	l.action_user_id,	u.name as action_user_name,
+    $data = $db->query("select	l.id,	l.action_user_id,	u.name as action_user_name,
 	          l.action_time,	l.action_info,	l.remarks
-            FROM	t_log AS l
-	          LEFT JOIN t_user AS u ON l.action_user_id = u.id 
-            WHERE	is_del = 0	ORDER BY l.action_time DESC
-            LIMIT %d,%d", $params["start"], $params["limit"]);
+            from	t_log as l
+	          left join t_user as u on l.action_user_id = u.id 
+            where	is_del = 0	order by l.action_time desc
+            limit %d,%d", $params["start"], $params["limit"]);
     foreach ($data as $i => $v) {
       $data[$i]["action_time"] = date("Y-m-d H:i:s", strtotime($data[$i]["action_time"]));
     }
@@ -169,8 +169,8 @@ class FileManagerlogDAO extends PSIBaseExDAO
             file_fid, action_user_id, action_time, is_del, action_info) 
             values ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s')";
 
-        $rs_info = $db->execute($sql,$info[0]);
-        if(!$rs_info){
+        $rs_info = $db->execute($sql, $info[0]);
+        if (!$rs_info) {
           $db->rollback();
         }
       }
@@ -189,6 +189,18 @@ class FileManagerlogDAO extends PSIBaseExDAO
     $db = $this->db;
     $rs['success'] = false;
     $old_file_info = $db->query("select * from t_file_info where id = '%s' and is_del = 1000", $params['id']);
+
+    //验证目录是否存在相同文件
+    $is_container = $db->query("select * from t_file_info
+        where parent_dir_id = '%s' and is_del = 0 and file_name in ('%s') and file_suffix in ('%s')",
+      $old_file_info[0]["parent_dir_id"], $old_file_info[0]["file_name"], $old_file_info[0]["file_suffix"]);
+    if (count($is_container)) {
+      $this->deleteLog($params["log_id"]);
+      $rs["msg"] = "当前目录存在相同文件[" . $old_file_info[0]["file_name"] . "]，无法撤回，";
+      return $rs;
+    }
+
+
     if (count($old_file_info)) {
       $now_file_info = $db->query("select * from t_file_info 
       where file_fid = '%s' and is_del = 0", $old_file_info[0]['file_fid']);
@@ -203,10 +215,10 @@ class FileManagerlogDAO extends PSIBaseExDAO
       $this->addLogAction($data);
 
 
-      $insert_sql = "INSERT INTO t_file_info 
+      $insert_sql = "insert into t_file_info 
         (id, file_name, file_path, file_size, file_suffix, parent_dir_id, file_version,
         file_fid,action_user_id, action_time, is_del, action_info )
-        VALUES	( '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s' )";
+        values	( '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s' )";
 
       $old_file_path = $old_file_info[0]["file_path"];
       $old_file_version = $old_file_info[0]["file_version"];
@@ -214,7 +226,7 @@ class FileManagerlogDAO extends PSIBaseExDAO
       $old_file_info[0]["file_version"] = $this->newId();
       $old_file_info[0]["action_time"] = Date("Y-m-d H:i:s");
       $old_file_info[0]["is_del"] = 0;
-      $old_file_info[0]["parent_dir_id"] = $now_file_info[0]["parent_dir_id"];
+      //$old_file_info[0]["parent_dir_id"] = $now_file_info[0]["parent_dir_id"];
       $old_file_info[0]["file_path"] = $now_file_info[0]["file_path"];
 
       $info = $db->execute($insert_sql, $old_file_info[0]);

@@ -69,7 +69,22 @@ Ext.define('PSI.FileManager.MainForm', {
           scope: me
         }
       ],
-      items: [{
+      items: [
+        {
+          id: "panelQueryCmp",
+          region: "north",
+          border: 0,
+          height: 35,
+          header: false,
+          collapsible: true,
+          collapseMode: "mini",
+          layout: {
+            type: "table",
+            columns: 4
+          },
+          items: me.getQueryCmp()
+        },
+        {
         id: "panelFileManager",
         xtype: "panel",
         region: "west",
@@ -93,6 +108,66 @@ Ext.define('PSI.FileManager.MainForm', {
     me.FileTree = me.getFileGrid();
     me.FilePanel = me.getFanel();
   },
+
+  getQueryCmp: function () {
+    var me = this;
+    return [{
+      id: "editQueryName",
+      labelWidth: 60,
+      labelAlign: "right",
+      labelSeparator: "",
+      fieldLabel: "名称",
+      margin: "5, 0, 0, 0",
+      xtype: "textfield"
+    }, {
+      id: "editQueryType",
+      xtype: "combo",
+      queryMode: "local",
+      editable: false,
+      valueField: "id",
+      labelWidth: 60,
+      labelAlign: "right",
+      labelSeparator: "",
+      fieldLabel: "查询类型",
+      margin: "5, 0, 0, 0",
+      store: Ext.create("Ext.data.ArrayStore", {
+        fields: ["id", "text"],
+        data: [[1, "文件"], [0, "文件夹"]]
+      }),
+      value: 1
+    }, {
+      xtype: "container",
+      items: [{
+        xtype: "button",
+        text: "查询",
+        width: 100,
+        height: 26,
+        margin: "5, 0, 0, 20",
+        handler: me.onQuery,
+        scope: me
+      }, {
+        xtype: "button",
+        text: "清空查询条件",
+        width: 100,
+        height: 26,
+        margin: "5, 0, 0, 5",
+        handler: me.onClearQuery,
+        scope: me
+      }, {
+        xtype: "button",
+        text: "隐藏查询条件栏",
+        width: 130,
+        height: 26,
+        iconCls: "PSI-button-hide",
+        margin: "5 0 0 10",
+        handler: function () {
+          Ext.getCmp("panelQueryCmp").collapse();
+        },
+        scope: me
+      }]
+    }];
+  },
+
   getFileGrid: function () {
     var me = this;
 
@@ -458,6 +533,9 @@ Ext.define('PSI.FileManager.MainForm', {
     });
     return me.__filePanel;
   },
+
+
+
   //提取当前选中节点数据，并设置操作类型
   getSelectNodeData: function (action) {
     var me = this;
@@ -501,8 +579,7 @@ Ext.define('PSI.FileManager.MainForm', {
       entity: data
     });
     form.show();
-  }
-  ,
+  },
   //删除文件夹
   onDeleteDir: function () {
     var me = this;
@@ -531,8 +608,7 @@ Ext.define('PSI.FileManager.MainForm', {
         }
       });
     });
-  }
-  ,
+  },
   //编辑文件
   onEditFile: function () {
     var me = this;
@@ -626,7 +702,6 @@ Ext.define('PSI.FileManager.MainForm', {
       }
     });
   },
-
   //删除文件
   onDeleteFile: function () {
     var me = this;
@@ -656,8 +731,7 @@ Ext.define('PSI.FileManager.MainForm', {
       });
     });
 
-  }
-  ,
+  },
   //预览文件
   onPreviewFile: function (node, record, item) {
     var me = this;
@@ -678,6 +752,7 @@ Ext.define('PSI.FileManager.MainForm', {
           var rsdata = me.decodeJSON(response.responseText);
           if (rsdata.success) {
             var dom = Ext.get("mainframe");
+            dom.set({"src":""});
             if (!(rsdata.file_suffix == "pdf")) {
               dom.set({"src": me.URL("Home/FileManager/getFile?fileid=" + rsdata.id)});
               return true;
@@ -703,13 +778,11 @@ Ext.define('PSI.FileManager.MainForm', {
     // };
     Ext.getCmp("pagingToobar").doRefresh();
   },
-
   //刷新树
   freshFileGrid: function () {
     var me = this;
     me.getFileGrid().getStore().reload();
-  }
-  ,
+  },
   onfileStoryLoad: function () {
     var me = this;
     var tree = me.getFileGrid();
@@ -816,11 +889,30 @@ Ext.define('PSI.FileManager.MainForm', {
   },
   onWndClose: function () {
     var me = this;
-
     Ext.get(window).un('beforeunload', me.onWindowBeforeUnload);
   },
-  onWindowBeforeUnload: function (e) {
-    return (window.event.returnValue = e.returnValue = '确认离开当前页面？');
+  //清空查询条件
+  onClearQuery:function () {
+    var me = this;
+
+    Ext.getCmp("editQueryName").setValue(null);
+    Ext.getCmp("editQueryType").setValue(1);
+  },
+  //创建查询窗口
+  onQuery:function () {
+    var me = this;
+
+    var name = Ext.getCmp("editQueryName").getValue();
+    var type = Ext.getCmp("editQueryType").getValue();
+
+    var window = Ext.create("PSI.FileManager.FileQueryForm",{
+      parentForm: me,
+      entity: {
+        name:name,
+        type:type
+      }
+    });
+    window.show();
   }
 
 })

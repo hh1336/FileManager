@@ -88,14 +88,14 @@ class FileManagerPermissionDAO extends PSIBaseExDAO
       $file_fid = $db->query("select * from t_dir_info where id = '%s'", $params['file_id'])[0]['dir_fid'];
     }
 
-    $sql = "SELECT	count(*) FROM
-	          t_file_permission AS fp
-	          LEFT JOIN t_role_user AS ru ON ru.role_id = fp.role_id
-	          LEFT JOIN t_permission AS p ON fp.permission_fid = p.fid 
-	          WHERE
+    $sql = "select	count(*) from
+	          t_file_permission as fp
+	          left join t_role_user as ru on ru.role_id = fp.role_id
+	          left join t_permission as p on fp.permission_fid = p.fid 
+	          where
 	          ru.user_id = '%s' 
-	          AND fp.file_id = '%s' 
-	          AND p.fid = '%s' ";
+	          and fp.file_id = '%s' 
+	          and p.fid = '%s' ";
     $counts = $db->query($sql, $params["user_id"], $file_fid, $params["fid"]);
 
     return $counts["0"]["count(*)"] > 0;

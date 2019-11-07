@@ -51,6 +51,24 @@ class FileManagerController extends PSIBaseController
     }
   }
 
+  public function queryFiles()
+  {
+    if (IS_POST) {
+      $params = [
+        "name" => I("post.name"),
+        "type" => I("post.type")
+      ];
+      $fms = new FileManagerService();
+      $this->ajaxReturn($fms->queryFiels($params));
+    }
+  }
+
+  public function queryTree()
+  {
+    $fms = new FileManagerService();
+    $this->ajaxReturn($fms->queryTree());
+  }
+
   public function mkDirOrEdit()
   {
     if (IS_POST) {
@@ -185,7 +203,7 @@ class FileManagerController extends PSIBaseController
 
       $suffixService = new SuffixConfigService();
       $upType = $suffixService->getSuffixs();
-      if(!empty($params["path"])){
+      if (!empty($params["path"])) {
         $upload = new \Think\Upload();// 实例化上传类
         $upload->maxSize = 20971520;// 设置附件上传大小 5M
         $upload->exts = $upType;// 设置附件上传类型
@@ -198,7 +216,7 @@ class FileManagerController extends PSIBaseController
       }
 
       $fms = new FileManagerService();
-      $rs = $fms->editFile($params,$info);
+      $rs = $fms->editFile($params, $info);
       $this->ajaxReturn($rs);
     }
   }

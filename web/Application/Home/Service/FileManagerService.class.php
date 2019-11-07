@@ -9,7 +9,6 @@ class FileManagerService extends PSIBaseExService
 {
   public function loadTree($params)
   {
-
     if ($this->isNotOnline()) {
       return $this->emptyResult();
     }
@@ -19,6 +18,26 @@ class FileManagerService extends PSIBaseExService
     //$tree_data = $dao->loadTree($params);
     $tree_data = $dao->loadDir($params);
     return $tree_data;
+  }
+
+  public function queryTree(){
+    if ($this->isNotOnline()) {
+      return $this->emptyResult();
+    }
+    $dao = new FileManagerDAO($this->db());
+    $tree_data = $dao->loadTree();
+    return $tree_data;
+  }
+
+  public function queryFiels($params)
+  {
+    if ($this->isNotOnline()) {
+      return $this->emptyResult();
+    }
+    $us = new UserService();
+    $params["login_user_id"] = $us->getLoginUserId();
+    $dao = new FileManagerDAO($this->db());
+    return $dao->queryFiles($params);
   }
 
   public function loadLog($params)
@@ -165,11 +184,11 @@ class FileManagerService extends PSIBaseExService
       return $rs;
     }
 
-    $params["log_info"] = "编辑文件[" .$params["file_name"]. "]";
+    $params["log_info"] = "编辑文件[" . $params["file_name"] . "]";
     $logService = new FileManagerlogService();
     $logService->log($params);
     $dao = new FileManagerDAO($this->db());
-    return $dao->editFile($params,$info);
+    return $dao->editFile($params, $info);
   }
 
   public function setFileSize($id, $size)

@@ -21,18 +21,18 @@ class FileManagerDAO extends PSIBaseExDAO
   public function loadDir($params)
   {
     $db = $this->db;
-    $sql = "SELECT	d.id,	di.id AS id2,	di.dir_name,	di.dir_path, di.dir_version,
+    $sql = "select	d.id,	di.id as id2,	di.dir_name,	di.dir_path, di.dir_version,
                 di.action_user_id,	di.action_time,	di.parent_dir_id ,	di.action_info, u.name as user_name 
-                FROM	t_dir d	
-                LEFT JOIN t_dir_info di ON d.id = di.dir_fid LEFT JOIN t_user u on di.action_user_id = u.id
-                WHERE	di.parent_dir_id = '%s'	AND di.is_del = 0
+                from	t_dir d	
+                left join t_dir_info di on d.id = di.dir_fid left join t_user u on di.action_user_id = u.id
+                where	di.parent_dir_id = '%s'	and di.is_del = 0
                 order by di.dir_name";
 
-    $rootsql = "SELECT	d.id,	di.id AS id2,	di.dir_name,	di.dir_path, di.dir_version,
+    $rootsql = "select	d.id,	di.id as id2,	di.dir_name,	di.dir_path, di.dir_version,
                 di.action_user_id,	di.action_time,	di.parent_dir_id ,	di.action_info, u.name as user_name 
-                FROM	t_dir d	
-                LEFT JOIN t_dir_info di ON d.id = di.dir_fid LEFT JOIN t_user u on di.action_user_id = u.id
-                WHERE	di.parent_dir_id is null 	AND di.is_del = 0
+                from	t_dir d	
+                left join t_dir_info di on d.id = di.dir_fid left join t_user u on di.action_user_id = u.id
+                where	di.parent_dir_id is null 	and di.is_del = 0
                 order by di.dir_name";
     $root = $db->query($rootsql);
 
@@ -43,16 +43,16 @@ class FileManagerDAO extends PSIBaseExDAO
       $params["is_root"] = true;
     }
     //找当前目录
-    $grand_dir = $db->query("select id,parent_dir_id from t_dir_info where id = '%s' AND is_del = 0",
+    $grand_dir = $db->query("select id,parent_dir_id from t_dir_info where id = '%s' and is_del = 0",
       $params["parent_dir_id"]);
     //找子目录
     $dirlist = $db->query($sql, $params["parent_dir_id"]);
-    $file_sql = "SELECT	f.id,	fi.id AS id2,	fi.file_name,	fi.file_path,	fi.file_size,	fi.file_suffix,	fi.file_version,
-	  fi.action_user_id,	fi.action_time,	fi.parent_dir_id,	fi.action_info,	u.NAME AS user_name 
-    FROM
-	  t_file f LEFT JOIN t_file_info fi ON f.id = fi.file_fid	LEFT JOIN t_user u ON fi.action_user_id = u.id 
-    WHERE	fi.parent_dir_id = '%s'	AND fi.is_del = 0 
-    ORDER BY	fi.file_name";
+    $file_sql = "select	f.id,	fi.id as id2,	fi.file_name,	fi.file_path,	fi.file_size,	fi.file_suffix,	fi.file_version,
+	  fi.action_user_id,	fi.action_time,	fi.parent_dir_id,	fi.action_info,	u.name as user_name 
+    from
+	  t_file f left join t_file_info fi on f.id = fi.file_fid	left join t_user u on fi.action_user_id = u.id 
+    where	fi.parent_dir_id = '%s'	and fi.is_del = 0 
+    order by	fi.file_name";
     $filelist = $db->query($file_sql, $params["parent_dir_id"]);
     $datalist = array_merge($dirlist, $filelist);
 
@@ -101,22 +101,93 @@ class FileManagerDAO extends PSIBaseExDAO
   }
 
   /**
+   * 筛选文件或文件夹
+   * @param $params
+   */
+  public function queryFiles($params)
+  {
+    $db = $this->db;
+
+    $sql = "";
+    if ($params["type"]) {
+      $sql = "select info.*,tu.name as user_name from
+  ((select * from t_file_info where is_del = 0 and file_name like ('%s')) as info,
+	(select	fp.* from	t_file_permission as fp
+	left join t_role_user as ru on ru.role_id = fp.role_id
+	left join t_permission as p on fp.permission_fid = p.fid 
+	where	ru.user_id = '%s' 	and p.fid = '%s') as tfp )
+	left join t_dir_info as tdi on info.parent_dir_id = tdi.id 
+	left join t_user as tu on info.action_user_id = tu.id
+  where	tfp.file_id = tdi.dir_fid";
+    } else {
+      $sql = "select info.*,tu.name as user_name from
+	((select * from t_dir_info where is_del = 0 and dir_name like ('%s')) as info,
+	(select	fp.* from	t_file_permission as fp
+	left join t_role_user as ru on ru.role_id = fp.role_id
+	left join t_permission as p on fp.permission_fid = p.fid 
+	where	ru.user_id = '%s' and p.fid = '%s' ) as tfp )
+	left join t_user as tu on info.action_user_id = tu.id
+  where	tfp.file_id = info.dir_fid";
+    }
+    $query_data = $db->query($sql,
+      "%" . $params["name"] . "%", $params["login_user_id"],
+      FIdConst::WJGL_INTO_DIR);
+    $rs_data = [];
+    foreach ($query_data as $i => $v) {
+      $rs_data[$i]["id"] = $v["dir_fid"] ?? $v["file_fid"];
+      $rs_data[$i]["id2"] = $v["id"];
+      $rs_data[$i]["Name"] = $v["dir_name"] ?? ($v["file_name"] . "." . $v["file_suffix"]);
+      $rs_data[$i]["Version"] = $v["dir_version"] ?? $v["file_version"];
+      $rs_data[$i]["actionUserId"] = $v["action_user_id"];
+      $rs_data[$i]["actionTime"] = date("Y-m-d H:i:s", strtotime($v["action_time"]));
+      $rs_data[$i]["userName"] = $v["user_name"];
+      $rs_data[$i]["parentDirId"] = $v["parent_dir_id"];
+      $rs_data[$i]["actionInfo"] = $v["action_info"];
+      //$rs_data[$i]["path"] = isset($v["dir_path"]) ?
+      $arr = explode("\\", $v["dir_path"] ?? $v["file_path"]);
+      $path = $this->getShowPath($arr,$db);
+      $rs_data[$i]['path'] = $path;
+
+      //加载文件
+      $rs_data[$i]["fileSize"] = $v["file_size"] ?? "";
+      $rs_data[$i]["fileSuffix"] = !isset($v["dir_name"]) ? $v["file_suffix"] : "dir";
+      $rs_data[$i]['children'] = array();
+      $rs_data[$i]['leaf'] = true;
+      $rs_data[$i]['expanded'] = true;//不展开
+      $rs_data[$i]["iconCls"] = isset($v["dir_name"]) ? $this->getCss("dir") : $this->getCss($v["file_suffix"]);
+      $rs_data[$i]["checked"] = false;
+    }
+    return $rs_data;
+
+  }
+
+  /**
    * 一次性加载文件呈树状
    * @param $params
    * @return mixed
    */
-  public function loadTree($params)
+  public function loadTree($parentId = null)
   {
     $db = $this->db;
 
-    $sql = "SELECT	d.id,	di.id AS id2,	di.dir_name,	di.dir_path, di.dir_version,
+    $sql = "select	di.dir_fid as id,	di.id as id2,	di.dir_name,	di.dir_path, di.dir_version,
                 di.action_user_id,	di.action_time,	di.parent_dir_id ,	di.action_info, u.name as user_name
-                FROM	t_dir d
-                LEFT JOIN t_dir_info di ON d.id = di.dir_fid LEFT JOIN t_user u on di.action_user_id = u.id
-                WHERE	di.parent_dir_id is null 	AND di.is_del = 0
-                order by di.dir_name";
+                from	t_dir_info di
+                left join t_user u on di.action_user_id = u.id";
+    if(!$parentId){
+      $sql .= " where	di.parent_dir_id is null 	and di.is_del = 0";
+    }else{
+      $sql .= " where	di.parent_dir_id = '%s'	and di.is_del = 0";
+    }
+    $sql .= " order by di.dir_name";
 
-    $fileslist1 = $db->query($sql);
+    $fileslist1 = [];
+    if(!$parentId){
+      $fileslist1 = $db->query($sql);
+    }else{
+      $fileslist1 = $db->query($sql, $parentId);
+    }
+
     $result = [];
     foreach ($fileslist1 as $i => $list1) {
       $result[$i]["id"] = $list1["id"];
@@ -129,63 +200,18 @@ class FileManagerDAO extends PSIBaseExDAO
       $result[$i]["parentDirID"] = $list1["parent_dir_id"];
       $result[$i]["actionInfo"] = $list1["action_info"];
 
-      $fileslist2 = $this->allFileInternal($list1["id2"], $db);
+      $fileslist2 = $this->loadTree($list1["id2"]);
       $result[$i]['children'] = $fileslist2;
       $result[$i]['leaf'] = count($fileslist2) == 0;
-      $result[$i]['expanded'] = true;
+      $result[$i]['expanded'] = false;
       $result[$i]["iconCls"] = "PSI-FileManager-Dir";
     }
-    return $result[0];
-  }
 
-  /**
-   * 加载子节点
-   * @param $parentId
-   * @param $db
-   * @return array
-   */
-  private function allFileInternal($parentId, $db)
-  {
-    $result = [];
-    $sql = "SELECT	d.id,	di.id AS id2,	di.dir_name,	di.dir_path, di.dir_version,	di.action_user_id,
-                di.action_time,	di.parent_dir_id ,	di.action_info, u.name as user_name
-                FROM	t_dir d
-                LEFT JOIN t_dir_info di ON d.id = di.dir_fid LEFT JOIN t_user u on di.action_user_id = u.id
-                WHERE	di.parent_dir_id = '%s'	AND di.is_del = 0
-                order by di.dir_name";
-
-    $file_sql = "SELECT	f.id,	fi.id AS id2,	fi.file_name,	fi.file_path,	fi.file_size,	fi.file_suffix,	fi.file_version,
-                fi.action_user_id,	fi.action_time,	fi.parent_dir_id,	fi.action_info,	u.NAME AS user_name
-                FROM
-                t_file f LEFT JOIN t_file_info fi ON f.id = fi.file_fid	LEFT JOIN t_user u ON fi.action_user_id = u.id
-                WHERE	fi.parent_dir_id = '%s'	AND fi.is_del = 0
-                ORDER BY	fi.file_name";
-    $data = array_merge($db->query($sql, $parentId), $db->query($file_sql, $parentId));
-    foreach ($data as $i => $v) {
-      //公共信息
-      $result[$i]["id"] = $v["id"];
-      $result[$i]["id2"] = $v["id2"];
-      $result[$i]["actionUserID"] = $v["action_user_id"];
-      $result[$i]["actionTime"] = date("Y-m-d H:i:s", strtotime($v["action_time"]));
-      $result[$i]["parentDirID"] = $v["parent_dir_id"];
-      $result[$i]["userName"] = $v["user_name"];
-      $result[$i]["Version"] = $v["dir_version"] ?? $v["file_version"];
-      $result[$i]["Name"] = $v["dir_name"] ?? ($v["file_name"] . "." . $v["file_suffix"]);
-      $result[$i]["actionInfo"] = $v["action_info"];
-      //加载文件
-      $result[$i]["fileSize"] = $v["file_size"] ?? "";
-      $result[$i]["fileSuffix"] = !isset($v["dir_name"]) ? $v["file_suffix"] : "dir";
-
-      $data2 = empty($v["file_suffix"]) ? $this->allFileInternal($v["id2"], $db) : array();
-
-      $result[$i]['children'] = $data2;
-      $result[$i]['leaf'] = count($data2) == 0;
-      $result[$i]['expanded'] = false;//不展开
-      $result[$i]["iconCls"] = isset($v["dir_name"]) ? $this->getCss("dir") : $this->getCss($v["file_suffix"]);
-      $result[$i]["checked"] = false;
-
+    if(!$parentId){
+      return $result[0];
+    }else{
+      return $result;
     }
-    return $result;
   }
 
   /**
@@ -245,9 +271,9 @@ class FileManagerDAO extends PSIBaseExDAO
         $logService->addLogAction($logData);
 
         //构造t_dir_info数据
-        $insert_dir_sql = "INSERT INTO t_dir_info ( id, dir_name, dir_path, dir_version, dir_fid,
+        $insert_dir_sql = "insert into t_dir_info ( id, dir_name, dir_path, dir_version, dir_fid,
                 action_user_id, action_time, is_del, parent_dir_id, action_info )
-                VALUES	('%s','%s','%s','%s','%s','%s','%s','%d','%s','%s');";
+                values	('%s','%s','%s','%s','%s','%s','%s','%d','%s','%s');";
         $v["id"] = $this->newId();
         $v["dir_version"] = $this->newId();
         //$v["dirfkid"] = $new_dir_id;
@@ -290,10 +316,10 @@ class FileManagerDAO extends PSIBaseExDAO
         //构建数据
         $old_path = $v['file_path'];
         $old_version = $v["file_version"];
-        $insert_file_sql = "INSERT INTO t_file_info (
+        $insert_file_sql = "insert into t_file_info (
         id, file_name, file_path,  file_size, file_suffix, parent_dir_id,
          file_version, file_fid, action_user_id, action_time, is_del, action_info )
-        VALUES	('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%d','%s');";
+        values	('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%d','%s');";
         $v["id"] = $this->newId();
         $v["parent_dir_id"] = $newID;
         $v["file_version"] = $this->newId();
@@ -381,9 +407,9 @@ class FileManagerDAO extends PSIBaseExDAO
         $logService->addLogAction($logData);
 
         //构造t_dir_info数据
-        $insert_dir_sql = "INSERT INTO t_dir_info ( id, dir_name, dir_path,  dir_version, dir_fid,
+        $insert_dir_sql = "insert into t_dir_info ( id, dir_name, dir_path,  dir_version, dir_fid,
                   action_user_id, action_time, is_del, parent_dir_id, action_info )
-                  VALUES	('%s','%s','%s','%s','%s','%s','%s','%d','%s','%s');";
+                  values	('%s','%s','%s','%s','%s','%s','%s','%d','%s','%s');";
 
         $dir_info[0]["id"] = $this->newId();
         $dir_info[0]["dir_name"] = $params["dir_name"];
@@ -395,7 +421,7 @@ class FileManagerDAO extends PSIBaseExDAO
 
         //验证该路径下是否存在相同文件夹
         $is_dirName = $db->query("select count(*) from t_dir_info
-            where parent_dir_id = '%s' AND is_del = 0 AND dir_name in ('%s')",
+            where parent_dir_id = '%s' and is_del = 0 and dir_name in ('%s')",
           $dir_info[0]["parent_dir_id"], $dir_info[0]["dir_name"]);
         if ($is_dirName[0]["count(*)"]) {
           $db->rollback();
@@ -458,7 +484,7 @@ class FileManagerDAO extends PSIBaseExDAO
                     is_del,parent_dir_id,action_info) 
                     values ('%s','%s','%s','%s','%s','%s','%s','%d','%s','%s')";
         //判断是否存在上级目录，不存在就设置root为目录
-        $is_parent_id = $db->query("select count(*) from t_dir_info where id = '%s' AND is_del = 0",
+        $is_parent_id = $db->query("select count(*) from t_dir_info where id = '%s' and is_del = 0",
           $params['parent_dir_id']);
         if (!$params['parent_dir_id'] || !$is_parent_id[0]["count(*)"]) {
           $rootDir = $db->query('select id from t_dir_info where parent_dir_id is null');
@@ -480,7 +506,7 @@ class FileManagerDAO extends PSIBaseExDAO
 
         //验证该路径下是否存在相同文件夹
         $is_dirName = $db->query("select count(*) from t_dir_info
-        where parent_dir_id = '%s' AND is_del = 0 AND dir_name in ('%s')", $data["parent_dir_id"], $data["dir_name"]);
+        where parent_dir_id = '%s' and is_del = 0 and dir_name in ('%s')", $data["parent_dir_id"], $data["dir_name"]);
         if ($is_dirName[0]["count(*)"]) {
           $db->rollback();
           $db->execute("delete from t_dir where id = '%s'", $dirId);
@@ -585,7 +611,7 @@ class FileManagerDAO extends PSIBaseExDAO
 
       //验证目录是否存在相同文件
       $is_container = $db->query("select * from t_file_info
-        where parent_dir_id = '%s' AND is_del = 0 AND file_name in ('%s') AND file_suffix in ('%s')",
+        where parent_dir_id = '%s' and is_del = 0 and file_name in ('%s') and file_suffix in ('%s')",
         $dir_info["id"], $file_info["file_name"], $file_info["file_suffix"]);
       if (count($is_container)) {
         $logService->deleteLog($params["log_id"]);
@@ -708,7 +734,7 @@ class FileManagerDAO extends PSIBaseExDAO
       return $rs;
     }
 
-    $dir_info = $db->query("select * from t_dir_info where id = '%s' AND parent_dir_id is not null", $params["id"]);
+    $dir_info = $db->query("select * from t_dir_info where id = '%s' and parent_dir_id is not null", $params["id"]);
     if (!count($dir_info)) {
       $logService->deleteLog($params["log_id"]);
       $rs["msg"] = "数据不存在";
@@ -754,7 +780,7 @@ class FileManagerDAO extends PSIBaseExDAO
       return $rs;
     }
 
-    $file_info = $db->query("select * from t_file_info where id = '%s' AND is_del = 0", $params["id"]);
+    $file_info = $db->query("select * from t_file_info where id = '%s' and is_del = 0", $params["id"]);
     if (!count($file_info)) {
       $rs["msg"] = "数据不存在";
       $logService->deleteLog($params["log_id"]);
@@ -796,7 +822,7 @@ class FileManagerDAO extends PSIBaseExDAO
   {
     $logService = new FileManagerlogService();
     //找到文件夹
-    $dirs = $db->query("select * from t_dir_info where parent_dir_id = '%s' AND is_del = 0", $parentId);
+    $dirs = $db->query("select * from t_dir_info where parent_dir_id = '%s' and is_del = 0", $parentId);
     if (count($dirs)) {
       foreach ($dirs as $i => $v) {
         $db->execute("update t_file_info set is_del = 1000 where id = '%s'", $v["id"]);
@@ -810,7 +836,7 @@ class FileManagerDAO extends PSIBaseExDAO
       }
     }
     //找到文件
-    $files = $db->query("select * from t_file_info where parent_dir_id = '%s' AND is_del = 0", $parentId);
+    $files = $db->query("select * from t_file_info where parent_dir_id = '%s' and is_del = 0", $parentId);
     if (count($files)) {
       foreach ($files as $i => $v) {
         $db->execute("update t_file_info set is_del = 1000 where id = '%s'", $v["id"]);
@@ -835,7 +861,7 @@ class FileManagerDAO extends PSIBaseExDAO
     $permissionService = new FileManagerPermissionService();
     //验证名称
     $file_info = $db->query("select * from t_file_info
-                        where parent_dir_id = '%s' AND is_del = 0 AND file_name in ('%s') AND file_suffix in ('%s')",
+    where parent_dir_id = '%s' and is_del = 0 and file_name in ('%s') and file_suffix in ('%s')",
       $param["parent_dir_id"], $param["file_name"], $param["file_suffix"]);
     if (count($file_info)) {//更新文件
 
@@ -988,10 +1014,10 @@ class FileManagerDAO extends PSIBaseExDAO
     $log_data["log_id"] = $params["log_id"];
     $logService->addLogAction($log_data);
 
-    $insert_sql = "INSERT INTO 
+    $insert_sql = "insert into 
             t_file_info(id, file_name, file_path, file_size, file_suffix, parent_dir_id,
             file_version, file_fid, action_user_id, action_time, is_del, action_info) 
-            VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s')";
+            values ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s')";
 
     if (empty($params["path"])) {//没有上传新的文件
 
@@ -1017,9 +1043,9 @@ class FileManagerDAO extends PSIBaseExDAO
         (-1 - strlen($info["file"]["ext"])));
       //验证名称
       $is_container = $db->query("select * from t_file_info
-                        where parent_dir_id = '%s' AND is_del = 0 AND file_name in ('%s') AND file_suffix in ('%s')",
+            where parent_dir_id = '%s' and is_del = 0 and file_name in ('%s') and file_suffix in ('%s')",
         $file_info[0]["parent_dir_id"], $file_name, $info["file"]["ext"]);
-      if(count($is_container)){
+      if (count($is_container)) {
         $db->rollback();
         $logService->deleteLog($params["log_id"]);
         unlink("Uploads/" . $info["file"]["savename"]);
@@ -1247,7 +1273,6 @@ class FileManagerDAO extends PSIBaseExDAO
     }
     return $path;
   }
-
 
   /**
    * 创建真实路径
