@@ -4,6 +4,7 @@ Ext.define("PSI.FileManager.FileQueryForm", {
   initComponent: function () {
     var me = this;
     var entity = me.getEntity();
+    me.__count = 0;
 
     Ext.apply(me, {
       header: {
@@ -80,7 +81,7 @@ Ext.define("PSI.FileManager.FileQueryForm", {
           xtype: "panel",
           region: "west",
           layout: "fit",
-          width: "50%",
+          width: "65%",
           split: true,
           collapsible: false,
           header: false,
@@ -105,8 +106,8 @@ Ext.define("PSI.FileManager.FileQueryForm", {
         },
         {
           text: "新窗口预览",
-          handler:me.windowPreview,
-          scope:me
+          handler: me.windowPreview,
+          scope: me
         },
         {
           text: "关闭",
@@ -193,11 +194,11 @@ Ext.define("PSI.FileManager.FileQueryForm", {
         }, {
           text: "操作描述",
           dataIndex: "actionInfo",
-          width: "20%"
+          width: "17%"
         }, {
           text: "路径",
           dataIndex: "path",
-          width: "13%"
+          width: "16%"
         }]
       }
     });
@@ -293,13 +294,21 @@ Ext.define("PSI.FileManager.FileQueryForm", {
 
   onQuery: function () {
     var me = this;
-
     me.getQueryFilesPanel().getStore().proxy.extraParams = {
       name: Ext.getCmp("queryName").getValue(),
       type: Ext.getCmp("queryType").getValue()
     };
 
-    me.freshFileGrid();
+    if (me.__t1) {
+      return false;
+    }
+
+    me.__t1 = window.setTimeout(function () {
+      me.freshFileGrid();
+      window.clearTimeout(me.__t1);
+      me.__t1 = "";
+    }, 500, me);
+
   },
   clearQuery: function () {
     var me = this;
@@ -365,38 +374,38 @@ Ext.define("PSI.FileManager.FileQueryForm", {
     if (queryData["id2"] == treeNode["id2"]) {
       return me.showInfo("不能将文件夹移动到自己里面");
     }
-    if(queryData["parentDirID"] == treeNode["id2"]){
+    if (queryData["parentDirID"] == treeNode["id2"]) {
       return me.showInfo("目标已在该文件夹下");
     }
     me.confirm("确认要将该内容移动到['" + treeNode["Name"] + "']目录中吗？",
       function () {
-      me.ajax({
-        url: me.URL("Home/FileManager/MoveToDir"),
-        params: {
-          mid: queryData["id"],//得到被拖拽对象的t_dir或t_file表的id
-          dirid: treeNode["id2"],//得到目标目录id
-          name: queryData["Name"],//被拖拽对象的名称
-          todirname: treeNode["Name"]//得到目标目录名称
-        },
-        callback: function (opt, success, response) {
-          var rsdata = me.decodeJSON(response.responseText);
-          if (!rsdata.success) {
-            me.showInfo(rsdata.msg);
+        me.ajax({
+          url: me.URL("Home/FileManager/MoveToDir"),
+          params: {
+            mid: queryData["id"],//得到被拖拽对象的t_dir或t_file表的id
+            dirid: treeNode["id2"],//得到目标目录id
+            name: queryData["Name"],//被拖拽对象的名称
+            todirname: treeNode["Name"]//得到目标目录名称
+          },
+          callback: function (opt, success, response) {
+            var rsdata = me.decodeJSON(response.responseText);
+            if (!rsdata.success) {
+              me.showInfo(rsdata.msg);
+            }
+            me.freshFileGrid();
+            me.freshDirPanel();
+            me.getParentForm().freshFileGrid();
           }
-          me.freshFileGrid();
-          me.freshDirPanel();
-          me.getParentForm().freshFileGrid();
-        }
+        });
       });
-    });
   },
-  windowPreview:function () {
+  windowPreview: function () {
     var me = this;
     var data = me.getSelectQueryData();
-    if(JSON.stringify(data) == "{}"){
+    if (JSON.stringify(data) == "{}") {
       return me.showInfo("请选择文件");
     }
-    if(data["fileSuffix"] == "dir"){
+    if (data["fileSuffix"] == "dir") {
       return me.showInfo("只能预览文件");
     }
     me.ajax({
