@@ -110,6 +110,11 @@ Ext.define("PSI.FileManager.FileQueryForm", {
           scope: me
         },
         {
+          text: "下载",
+          handler: me.onDownload,
+          scope: me
+        },
+        {
           text: "关闭",
           handler: function () {
             var me = this;
@@ -429,5 +434,27 @@ Ext.define("PSI.FileManager.FileQueryForm", {
       }
     });
 
+  },
+  onDownload: function () {
+    var me = this;
+    var checkedArr = me.getQueryFilesPanel().getChecked();
+    var arr = [];
+    for (var i = 0, len = checkedArr.length; i < len; i++) {
+      arr.push(checkedArr[i]["data"]["id2"]);
+    }
+    var data = arr.join("|");
+    me.ajax({
+      url: me.URL("Home/FileManager/downLoad"),
+      params: {
+        str: data
+      },
+      success: function (response) {
+        var rsdata = me.decodeJSON(response.responseText);
+        if (!rsdata.success) {
+          return me.showInfo(rsdata.msg);
+        }
+        window.open(rsdata.url);
+      }
+    });
   }
 })
