@@ -534,16 +534,16 @@ Ext.define('PSI.FileManager.MainForm', {
     return me.__filePanel;
   },
 
-
-
   //提取当前选中节点数据，并设置操作类型
   getSelectNodeData: function (action) {
     var me = this;
-    var id = me.__fileGrid.getSelectionModel().selected.keys[0];
-    if (!me.__fileGrid.getSelectionModel().selected.map[id]) {
+    var panel = me.__fileGrid;
+    var selected = panel.getSelectionModel().selected;
+    var id = selected.keys[0];
+    if (!selected.map[id]) {
       return {};
     }
-    var data = me.__fileGrid.getSelectionModel().selected.map[id].data;
+    var data = selected.map[id].data;
     data["action"] = action;
     return data;
 

@@ -141,11 +141,11 @@ class FileManagerDAO extends PSIBaseExDAO
       $rs_data[$i]["actionUserId"] = $v["action_user_id"];
       $rs_data[$i]["actionTime"] = date("Y-m-d H:i:s", strtotime($v["action_time"]));
       $rs_data[$i]["userName"] = $v["user_name"];
-      $rs_data[$i]["parentDirId"] = $v["parent_dir_id"];
+      $rs_data[$i]["parentDirID"] = $v["parent_dir_id"];
       $rs_data[$i]["actionInfo"] = $v["action_info"];
       //$rs_data[$i]["path"] = isset($v["dir_path"]) ?
       $arr = explode("\\", $v["dir_path"] ?? $v["file_path"]);
-      $path = $this->getShowPath($arr,$db);
+      $path = $this->getShowPath($arr, $db);
       $rs_data[$i]['path'] = $path;
 
       //加载文件
@@ -174,22 +174,23 @@ class FileManagerDAO extends PSIBaseExDAO
                 di.action_user_id,	di.action_time,	di.parent_dir_id ,	di.action_info, u.name as user_name
                 from	t_dir_info di
                 left join t_user u on di.action_user_id = u.id";
-    if(!$parentId){
+    if (!$parentId) {
       $sql .= " where	di.parent_dir_id is null 	and di.is_del = 0";
-    }else{
+    } else {
       $sql .= " where	di.parent_dir_id = '%s'	and di.is_del = 0";
     }
     $sql .= " order by di.dir_name";
 
     $fileslist1 = [];
-    if(!$parentId){
+    if (!$parentId) {
       $fileslist1 = $db->query($sql);
-    }else{
+    } else {
       $fileslist1 = $db->query($sql, $parentId);
     }
 
     $result = [];
     foreach ($fileslist1 as $i => $list1) {
+
       $result[$i]["id"] = $list1["id"];
       $result[$i]["id2"] = $list1["id2"];
       $result[$i]["Name"] = $list1["dir_name"];
@@ -207,9 +208,14 @@ class FileManagerDAO extends PSIBaseExDAO
       $result[$i]["iconCls"] = "PSI-FileManager-Dir";
     }
 
-    if(!$parentId){
+    if (!$parentId) {
       return $result[0];
-    }else{
+    } else {
+      $permissionService = new FileManagerPermissionService();
+      $data["file_id"] = $parentId;
+      if (!$permissionService->hasPermission($data, FIdConst::WJGL_INTO_DIR)) {
+        return array();
+      }
       return $result;
     }
   }
@@ -346,7 +352,6 @@ class FileManagerDAO extends PSIBaseExDAO
     }
 
   }
-
 
   /**
    * 创建或编辑文件夹
@@ -548,7 +553,6 @@ class FileManagerDAO extends PSIBaseExDAO
     return $rs;
   }
 
-
   /**
    * 移动文件
    * @param $params
@@ -573,6 +577,13 @@ class FileManagerDAO extends PSIBaseExDAO
     if (!$is_dir[0]["count(*)"]) {
       $rs["msg"] = "不能移动到文件中";
       $logService->deleteLog($params["log_id"]);
+      return $rs;
+    }
+
+    $data["file_id"] = $params["dir_id"];
+    if (!$permissionService->hasPermission($data, FIdConst::WJGL_MOVE_DIR)) {
+      $logService->deleteLog($params["log_id"]);
+      $rs["msg"] = "你没有权限将内容移动到这个文件夹";
       return $rs;
     }
 

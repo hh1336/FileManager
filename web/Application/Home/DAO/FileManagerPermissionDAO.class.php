@@ -85,7 +85,11 @@ class FileManagerPermissionDAO extends PSIBaseExDAO
     if (count($is_file)) {
       $file_fid = $is_file[0]["file_fid"];
     } else {
-      $file_fid = $db->query("select * from t_dir_info where id = '%s'", $params['file_id'])[0]['dir_fid'];
+      $info = $db->query("select * from t_dir_info where id = '%s'", $params['file_id']);
+      $file_fid = $info[0]['dir_fid'];
+      if (!$info[0]["parent_dir_id"]) {
+        return true;
+      }
     }
 
     $sql = "select	count(*) from

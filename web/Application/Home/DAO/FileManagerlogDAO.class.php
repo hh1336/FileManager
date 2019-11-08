@@ -226,7 +226,7 @@ class FileManagerlogDAO extends PSIBaseExDAO
       $old_file_info[0]["file_version"] = $this->newId();
       $old_file_info[0]["action_time"] = Date("Y-m-d H:i:s");
       $old_file_info[0]["is_del"] = 0;
-      //$old_file_info[0]["parent_dir_id"] = $now_file_info[0]["parent_dir_id"];
+      $old_file_info[0]["parent_dir_id"] = $now_file_info[0]["parent_dir_id"];
       $old_file_info[0]["file_path"] = $now_file_info[0]["file_path"];
 
       $info = $db->execute($insert_sql, $old_file_info[0]);
