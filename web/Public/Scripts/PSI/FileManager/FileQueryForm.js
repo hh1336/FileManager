@@ -439,6 +439,9 @@ Ext.define("PSI.FileManager.FileQueryForm", {
     var me = this;
     var checkedArr = me.getQueryFilesPanel().getChecked();
     var arr = [];
+    if(checkedArr.length == 0){
+        return me.showInfo("请选择要下载的内容");
+    }
     for (var i = 0, len = checkedArr.length; i < len; i++) {
       arr.push(checkedArr[i]["data"]["id2"]);
     }

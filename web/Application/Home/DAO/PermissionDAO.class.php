@@ -15,7 +15,7 @@ class PermissionDAO extends PSIBaseExDAO
   /**
    * 角色列表
    *
-   * @param array $params        	
+   * @param array $params
    * @return array
    */
   public function roleList($params)
@@ -74,7 +74,7 @@ class PermissionDAO extends PSIBaseExDAO
   /**
    * 某个角色的权限列表
    *
-   * @param array $params        	
+   * @param array $params
    * @return array
    */
   public function permissionList($params)
@@ -125,7 +125,7 @@ class PermissionDAO extends PSIBaseExDAO
   /**
    * 某个角色包含的用户
    *
-   * @param array $params        	
+   * @param array $params
    * @return array
    */
   public function userList($params)
@@ -157,7 +157,7 @@ class PermissionDAO extends PSIBaseExDAO
   /**
    * 某个权限的数据域列表
    *
-   * @param array $params        	
+   * @param array $params
    * @return array
    */
   public function dataOrgList($params)
@@ -210,7 +210,7 @@ class PermissionDAO extends PSIBaseExDAO
   /**
    * 获得可以选择的数据域列表
    *
-   * @param array $params        	
+   * @param array $params
    * @return array
    */
   public function selectDataOrg($params)
@@ -275,7 +275,7 @@ class PermissionDAO extends PSIBaseExDAO
   /**
    * 按权限分类查询权限项
    *
-   * @param array $params        	
+   * @param array $params
    * @return array
    */
   public function permissionByCategory($params)
@@ -325,7 +325,7 @@ class PermissionDAO extends PSIBaseExDAO
    * 通过id获得角色
    *
    * @param string $id
-   *        	角色id
+   *          角色id
    * @return array
    */
   public function getRoleById($id)
@@ -346,7 +346,7 @@ class PermissionDAO extends PSIBaseExDAO
   /**
    * 删除角色
    *
-   * @param array $params        	
+   * @param array $params
    * @return NULL|array
    */
   public function deleteRole($params)
@@ -392,7 +392,7 @@ class PermissionDAO extends PSIBaseExDAO
   /**
    * 获得可以选择的权限列表
    *
-   * @param array $params        	
+   * @param array $params
    * @return array
    */
   public function selectPermission($params)
@@ -429,7 +429,7 @@ class PermissionDAO extends PSIBaseExDAO
   /**
    * 获得可以选择的用户列表
    *
-   * @param array $params        	
+   * @param array $params
    * @return array
    */
   public function selectUsers($params)
@@ -479,17 +479,52 @@ class PermissionDAO extends PSIBaseExDAO
         "id" => $v["id"],
         "name" => $v["name"],
         "loginName" => $v["login_name"],
-        "orgFullName" => $v["full_name"]
+        "orgFullName" => $v["full_name"],
+        "children" => array("name" => "123"),
+        "leaf" => true
       ];
     }
 
     return $result;
   }
 
+  public function buildUserTree($params)
+  {
+    $db = $this->db;
+    $orgs = $db->query("select * from t_org where parent_id is not null");
+    $rs = [];
+    foreach ($orgs as $i => $org) {
+      $rs[$i]["id"] = "";
+      $rs[$i]["name"] = $org["name"];
+      $rs[$i]["leaf"] = false;
+      $rs[$i]["children"] = $this->getUsersByOrgId($org["id"], $db);
+      $rs[$i]["checked"] = false;
+      $rs[$i]["iconCls"] = "PSI-org2";
+    }
+    return $rs;
+  }
+
+  public function getUsersByOrgId($orgId, $db)
+  {
+    $sql = "select	u.id,	u.name,	u.login_name from	t_user u,	t_org o 
+    where	( u.org_id = o.id )	and u.org_id = '%s'";
+    $users = $db->query($sql, $orgId);
+    $rs = [];
+    foreach ($users as $i => $user) {
+      $rs[$i]["id"] = $user["id"];
+      $rs[$i]["loginName"] = $user["login_name"];
+      $rs[$i]["name"] = $user["name"];
+      $rs[$i]["leaf"] = true;
+      $rs[$i]["checked"] = false;
+      $rs[$i]["iconCls"] = "PSI-Permission-User";
+    }
+    return $rs;
+  }
+
   /**
    * 检查参数
    *
-   * @param array $params        	
+   * @param array $params
    * @return array|NULL null: 没有错误
    */
   private function checkParams($params)
@@ -514,7 +549,7 @@ class PermissionDAO extends PSIBaseExDAO
   /**
    * 新增角色
    *
-   * @param array $params        	
+   * @param array $params
    * @return NULL|array
    */
   public function addRole(&$params)
@@ -608,7 +643,7 @@ class PermissionDAO extends PSIBaseExDAO
   /**
    * 编辑角色
    *
-   * @param array $params        	
+   * @param array $params
    * @return NULL|array
    */
   public function modifyRole($params)

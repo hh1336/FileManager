@@ -17,52 +17,112 @@ Ext.define("PSI.Permission.SelectUserForm", {
 
   initComponent: function () {
     var me = this;
-    Ext.define("PSIUser_SelectUserForm", {
+    // Ext.define("PSIUser_SelectUserForm", {
+    //   extend: "Ext.data.Model",
+    //   fields: ["id", "loginName", "name", "orgFullName",
+    //     "enabled"]
+    // });
+    //
+    // var userStore = Ext.create("Ext.data.Store", {
+    //   model: "PSIUser_SelectUserForm",
+    //   autoLoad: false,
+    //   data: []
+    // });
+    //
+    // var grid = Ext.create("Ext.grid.Panel", {
+    //   cls: "PSI",
+    //   header: {
+    //     height: 30,
+    //     title: me.formatGridHeaderTitle("属于当前角色的用户")
+    //   },
+    //   padding: 5,
+    //   selModel: {
+    //     mode: "MULTI"
+    //   },
+    //   selType: "checkboxmodel",
+    //   viewConfig: {
+    //     deferEmptyText: false,
+    //     emptyText: "所有用户都已经加入到当前角色中了"
+    //   },
+    //   store: userStore,
+    //   columnLines: true,
+    //   columns: [{
+    //     header: "用户姓名",
+    //     dataIndex: "name",
+    //     width: 120,
+    //     menuDisabled: true
+    //   }, {
+    //     header: "登录名",
+    //     dataIndex: "loginName",
+    //     width: 120,
+    //     menuDisabled: true
+    //   }, {
+    //     header: "所属组织",
+    //     dataIndex: "orgFullName",
+    //     flex: 1,
+    //     menuDisabled: true
+    //   }]
+    // });
+
+    var modelName = "UserModel";
+    Ext.define(modelName, {
       extend: "Ext.data.Model",
-      fields: ["id", "loginName", "name", "orgFullName",
-        "enabled"]
+      fields: ["id", "children", "loginName", "name", "leaf"]
     });
 
-    var userStore = Ext.create("Ext.data.Store", {
-      model: "PSIUser_SelectUserForm",
-      autoLoad: false,
-      data: []
+    var UserStory = Ext.create('Ext.data.TreeStore', {
+      model: modelName,
+      proxy: {
+        type: "ajax",
+        actionMethods: {
+          read: "POST"
+        },
+        // extraParams: {
+        //   parentDirId: ""
+        // },
+        url: me.URL("Home/Permission/buildUserTree"),
+        reader: {
+          type: 'json'
+        }
+      },
+      root: {expanded: true}
     });
 
-    var grid = Ext.create("Ext.grid.Panel", {
+    var grid = Ext.create('Ext.tree.Panel', {
       cls: "PSI",
       header: {
         height: 30,
         title: me.formatGridHeaderTitle("属于当前角色的用户")
       },
-      padding: 5,
-      selModel: {
-        mode: "MULTI"
-      },
-      selType: "checkboxmodel",
+      store: UserStory,
+      animate: true, // 开启动画效果
+      rootVisible: false,
+      useArrows: true,
+      //selType: "checkboxmodel",
+      //columnLines: true,
       viewConfig: {
-        deferEmptyText: false,
-        emptyText: "所有用户都已经加入到当前角色中了"
+        loadMask: true,
       },
-      store: userStore,
-      columnLines: true,
-      columns: [{
-        header: "用户姓名",
-        dataIndex: "name",
-        width: 120,
-        menuDisabled: true
-      }, {
-        header: "登录名",
-        dataIndex: "loginName",
-        width: 120,
-        menuDisabled: true
-      }, {
-        header: "所属组织",
-        dataIndex: "orgFullName",
-        flex: 1,
-        menuDisabled: true
-      }]
+      columns: {
+        defaults: {
+          sortable: false,
+          menuDisabled: true,
+          draggable: false
+        },
+        items: [{
+          xtype: "treecolumn",
+          text: "名称",
+          dataIndex: "name",
+          width: "50%"
+        }, {
+          text: "登陆名",
+          dataIndex: "loginName",
+          width: "50%"
+        }]
+      }
     });
+
+    grid.on("checkchange", me.onCheckedUser, me);
 
     me.__grid = grid;
 
@@ -81,15 +141,24 @@ Ext.define("PSI.Permission.SelectUserForm", {
         },
         scope: me
       }],
-      listeners: {
-        show: {
-          fn: me.onWndShow,
-          scope: me
-        }
-      }
+      // listeners: {
+      //   show: {
+      //     fn: me.onWndShow,
+      //     scope: me
+      //   }
+      // }
     });
 
     me.callParent(arguments);
+  },
+  onCheckedUser: function (node, checked) {
+    var me = this;
+    for (var i = 0, len = node.childNodes.length; i < len; i++) {
+      node.childNodes[i].data.checked = checked;
+      me.__grid.updateLayout(node.childNodes[i]);
+      me.onCheckedUser(node.childNodes[i], checked, me);
+    }
+    me.__grid.doLayout();
   },
 
   onWndShow: function () {
@@ -130,7 +199,14 @@ Ext.define("PSI.Permission.SelectUserForm", {
   onOK: function () {
     var grid = this.__grid;
 
-    var items = grid.getSelectionModel().getSelection();
+    //var items = grid.getSelectionModel().getSelection();
+    var checkeds = grid.getChecked();
+    var items = [];
+    for (var i = 0, len = checkeds.length; i < len; i++) {
+      if (checkeds[i]["data"]["id"]) {
+        items.push(checkeds[i]);
+      }
+    }
     if (items == null || items.length == 0) {
       PSI.MsgBox.showInfo("没有选择用户");
 

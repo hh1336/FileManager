@@ -262,3 +262,7 @@
   background-image: url(../Images/icons/UnKnown.png) !important;
   background-size: 16px 20px;
 }
+
+.PSI-Permission-User{
+  background-image: url("../Images/icons/user_edit.png") !important;
+}

@@ -10,7 +10,7 @@ use Home\Service\UserService;
  * 权限Controller
  *
  * @author 李静波
- *        
+ *
  */
 class PermissionController extends PSIBaseController
 {
@@ -146,6 +146,13 @@ class PermissionController extends PSIBaseController
       $idList = I("post.idList");
 
       $this->ajaxReturn((new PermissionService())->selectUsers($idList));
+    }
+  }
+
+  public function buildUserTree()
+  {
+    if (IS_POST) {
+      $this->ajaxReturn((new PermissionService())->buildUserTree());
     }
   }
 

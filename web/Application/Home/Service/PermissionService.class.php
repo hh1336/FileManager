@@ -142,6 +142,20 @@ class PermissionService extends PSIBaseExService
     return $dao->selectUsers($params);
   }
 
+  public function buildUserTree(){
+    if ($this->isNotOnline()) {
+      return $this->emptyResult();
+    }
+
+    $params = array(
+      "loginUserId" => $this->getLoginUserId()
+    );
+
+    $dao = new PermissionDAO($this->db());
+
+    return $dao->buildUserTree($params);
+  }
+
   /**
    * 删除角色
    */

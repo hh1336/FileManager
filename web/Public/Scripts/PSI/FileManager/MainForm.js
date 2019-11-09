@@ -735,13 +735,13 @@ Ext.define('PSI.FileManager.MainForm', {
   //预览文件
   onPreviewFile: function (node, record, item) {
     var me = this;
-    if (me.getPreviewFile() == "0") {
-      return me.showInfo("没有权限");
-    }
     if (me.__fileGrid) {
       var data = me.getSelectNodeData();
       if (data.fileSuffix == "dir") {
         return me.onloadChildrenDir(node, record, item);
+      }
+      if (me.getPreviewFile() == "0") {
+        return me.showInfo("没有权限");
       }
       Ext.Ajax.request({
         url: me.URL("Home/FileManager/convertFile"),
