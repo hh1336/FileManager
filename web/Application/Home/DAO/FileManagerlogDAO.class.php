@@ -53,13 +53,15 @@ class FileManagerlogDAO extends PSIBaseExDAO
   {
     $db = $this->db;
     if ($params["id"]) {//查看指定内容的操作历史
-      $is_dir = $db->query("select * from t_dir where id = '%s'", $params["id"]);
+      $is_dir = $db->query("select * from t_dir_info where dir_fid = '%s' and is_del = 0", $params["id"]);
       $data = [];
       if (!count($is_dir)) {//查看文件历史
         $sql = "select	fi.id,concat(fi.file_name,'.',fi.file_suffix) as name,
-	      fi.action_time,	fi.action_user_id,	fi.action_info,	u.name as action_user_name,	'file' as type, fi.is_del
+	      fi.action_time,	fi.action_user_id,	fi.action_info,	u.name as action_user_name,
+	      	'file' as type, fi.is_del,cu.name as create_user_name,fi.create_time
         from	t_file_info as fi 
         left join t_user as u on fi.action_user_id = u.id
+        left join t_user as cu on cu.id = fi.create_user_id
         where	fi.file_fid = '%s' 
         order by	fi.is_del,fi.action_time desc
         limit %d,%d";
@@ -67,10 +69,11 @@ class FileManagerlogDAO extends PSIBaseExDAO
         $rs["totalCount"] = $db->query("select count(*) from t_file_info 
         where file_fid = '%s'", $params["id"])[0]["count(*)"];
       } else {
-        $sql = "select	di.id,di.dir_name as name,	di.action_time,	di.action_user_id,
-	      di.action_info,	u.name as action_user_name,'dir' as type, di.is_del
+        $sql = "select	di.id,di.dir_name as name, di.action_time,	di.action_user_id,
+	      di.action_info,	u.name as action_user_name,'dir' as type, di.is_del,cu.name as create_user_name,fi.create_time
         from	t_dir_info as di 
         left join t_user as u on di.action_user_id = u.id
+        left join t_user as cu on cu.id = di.create_user_id
         where	di.dir_fid = '%s' 
         order by	di.is_del,di.action_time desc
         limit %d,%d";
@@ -166,8 +169,8 @@ class FileManagerlogDAO extends PSIBaseExDAO
         $db->execute("delete from t_file_info where id = '%s'", $params["file_id"]);
         $sql = "insert into t_useless_data
             (id, file_name, file_path, file_size, file_suffix, parent_dir_id, file_version,
-            file_fid, action_user_id, action_time, is_del, action_info) 
-            values ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s')";
+            file_fid, action_user_id, action_time, is_del,create_user_id,create_time, action_info) 
+            values ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s','%s','%s')";
 
         $rs_info = $db->execute($sql, $info[0]);
         if (!$rs_info) {
@@ -217,8 +220,8 @@ class FileManagerlogDAO extends PSIBaseExDAO
 
       $insert_sql = "insert into t_file_info 
         (id, file_name, file_path, file_size, file_suffix, parent_dir_id, file_version,
-        file_fid,action_user_id, action_time, is_del, action_info )
-        values	( '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s' )";
+        file_fid,action_user_id, action_time, is_del,create_user_id,create_time, action_info)
+        values	( '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s','%s','%s')";
 
       $old_file_path = $old_file_info[0]["file_path"];
       $old_file_version = $old_file_info[0]["file_version"];

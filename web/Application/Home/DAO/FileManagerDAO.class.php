@@ -21,19 +21,23 @@ class FileManagerDAO extends PSIBaseExDAO
   public function loadDir($params)
   {
     $db = $this->db;
-    $sql = "select	d.id,	di.id as id2,	di.dir_name,	di.dir_path, di.dir_version,
-                di.action_user_id,	di.action_time,	di.parent_dir_id ,	di.action_info, u.name as user_name 
-                from	t_dir d	
-                left join t_dir_info di on d.id = di.dir_fid left join t_user u on di.action_user_id = u.id
+    $sql = "select di.dir_fid as id, di.id as id2,	di.dir_name,	di.dir_path, di.dir_version,
+                di.action_user_id,	di.action_time,	di.parent_dir_id ,
+                cu.name as create_user_name, di.create_time, di.action_info, u.name as user_name 
+                from	t_dir_info di
+                left join t_user u on di.action_user_id = u.id
+                left join t_user cu on di.create_user_id = cu.id
                 where	di.parent_dir_id = '%s'	and di.is_del = 0
                 order by di.dir_name";
 
-    $rootsql = "select	d.id,	di.id as id2,	di.dir_name,	di.dir_path, di.dir_version,
-                di.action_user_id,	di.action_time,	di.parent_dir_id ,	di.action_info, u.name as user_name 
-                from	t_dir d	
-                left join t_dir_info di on d.id = di.dir_fid left join t_user u on di.action_user_id = u.id
-                where	di.parent_dir_id is null 	and di.is_del = 0
-                order by di.dir_name";
+    $rootsql = "select di.dir_fid as id, di.id as id2,	di.dir_name,	di.dir_path,	di.dir_version,
+                di.action_user_id,	di.action_time,	di.parent_dir_id,	di.action_info,	u.name as user_name,
+                cu.name as create_user_name, di.create_time,	di.create_user_id,	di.create_time
+                from	t_dir_info di
+                left join t_user u on di.action_user_id = u.id
+	              left join t_user cu on di.create_user_id = cu.id
+                where	di.parent_dir_id is null	and di.is_del = 0 
+                order by	di.dir_name";
     $root = $db->query($rootsql);
 
     $datalist = [];
@@ -47,12 +51,14 @@ class FileManagerDAO extends PSIBaseExDAO
       $params["parent_dir_id"]);
     //找子目录
     $dirlist = $db->query($sql, $params["parent_dir_id"]);
-    $file_sql = "select	f.id,	fi.id as id2,	fi.file_name,	fi.file_path,	fi.file_size,	fi.file_suffix,	fi.file_version,
-	  fi.action_user_id,	fi.action_time,	fi.parent_dir_id,	fi.action_info,	u.name as user_name 
-    from
-	  t_file f left join t_file_info fi on f.id = fi.file_fid	left join t_user u on fi.action_user_id = u.id 
-    where	fi.parent_dir_id = '%s'	and fi.is_del = 0 
-    order by	fi.file_name";
+    $file_sql = "select	fi.file_fid as id,	fi.id as id2,	fi.file_name,	fi.file_path,	fi.file_size,
+	              fi.file_suffix,	fi.file_version,	fi.action_user_id,	fi.action_time,	fi.parent_dir_id,
+	              cu.name as create_user_name, fi.create_time,	fi.action_info,	u.name as user_name 
+                from	t_file_info fi
+	              left join t_user u on fi.action_user_id = u.id 
+	              left join t_user cu on fi.create_user_id = cu.id
+                where	fi.parent_dir_id = '%s' and fi.is_del = 0 
+                order by	fi.file_name";
     $filelist = $db->query($file_sql, $params["parent_dir_id"]);
     $datalist = array_merge($dirlist, $filelist);
 
@@ -68,6 +74,8 @@ class FileManagerDAO extends PSIBaseExDAO
       $result[$i]["Version"] = $v["dir_version"] ?? $v["file_version"];
       $result[$i]["Name"] = $v["dir_name"] ?? ($v["file_name"] . "." . $v["file_suffix"]);
       $result[$i]["actionInfo"] = $v["action_info"];
+      $result[$i]["createUserName"] = $v["create_user_name"];
+      $result[$i]["createTime"] = date("Y-m-d H:i:s", strtotime($v["create_time"]));
       //加载文件
       $result[$i]["fileSize"] = $v["file_size"] ?? "";
       $result[$i]["fileSuffix"] = !isset($v["dir_name"]) ? $v["file_suffix"] : "dir";
@@ -110,24 +118,26 @@ class FileManagerDAO extends PSIBaseExDAO
 
     $sql = "";
     if ($params["type"]) {
-      $sql = "select info.*,tu.name as user_name from
-  ((select * from t_file_info where is_del = 0 and file_name like ('%s')) as info,
-	(select	fp.* from	t_file_permission as fp
-	left join t_role_user as ru on ru.role_id = fp.role_id
-	left join t_permission as p on fp.permission_fid = p.fid 
-	where	ru.user_id = '%s' 	and p.fid = '%s') as tfp )
-	left join t_dir_info as tdi on info.parent_dir_id = tdi.id 
-	left join t_user as tu on info.action_user_id = tu.id
-  where	tfp.file_id = tdi.dir_fid";
+      $sql = "select	info.*,	cu.name as create_user_name,	tu.name as user_name 
+        from	(( select * from t_file_info where is_del = 0 and file_name like ( '%s' ) ) as info,	
+        (select	fp.* from	t_file_permission as fp
+	      left join t_role_user as ru on ru.role_id = fp.role_id
+	      left join t_permission as p on fp.permission_fid = p.fid 
+        where	ru.user_id = '%s' 	and p.fid = '%s' 	) as tfp 	)
+	      left join t_dir_info as tdi on info.parent_dir_id = tdi.id
+	      left join t_user as tu on info.action_user_id = tu.id 
+	      left join t_user as cu on cu.id = info.create_user_id
+        where	tfp.file_id = tdi.dir_fid";
     } else {
-      $sql = "select info.*,tu.name as user_name from
-	((select * from t_dir_info where is_del = 0 and dir_name like ('%s')) as info,
-	(select	fp.* from	t_file_permission as fp
-	left join t_role_user as ru on ru.role_id = fp.role_id
-	left join t_permission as p on fp.permission_fid = p.fid 
-	where	ru.user_id = '%s' and p.fid = '%s' ) as tfp )
-	left join t_user as tu on info.action_user_id = tu.id
-  where	tfp.file_id = info.dir_fid";
+      $sql = "select info.*,cu.name as create_user_name,tu.name as user_name 
+        from	((select * from t_dir_info where is_del = 0 and dir_name like ('%s')) as info,
+	      (select	fp.* from	t_file_permission as fp
+	      left join t_role_user as ru on ru.role_id = fp.role_id
+	      left join t_permission as p on fp.permission_fid = p.fid 
+	      where	ru.user_id = '%s' and p.fid = '%s' ) as tfp )
+	      left join t_user as tu on info.action_user_id = tu.id
+	      left join t_user as cu on cu.id = info.create_user_id
+        where	tfp.file_id = info.dir_fid";
     }
     $query_data = $db->query($sql,
       "%" . $params["name"] . "%", $params["login_user_id"],
@@ -143,6 +153,8 @@ class FileManagerDAO extends PSIBaseExDAO
       $rs_data[$i]["userName"] = $v["user_name"];
       $rs_data[$i]["parentDirID"] = $v["parent_dir_id"];
       $rs_data[$i]["actionInfo"] = $v["action_info"];
+      $rs_data[$i]["createUserName"] = $v["create_user_name"];
+      $rs_data[$i]["createTime"] = $v["create_time"];
       //$rs_data[$i]["path"] = isset($v["dir_path"]) ?
       $arr = explode("\\", $v["dir_path"] ?? $v["file_path"]);
       $path = $this->getShowPath($arr, $db);
@@ -170,10 +182,12 @@ class FileManagerDAO extends PSIBaseExDAO
   {
     $db = $this->db;
 
-    $sql = "select	di.dir_fid as id,	di.id as id2,	di.dir_name,	di.dir_path, di.dir_version,
-                di.action_user_id,	di.action_time,	di.parent_dir_id ,	di.action_info, u.name as user_name
-                from	t_dir_info di
-                left join t_user u on di.action_user_id = u.id";
+    $sql = "select	di.dir_fid as id,	di.id as id2,	di.dir_name,	di.dir_path,	di.dir_version,
+	          di.action_user_id,	di.action_time,	di.parent_dir_id,	di.action_info,	cu.name as create_user_name,
+	          di.create_time,	u.name as user_name 
+	          from	t_dir_info di
+	          left join t_user u on di.action_user_id = u.id
+	          left join t_user cu on cu.id = di.create_user_id";
     if (!$parentId) {
       $sql .= " where	di.parent_dir_id is null 	and di.is_del = 0";
     } else {
@@ -200,6 +214,8 @@ class FileManagerDAO extends PSIBaseExDAO
       $result[$i]["actionTime"] = date("Y-m-d H:i:s", strtotime($list1["action_time"]));
       $result[$i]["parentDirID"] = $list1["parent_dir_id"];
       $result[$i]["actionInfo"] = $list1["action_info"];
+      $result[$i]["createUserName"] = $list1["create_user_name"];
+      $result[$i]["createTime"] = $list1["create_time"];
 
       $fileslist2 = $this->loadTree($list1["id2"]);
       $result[$i]['children'] = $fileslist2;
@@ -278,8 +294,8 @@ class FileManagerDAO extends PSIBaseExDAO
 
         //构造t_dir_info数据
         $insert_dir_sql = "insert into t_dir_info ( id, dir_name, dir_path, dir_version, dir_fid,
-                action_user_id, action_time, is_del, parent_dir_id, action_info )
-                values	('%s','%s','%s','%s','%s','%s','%s','%d','%s','%s');";
+                action_user_id, action_time, is_del, parent_dir_id, action_info,create_user_id,create_time )
+                values	('%s','%s','%s','%s','%s','%s','%s','%d','%s','%s','%s','%s');";
         $v["id"] = $this->newId();
         $v["dir_version"] = $this->newId();
         //$v["dirfkid"] = $new_dir_id;
@@ -323,13 +339,12 @@ class FileManagerDAO extends PSIBaseExDAO
         $old_path = $v['file_path'];
         $old_version = $v["file_version"];
         $insert_file_sql = "insert into t_file_info (
-        id, file_name, file_path,  file_size, file_suffix, parent_dir_id,
-         file_version, file_fid, action_user_id, action_time, is_del, action_info )
-        values	('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%d','%s');";
+        id, file_name, file_path,  file_size, file_suffix, parent_dir_id,create_user_id,create_time,
+         file_version, file_fid, action_user_id, action_time, is_del, action_info)
+        values	('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%d','%s');";
         $v["id"] = $this->newId();
         $v["parent_dir_id"] = $newID;
         $v["file_version"] = $this->newId();
-        //$v["filefkid"] = $new_file_id;
         $v['file_path'] = $this->getFullPath($newID, $db);
         $v["action_user_id"] = $actionUserId;
         $v["action_time"] = Date("Y-m-d H:i:s");
@@ -375,14 +390,12 @@ class FileManagerDAO extends PSIBaseExDAO
     if ($params["id"]) {//编辑
       if ($us->hasPermission(FIdConst::WJGL_EDIT_DIR)) {
 
-
         $data["file_id"] = $params["id"];
         if (!$permissionService->hasPermission($data, FIdConst::WJGL_EDIT_DIR)) {
           $logService->deleteLog($params["log_id"]);
           $rs["msg"] = "你没有编辑这个文件夹的权限";
           return $rs;
         }
-
 
         //判断这个文件夹是否存在
         $dir_info = $db->query("select * from t_dir_info where id = '%s' and is_del = 0", $params["id"]);
@@ -413,8 +426,8 @@ class FileManagerDAO extends PSIBaseExDAO
 
         //构造t_dir_info数据
         $insert_dir_sql = "insert into t_dir_info ( id, dir_name, dir_path,  dir_version, dir_fid,
-                  action_user_id, action_time, is_del, parent_dir_id, action_info )
-                  values	('%s','%s','%s','%s','%s','%s','%s','%d','%s','%s');";
+                  action_user_id, action_time, is_del,create_user_id,create_time, parent_dir_id, action_info )
+                  values	('%s','%s','%s','%s','%s','%s','%s','%d','%s','%s','%s','%s');";
 
         $dir_info[0]["id"] = $this->newId();
         $dir_info[0]["dir_name"] = $params["dir_name"];
@@ -466,10 +479,6 @@ class FileManagerDAO extends PSIBaseExDAO
       }
     } else {
       if ($us->hasPermission(FIdConst::WJGL_ADD_DIR)) {
-        //插入一条id
-        $dirId = $this->newId();
-        $mkDirIdSql = "insert into t_dir values('%s')";
-        $db->execute($mkDirIdSql, $dirId);
         //开始事务
         $db->startTrans();
         //构造数据
@@ -477,17 +486,19 @@ class FileManagerDAO extends PSIBaseExDAO
         $data['dir_name'] = $params['dir_name'];
         $data['dir_path'] = "/";
         $data['dir_version'] = $this->newId();
-        $data['dir_fid'] = $dirId;
+        $data['dir_fid'] = $this->newId();;
         $data['action_user_id'] = $params['login_user_id'];
         $data['action_time'] = Date("Y-m-d H:i:s");
         $data['is_del'] = 0;
         $data['parent_dir_id'] = $params['parent_dir_id'];
         $data['action_info'] = $params['action_info'];
+        $data["create_user_id"] = $params['login_user_id'];
+        $data["create_time"] = Date("Y-m-d H:i:s");
 
         $dir_info_sql = "insert into t_dir_info
                     (id,dir_name,dir_path,dir_version,dir_fid,action_user_id,action_time,
-                    is_del,parent_dir_id,action_info) 
-                    values ('%s','%s','%s','%s','%s','%s','%s','%d','%s','%s')";
+                    is_del,parent_dir_id,action_info,create_user_id,create_time) 
+                    values ('%s','%s','%s','%s','%s','%s','%s','%d','%s','%s','%s','%s')";
         //判断是否存在上级目录，不存在就设置root为目录
         $is_parent_id = $db->query("select count(*) from t_dir_info where id = '%s' and is_del = 0",
           $params['parent_dir_id']);
@@ -514,7 +525,6 @@ class FileManagerDAO extends PSIBaseExDAO
         where parent_dir_id = '%s' and is_del = 0 and dir_name in ('%s')", $data["parent_dir_id"], $data["dir_name"]);
         if ($is_dirName[0]["count(*)"]) {
           $db->rollback();
-          $db->execute("delete from t_dir where id = '%s'", $dirId);
           $logService->deleteLog($params["log_id"]);
           $rs["msg"] = "文件夹已存在";
           return $rs;
@@ -587,33 +597,30 @@ class FileManagerDAO extends PSIBaseExDAO
       return $rs;
     }
 
-    $is_t_dir = $db->query("select count(*) from t_dir where id = '%s'", $params["mid"]);
-    if ($is_t_dir[0]["count(*)"]) {//被移动的是文件夹
-      //找到最新版本的该文件夹
-      $dir_info = $db->query("select * from t_dir_info where dir_fid = '%s' and is_del = 0", $params["mid"])[0];
+    $dir_info = $db->query("select * from t_dir_info where dir_fid = '%s' and is_del = 0", $params["mid"]);
+    if (count($dir_info)) {//被移动的是文件夹
       //验证单文件权限
-      $data["file_id"] = $dir_info["id"];
+      $data["file_id"] = $dir_info[0]["id"];
       if (!$permissionService->hasPermission($data, FIdConst::WJGL_MOVE_DIR)) {
         $logService->deleteLog($params["log_id"]);
         $rs["msg"] = "你没有权限对这个文件夹进行移动";
         return $rs;
       }
 
-      $data["id"] = $dir_info["id"];
-      $data["dir_name"] = $dir_info["dir_name"];
+      $data["id"] = $dir_info[0]["id"];
+      $data["dir_name"] = $dir_info[0]["dir_name"];
       $data["parent_dir_id"] = $params["dir_id"];
       $data["login_user_id"] = $params["login_user_id"];
-      $data["action_info"] = $dir_info["action_info"];
+      $data["action_info"] = $dir_info[0]["action_info"];
       $data["log_id"] = $params["log_id"];
       return $this->createDir($data);
     }
-    $is_t_file = $db->query("select count(*) from t_file where id = '%s'", $params["mid"]);
 
-    if ($is_t_file[0]["count(*)"]) {//被移动的是文件
+    $file_info = $db->query("select * from t_file_info where file_fid = '%s' and is_del = 0", $params["mid"]);
+    if (count($file_info)) {//被移动的是文件
       $dir_info = $db->query("select * from t_dir_info where id = '%s' and is_del = 0", $params["dir_id"])[0];
-      $file_info = $db->query("select * from t_file_info where file_fid = '%s' and is_del = 0", $params["mid"])[0];
       //验证单文件权限
-      $data["file_id"] = $file_info["id"];
+      $data["file_id"] = $file_info[0]["id"];
       if (!$permissionService->hasPermission($data, FIdConst::WJGL_MOVE_FILE)) {
         $logService->deleteLog($params["log_id"]);
         $rs["msg"] = "你没有权限对这个文件进行移动";
@@ -623,7 +630,7 @@ class FileManagerDAO extends PSIBaseExDAO
       //验证目录是否存在相同文件
       $is_container = $db->query("select * from t_file_info
         where parent_dir_id = '%s' and is_del = 0 and file_name in ('%s') and file_suffix in ('%s')",
-        $dir_info["id"], $file_info["file_name"], $file_info["file_suffix"]);
+        $dir_info["id"], $file_info[0]["file_name"], $file_info[0]["file_suffix"]);
       if (count($is_container)) {
         $logService->deleteLog($params["log_id"]);
         $rs["msg"] = "文件已存在";
@@ -631,32 +638,32 @@ class FileManagerDAO extends PSIBaseExDAO
       }
 
       $db->startTrans();
-      $db->execute("update t_file_info set is_del = 1000 where id = '%s'", $file_info["id"]);
+      $db->execute("update t_file_info set is_del = 1000 where id = '%s'", $file_info[0]["id"]);
 
       $logData["log_id"] = $params["log_id"];
       $logData["action_type"] = "delete";
       $logData["file_type"] = "file";
-      $logData["file_id"] = $file_info["id"];
+      $logData["file_id"] = $file_info[0]["id"];
       $logService->addLogAction($logData);
 
       $insert_sql = "insert into t_file_info
     (id, file_name, file_path, file_size, file_suffix, parent_dir_id, file_version, file_fid,
-    action_user_id, action_time, is_del, action_info) 
-    values ('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%d','%s')";
+    action_user_id, action_time, is_del, create_user_id,create_time, action_info) 
+    values ('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%d','%s','%s','%s')";
 
-      $old_file_path = $file_info["file_path"];
-      $old_file_version = $file_info["file_version"];
-      $file_info["id"] = $this->newId();
-      $file_info["file_path"] = $dir_info["dir_path"];
-      $file_info["parent_dir_id"] = $dir_info["id"];
-      $file_info["file_version"] = $this->newId();
-      $file_info["action_user_id"] = $params["login_user_id"];
-      $file_info["action_time"] = Date("Y-m-d H:i:s");
-      $file_info["is_del"] = 0;
-      $exinfo = $db->execute($insert_sql, $file_info);
+      $old_file_path = $file_info[0]["file_path"];
+      $old_file_version = $file_info[0]["file_version"];
+      $file_info[0]["id"] = $this->newId();
+      $file_info[0]["file_path"] = $dir_info["dir_path"];
+      $file_info[0]["parent_dir_id"] = $dir_info["id"];
+      $file_info[0]["file_version"] = $this->newId();
+      $file_info[0]["action_user_id"] = $params["login_user_id"];
+      $file_info[0]["action_time"] = Date("Y-m-d H:i:s");
+      $file_info[0]["is_del"] = 0;
+      $exinfo = $db->execute($insert_sql, $file_info[0]);
 
       $logData["action_type"] = "insert";
-      $logData["file_id"] = $file_info["id"];
+      $logData["file_id"] = $file_info[0]["id"];
       $logService->addLogAction($logData);
 
       if (!$exinfo) {
@@ -666,8 +673,8 @@ class FileManagerDAO extends PSIBaseExDAO
         return $rs;
       }
       $this->createTrueDirPath($dir_info["dir_path"]);
-      copy($old_file_path . $old_file_version . "." . $file_info["file_suffix"],
-        $dir_info["dir_path"] . $file_info["file_version"] . "." . $file_info["file_suffix"]);
+      copy($old_file_path . $old_file_version . "." . $file_info[0]["file_suffix"],
+        $dir_info["dir_path"] . $file_info[0]["file_version"] . "." . $file_info[0]["file_suffix"]);
       $db->commit();
       $rs["success"] = true;
       $rs["msg"] = "操作成功";
@@ -900,8 +907,8 @@ class FileManagerDAO extends PSIBaseExDAO
       $file_info[0]["action_time"] = Date("Y-m-d H:i:s");
       $file_info_sql = "insert into t_file_info
     (id, file_name, file_path, file_size, file_suffix, parent_dir_id, file_version, file_fid,
-    action_user_id, action_time, is_del, action_info) 
-    values ('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%d','%s')";
+    action_user_id, action_time, is_del,create_user_id,create_time, action_info) 
+    values ('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%d','%s','%s','%s')";
 
       $is_commit = $db->execute($file_info_sql, $file_info[0]);
       if (!$is_commit) {
@@ -923,14 +930,11 @@ class FileManagerDAO extends PSIBaseExDAO
     }
 
     $db->startTrans();
-    //t_file表数据
-    $t_file_id = $this->newId();
-    $db->execute("insert into t_file values ('%s')", $t_file_id);
 
     $file_info_sql = "insert into t_file_info
     (id, file_name, file_path, file_size, file_suffix, parent_dir_id, file_version, file_fid,
-    action_user_id, action_time, is_del, action_info) 
-    values ('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%d','%s')";
+    action_user_id, action_time, is_del,create_user_id,create_time, action_info) 
+    values ('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%d','%s','%s','%s')";
 
 
     $data["id"] = $this->newId();
@@ -940,10 +944,12 @@ class FileManagerDAO extends PSIBaseExDAO
     $data["file_suffix"] = $param["file_suffix"];
     $data["parent_dir_id"] = $param["parent_dir_id"];
     $data["file_version"] = $this->newId();
-    $data["file_fid"] = $t_file_id;
+    $data["file_fid"] = $this->newId();
     $data["action_user_id"] = $param["login_user_id"];
     $data["action_time"] = Date("Y-m-d H:i:s");
     $data["is_del"] = 0;
+    $data["create_user_id"] = $param["login_user_id"];
+    $data['create_time'] = Date("Y-m-d H:i:s");
     $data["action_info"] = $param["action_info"];
 
     //判断是否存在上级目录，不存在就设置root为目录
@@ -1025,10 +1031,10 @@ class FileManagerDAO extends PSIBaseExDAO
     $log_data["log_id"] = $params["log_id"];
     $logService->addLogAction($log_data);
 
-    $insert_sql = "insert into 
-            t_file_info(id, file_name, file_path, file_size, file_suffix, parent_dir_id,
-            file_version, file_fid, action_user_id, action_time, is_del, action_info) 
-            values ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s')";
+    $insert_sql = "insert into t_file_info
+        (id, file_name, file_path, file_size, file_suffix, parent_dir_id,file_version,
+         file_fid, action_user_id, action_time, is_del,create_user_id,create_time, action_info) 
+        values ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s','%s','%s')";
 
     if (empty($params["path"])) {//没有上传新的文件
 

@@ -85,23 +85,23 @@ Ext.define('PSI.FileManager.MainForm', {
           items: me.getQueryCmp()
         },
         {
-        id: "panelFileManager",
-        xtype: "panel",
-        region: "west",
-        layout: "fit",
-        width: "50%",
-        split: true,
-        collapsible: true,
-        header: false,
-        border: 0,
-        items: [me.getFileGrid()]
-      }, {
-        region: "center",
-        xtype: "panel",
-        layout: "fit",
-        border: 0,
-        items: [me.getFanel()]
-      }]
+          id: "panelFileManager",
+          xtype: "panel",
+          region: "west",
+          layout: "fit",
+          width: "55%",
+          split: true,
+          collapsible: true,
+          header: false,
+          border: 0,
+          items: [me.getFileGrid()]
+        }, {
+          region: "center",
+          xtype: "panel",
+          layout: "fit",
+          border: 0,
+          items: [me.getFanel()]
+        }]
     });
 
     me.callParent(arguments);
@@ -178,7 +178,8 @@ Ext.define('PSI.FileManager.MainForm', {
     Ext.define(modelName, {
       extend: "Ext.data.Model",
       fields: ["id", "id2", "children", "actionUserID", "actionTime", "parentDirID",
-        "userName", "actionInfo", "leaf", "Version", "Name", "fileSize", "fileSuffix"
+        "userName", "actionInfo", "leaf", "Version", "Name", "fileSize", "fileSuffix",
+        "createUserName", "createTime"
       ]
     });
 
@@ -267,27 +268,40 @@ Ext.define('PSI.FileManager.MainForm', {
           xtype: "treecolumn",
           text: "名称",
           dataIndex: "Name",
-          width: "30%"
-        }, {
-          text: "最后操作时间",
-          dataIndex: "actionTime",
-          width: "22%"
-        }, {
-          text: "操作人",
-          dataIndex: "userName",
-          width: "15%"
-        }, {
-          text: "操作描述",
-          dataIndex: "actionInfo",
-          width: "20%"
-        }, {
-          text: "版本号",
-          dataIndex: "Version",
-          width: "13%",
-          renderer: function (value) {
-            return value.slice(0, 8);
-          }
-        }]
+          width: "25%"
+        },
+          {
+            text: "创建人",
+            dataIndex: "createUserName",
+            width: "13%"
+          },
+          {
+            text: "创建时间",
+            dataIndex: "createTime",
+            width: "13%"
+          },
+          {
+            text: "最后操作人",
+            dataIndex: "userName",
+            width: "12%"
+          },
+          {
+            text: "最后操作时间",
+            dataIndex: "actionTime",
+            width: "13%"
+          },
+          {
+            text: "操作描述",
+            dataIndex: "actionInfo",
+            width: "14%"
+          }, {
+            text: "版本号",
+            dataIndex: "Version",
+            width: "10%",
+            renderer: function (value) {
+              return value.slice(0, 8);
+            }
+          }]
       }
     });
 
@@ -396,7 +410,7 @@ Ext.define('PSI.FileManager.MainForm', {
             },
           },
           {
-            text: '操作时间',
+            text: '最后操作时间',
             dataIndex: "action_time",
             width: "22%"
           },
@@ -752,7 +766,7 @@ Ext.define('PSI.FileManager.MainForm', {
           var rsdata = me.decodeJSON(response.responseText);
           if (rsdata.success) {
             var dom = Ext.get("mainframe");
-            dom.set({"src":""});
+            dom.set({"src": ""});
             if (!(rsdata.file_suffix == "pdf")) {
               dom.set({"src": me.URL("Home/FileManager/getFile?fileid=" + rsdata.id)});
               return true;
@@ -892,24 +906,24 @@ Ext.define('PSI.FileManager.MainForm', {
     Ext.get(window).un('beforeunload', me.onWindowBeforeUnload);
   },
   //清空查询条件
-  onClearQuery:function () {
+  onClearQuery: function () {
     var me = this;
 
     Ext.getCmp("editQueryName").setValue(null);
     Ext.getCmp("editQueryType").setValue(1);
   },
   //创建查询窗口
-  onQuery:function () {
+  onQuery: function () {
     var me = this;
 
     var name = Ext.getCmp("editQueryName").getValue();
     var type = Ext.getCmp("editQueryType").getValue();
 
-    var window = Ext.create("PSI.FileManager.FileQueryForm",{
+    var window = Ext.create("PSI.FileManager.FileQueryForm", {
       parentForm: me,
       entity: {
-        name:name,
-        type:type
+        name: name,
+        type: type
       }
     });
     window.show();
