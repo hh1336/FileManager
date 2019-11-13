@@ -9,6 +9,7 @@ Ext.define("PSI.FileManager.EditFileForm", {
   initComponent: function () {
     var me = this;
     var entity = me.getEntity();
+    console.log(entity);
 
     var t = "编辑文件";
     var f = "edit-form-create.png";
@@ -80,6 +81,13 @@ Ext.define("PSI.FileManager.EditFileForm", {
             fieldLabel: "文件名称:",
             name: "fileName",
             value: entity["Name"]
+          },
+          {
+            fieldLabel: "文件编码:",
+            id: "fileCode",
+            name:"fileCode",
+            width: 450,
+            value: entity["fileCode"]
           },
           {
             id: "PSI_FileManager_EditFileForm_actionInfo",

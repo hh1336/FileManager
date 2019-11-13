@@ -148,7 +148,8 @@ class FileManagerController extends PSIBaseController
       $params = [
         "path" => I("post.name"),
         "parent_dir_id" => I("post.parentDirID"),
-        "action_info" => I("post.actionInfo")
+        "action_info" => I("post.actionInfo"),
+        "file_code" => I("post.fileCode")
       ];
 
       $suffixService = new SuffixConfigService();
@@ -182,6 +183,8 @@ class FileManagerController extends PSIBaseController
         $rs["success"] = true;
         $rs["fileId"] = $params["data"]["id"];
         $fms->setFileSize($params["data"]["id"], $info["file"]["size"]);
+        $data["id"] = $params["data"]["id"];
+        $fms->convertFile($data);
         $this->ajaxReturn($rs);
 
       }
@@ -196,7 +199,8 @@ class FileManagerController extends PSIBaseController
         "id" => I("post.fileId"),
         "action_info" => I("post.actionInfo"),
         "path" => I("post.path"),
-        "file_name" => I("post.fileName")
+        "file_name" => I("post.fileName"),
+        "file_code" => I("post.fileCode")
       ];
 
       $info = "";

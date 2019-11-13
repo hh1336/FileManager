@@ -130,4 +130,35 @@ class PSIBaseExDAO extends PSIBaseDAO
   {
     return strlen($s) > $length;
   }
+
+  /**
+   * 返回权限不足
+   * @return mixed
+   */
+  protected function notPermission(){
+    $msg = "权限不足";
+    return $this->failAction($msg);
+  }
+
+  /**
+   * 返回一个操作失败的信息
+   * @param $msg
+   * @return mixed
+   */
+  protected function failAction($msg){
+    $rs["success"] = false;
+    $rs["msg"] = $msg;
+    return $rs;
+  }
+
+  /**
+   * 返回一个成功的操作
+   * @param $msg
+   * @return mixed
+   */
+  protected function successAction($msg){
+    $rs["success"] = true;
+    $rs["msg"] = $msg;
+    return $rs;
+  }
 }

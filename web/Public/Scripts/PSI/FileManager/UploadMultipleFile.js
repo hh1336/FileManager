@@ -78,6 +78,11 @@ Ext.define("PSI.FileManager.UploadMultipleFile", {
             value: "<div id='filesInfo'></div>&nbsp;<a href='javascript:;' id='cleanFiles'>清空文件</a>"
           },
           {
+            fieldLabel: "文件编码:",
+            id: "fileCode",
+            width: 500,
+          },
+          {
             id: "actionInfo",
             fieldLabel: "描述:",
             xtype: "textarea",
@@ -135,8 +140,6 @@ Ext.define("PSI.FileManager.UploadMultipleFile", {
   initUploadcomponment: function () {
     var me = this;
     var entity = me.getEntity();
-    var parentDirId = entity["Name"] == "../" ? entity["parentDirID"] : entity["id2"];
-    var actionInfo = Ext.getCmp("actionInfo").getValue();
     var el = me.getEl() || Ext.getBody();
     me.ajax({
       url: me.URL("Home/SuffixConfig/loadSuffix"),
@@ -153,10 +156,6 @@ Ext.define("PSI.FileManager.UploadMultipleFile", {
           url: me.URL("Home/FileManager/upFile"),
           flash_swf_url: me.URL("Public/plupload/Moxie.swf"),
           silverlight_xap_url: me.URL("Public/plupload/Moxie.xap"),
-          multipart_params: {
-            parentDirID: parentDirId,
-            actionInfo: actionInfo
-          },
           filters: {
             max_file_size: '200mb',
             mime_types: mime_types,
@@ -171,6 +170,16 @@ Ext.define("PSI.FileManager.UploadMultipleFile", {
                 } else if (count == 0) {
                   me.showInfo("没有要上传的文件");
                 } else {
+                  var parentDirId = entity["Name"] == "../" ? entity["parentDirID"] : entity["id2"];
+                  var actionInfo = Ext.getCmp("actionInfo").getValue();
+                  var fileCode = Ext.getCmp("fileCode").getValue();
+                  uploader.setOption({
+                    multipart_params:{
+                      parentDirID: parentDirId,
+                      actionInfo: actionInfo,
+                      fileCode:fileCode
+                    }
+                  });
                   uploader.start();
                   el.mask("上传中，请稍等");
                 }
@@ -178,8 +187,7 @@ Ext.define("PSI.FileManager.UploadMultipleFile", {
               };
               document.getElementById("cleanFiles").onclick = function (e) {
                 e.preventDefault();
-                uploader.splice(0,uploader.files.length);
-                console.log(uploader);
+                uploader.splice(0, uploader.files.length);
                 document.getElementById("filesInfo").innerHTML = "";
               };
             },
@@ -197,18 +205,7 @@ Ext.define("PSI.FileManager.UploadMultipleFile", {
         });
 
         uploader.init();
-        uploader.bind("FileUploaded", function (uploader, file, responseObject) {
-          var data = me.decodeJSON(responseObject.response);
-          if (!data.success) {
-            return me.showInfo(data.msg);
-          }
-          me.ajax({
-            url: me.URL("Home/FileManager/convertFile"),
-            params: {
-              id: data.fileId
-            }
-          });
-        });
+
         uploader.bind("UploadComplete", function (uploader, file) {
           me.close();
           me.getParentForm().freshFileGrid();

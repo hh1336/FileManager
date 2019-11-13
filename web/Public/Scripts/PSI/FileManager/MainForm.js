@@ -179,7 +179,7 @@ Ext.define('PSI.FileManager.MainForm', {
       extend: "Ext.data.Model",
       fields: ["id", "id2", "children", "actionUserID", "actionTime", "parentDirID",
         "userName", "actionInfo", "leaf", "Version", "Name", "fileSize", "fileSuffix",
-        "createUserName", "createTime"
+        "createUserName", "createTime","fileCode"
       ]
     });
 

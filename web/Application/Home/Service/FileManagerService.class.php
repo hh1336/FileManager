@@ -12,8 +12,8 @@ class FileManagerService extends PSIBaseExService
     if ($this->isNotOnline()) {
       return $this->emptyResult();
     }
-    $us = new UserService();
-    $params["login_user_id"] = $us->getLoginUserId();
+
+    $params["login_user_id"] = $this->getLoginUserId();
     $dao = new FileManagerDAO($this->db());
     //$tree_data = $dao->loadTree($params);
     $tree_data = $dao->loadDir($params);
@@ -34,8 +34,7 @@ class FileManagerService extends PSIBaseExService
     if ($this->isNotOnline()) {
       return $this->emptyResult();
     }
-    $us = new UserService();
-    $params["login_user_id"] = $us->getLoginUserId();
+    $params["login_user_id"] = $this->getLoginUserId();
     $dao = new FileManagerDAO($this->db());
     return $dao->queryFiles($params);
   }
@@ -45,11 +44,8 @@ class FileManagerService extends PSIBaseExService
     if ($this->isNotOnline()) {
       return $this->emptyResult();
     }
-    $us = new UserService();
-    if (!$us->hasPermission(FIdConst::WJGL_CKCZJL)) {
-      $rs["msg"] = "没有权限";
-      $rs["success"] = false;
-      return $rs;
+    if (!$this->hasPermission(FIdConst::WJGL_CKCZJL)) {
+      return $this->notPermission();
     }
     $logService = new FileManagerlogService();
     $rs = $logService->loadLog($params);
@@ -61,17 +57,16 @@ class FileManagerService extends PSIBaseExService
     if ($this->isNotOnline()) {
       return $this->emptyResult();
     }
-    $us = new UserService();
-    if (!$us->hasPermission(FIdConst::WJGL_BBHT)) {
-      $rs["msg"] = "没有权限";
-      $rs["success"] = false;
-      return $rs;
+
+    if (!$this->hasPermission(FIdConst::WJGL_BBHT)) {
+      return $this->notPermission();
     }
     $logService = new FileManagerlogService();
     return $logService->backLog($params);
   }
 
-  /**创建目录
+  /**
+   * 创建目录
    * @param $params
    * @return array
    */
@@ -81,10 +76,10 @@ class FileManagerService extends PSIBaseExService
       return $this->emptyResult();
     }
     $dao = new FileManagerDAO($this->db());
-    $params["log_info"] = empty($params["id"]) ? "创建文件夹[" . $params["dir_name"] . "]" :
+    $params["log_info"] = empty($params["id"]) ?
+      "创建文件夹[" . $params["dir_name"] . "]" :
       "编辑文件夹[" . $params["dir_name"] . "]";
-    $logService = new FileManagerlogService();
-    $logService->log($params);
+    $this->logAction($params);
 
     return $dao->createDir($params);
 
@@ -96,9 +91,10 @@ class FileManagerService extends PSIBaseExService
       return $this->emptyResult();
     }
     $dao = new FileManagerDAO($this->db());
-    $params["log_info"] = "移动[" . $params["name"] . "]--->[" . $params["to_dir_name"] . "]";
-    $logService = new FileManagerlogService();
-    $logService->log($params);
+    $params["log_info"] = "移动[" . $params["name"] . "]
+    --->[" . $params["to_dir_name"] . "]";
+
+    $this->logAction($params);
     return $dao->moveFiles($params);
   }
 
@@ -118,8 +114,7 @@ class FileManagerService extends PSIBaseExService
     }
     $dao = new FileManagerDAO($this->db());
     $params["log_info"] = "删除文件夹[" . $params["name"] . "]";
-    $logService = new FileManagerlogService();
-    $logService->log($params);
+    $this->logAction($params);
     return $dao->deleteDir($params);
   }
 
@@ -130,8 +125,7 @@ class FileManagerService extends PSIBaseExService
     }
     $dao = new FileManagerDAO($this->db());
     $params["log_info"] = "删除文件[" . $params["name"] . "]";
-    $logService = new FileManagerlogService();
-    $logService->log($params);
+    $this->logAction($params);
     return $dao->deleteFile($params);
   }
 
@@ -149,27 +143,20 @@ class FileManagerService extends PSIBaseExService
     if ($this->isNotOnline()) {
       return $this->emptyResult();
     }
-    $rs["success"] = false;
-    $rs["msg"] = "";
-    $us = new UserService();
     $params["file_suffix"] = substr($params["path"],
       (strripos($params["path"], '.') + 1), strlen($params["path"]));
     $params["file_name"] = substr($params["path"], 0, (-1 - strlen($params["file_suffix"])));
-    if (!$us->hasPermission(FIdConst::WJGL_UP_FILE)) {
-      $rs["msg"] = "没有权限";
-      return $rs;
+    if (!$this->hasPermission(FIdConst::WJGL_UP_FILE)) {
+      return $this->notPermission();
     }
 
     if (!in_array(strtolower($params["file_suffix"]), $arr)) {
-      $rs["msg"] = "非法文件，请上传有效格式";
-      return $rs;
+      return $this->failAction("非法文件，请上传有效格式");
     }
     $dao = new FileManagerDAO($this->db());
     $params["log_info"] = "上传文件[" . $params["file_name"] . "." . $params["file_suffix"] . "]";
-    $logService = new FileManagerlogService();
-    $logService->log($params);
-    $dao->upLoadFile($params, $rs);
-    return $rs;
+    $this->logAction($params);
+    return $dao->upLoadFile($params);
   }
 
   public function editFile($params, $info)
@@ -177,16 +164,13 @@ class FileManagerService extends PSIBaseExService
     if ($this->isNotOnline()) {
       return $this->emptyResult();
     }
-    $rs["success"] = false;
-    $us = new UserService();
-    if (!$us->hasPermission(FIdConst::WJGL_DEL_FILE)) {
-      $rs["msg"] = "没有权限";
-      return $rs;
+
+    if (!$this->hasPermission(FIdConst::WJGL_DEL_FILE)) {
+      return $this->notPermission();
     }
 
     $params["log_info"] = "编辑文件[" . $params["file_name"] . "]";
-    $logService = new FileManagerlogService();
-    $logService->log($params);
+    $this->logAction($params);
     $dao = new FileManagerDAO($this->db());
     return $dao->editFile($params, $info);
   }
@@ -205,12 +189,8 @@ class FileManagerService extends PSIBaseExService
     if ($this->isNotOnline()) {
       return $this->emptyResult();
     }
-    $rs["success"] = false;
-    $rs["msg"] = "";
-    $us = new UserService();
-    if (!$us->hasPermission(FIdConst::WJGL_YL_FILE)) {
-      $rs["msg"] = "没有权限";
-      return $rs;
+    if (!$this->hasPermission(FIdConst::WJGL_YL_FILE)) {
+      return $this->notPermission();
     }
     $dao = new FileManagerDAO($this->db());
     return $dao->convertFile($params);
@@ -227,24 +207,19 @@ class FileManagerService extends PSIBaseExService
 
   public function getPathById($params)
   {
-    $rs["success"] = false;
-    $us = new UserService();
     if ($this->isNotOnline()) {
       return $this->emptyResult();
     }
-    if (!$us->hasPermission(FIdConst::WJGL_DOWN_FILE)) {
-      $rs["msg"] = "权限不足";
-      return $rs;
+    if (!$this->hasPermission(FIdConst::WJGL_DOWN_FILE)) {
+      return $this->notPermission();
     }
     if (!count($params)) {
-      $rs["msg"] = "请刷新重试";
-      return $rs;
+      return $this->failAction("请刷新重试");
     }
     $dao = new FileManagerDAO($this->db());
     $paths = $dao->getPathById($params);
     if (!count($paths)) {
-      $rs["msg"] = "请刷新重试";
-      return $rs;
+      return $this->failAction("请刷新重试");
     }
     $rs["success"] = true;
     $rs["paths"] = $paths;
@@ -253,14 +228,11 @@ class FileManagerService extends PSIBaseExService
 
   public function revokeFile($params)
   {
-    $rs["success"] = false;
-    $us = new UserService();
     if ($this->isNotOnline()) {
       return $this->emptyResult();
     }
-    if (!$us->hasPermission(FIdConst::WJGL_BBHT)) {
-      $rs["msg"] = "权限不足";
-      return $rs;
+    if (!$this->hasPermission(FIdConst::WJGL_BBHT)) {
+      return $this->notPermission();
     }
     $params["log_info"] = "撤回文件[" . $params["name"] . "]";
     $logService = new FileManagerlogService();

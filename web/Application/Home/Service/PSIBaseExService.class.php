@@ -10,6 +10,7 @@ namespace Home\Service;
 class PSIBaseExService extends PSIBaseService
 {
   private $userService = null;
+  private $actionLog = null;
 
   private function us()
   {
@@ -18,6 +19,34 @@ class PSIBaseExService extends PSIBaseService
     }
 
     return $this->userService;
+  }
+
+  private function al()
+  {
+    if(!$this->actionLog){
+      $this->actionLog = new FileManagerlogService();
+    }
+
+    return $this->actionLog;
+  }
+
+  /**
+   * 验证用户权限
+   * @param null $fid
+   * @return bool
+   */
+  protected function hasPermission($fid = null){
+    $us = $this->us();
+    return $us->hasPermission($fid);
+  }
+
+  /**
+   * 记录用户操作
+   * @param $params
+   */
+  protected function logAction(&$params){
+    $al = $this->al();
+    return $al->log($params);
   }
 
   /**
@@ -57,6 +86,28 @@ class PSIBaseExService extends PSIBaseService
     $us = $this->us();
     return $us->getCompanyId();
   }
+
+  /**
+   * 返回权限不足
+   * @return mixed
+   */
+  protected function notPermission(){
+    $msg = "权限不足";
+    return $this->failAction($msg);
+  }
+
+  /**
+   * 返回一个操作失败的信息
+   * @param $msg
+   * @return mixed
+   */
+  protected function failAction($msg){
+    $rs["success"] = false;
+    $rs["msg"] = $msg;
+    return $rs;
+  }
+
+
 
   /**
    * 数据库操作类

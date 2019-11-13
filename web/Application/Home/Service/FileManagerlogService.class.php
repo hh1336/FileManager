@@ -7,19 +7,20 @@ use Home\DAO\FileManagerlogDAO;
 class FileManagerlogService extends PSIBaseExService
 {
 
-  /**记录log
+  /**
+   * 记录log
    * @param $params
    */
   public function log(&$params)
   {
     $dao = new FileManagerlogDAO($this->db());
-    $us = new UserService();
-    $params["login_user_id"] = $us->getLoginUserId();
+    $params["login_user_id"] = $this->getLoginUserId();
 
     $dao->log($params);
   }
 
-  /**删除记录
+  /**
+   * 删除记录
    * @param $id
    * @param $db
    */
@@ -29,7 +30,8 @@ class FileManagerlogService extends PSIBaseExService
     $dao->deleteLog($id);
   }
 
-  /**添加操作记录
+  /**
+   * 添加操作记录
    * @param $params
    */
   public function addLogAction($params)
@@ -38,20 +40,22 @@ class FileManagerlogService extends PSIBaseExService
     $dao->addLogAction($params);
   }
 
-  /**加载版本
+  /**
+   * 加载版本
    * @param $params
    * @return mixed
    */
   public function loadLog($params)
   {
     $dao = new FileManagerlogDAO($this->db());
-    $us = new UserService();
-    $params["login_user_id"] = $us->getLoginUserId();
+    $params["login_user_id"] = $this->getLoginUserId();
     return $dao->loadLog($params);
   }
 
-  /**撤销某个版本
+  /**
+   * 撤销某个版本
    * @param $params
+   * @return mixed
    */
   public function backLog($params){
     $dao = new FileManagerlogDAO($this->db());

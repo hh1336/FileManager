@@ -33,6 +33,8 @@ class FileManagerPermissionDAO extends PSIBaseExDAO
   public function setRolePermission($params)
   {
     $db = $this->db;
+    $params["role_id"] = $db->query("select role_id from t_role_user where user_id = '%s'",
+      $params["login_id"])[0]["role_id"];
 
     $file_fid = "";//得到文件的外键id
     $is_file = $db->query("select file_fid from t_file_info where id = '%s'", $params['file_id']);
@@ -71,10 +73,8 @@ class FileManagerPermissionDAO extends PSIBaseExDAO
       $this->setRolePermission($params);
     }
 
-
-    $rs["success"] = true;
-    $rs["msg"] = "操作成功";
-    return $rs;
+    $msg = "操作成功";
+    return $this->successAction($msg);
   }
 
   public function hasPermission($params)

@@ -58,7 +58,7 @@ class FileManagerlogDAO extends PSIBaseExDAO
       if (!count($is_dir)) {//查看文件历史
         $sql = "select	fi.id,concat(fi.file_name,'.',fi.file_suffix) as name,
 	      fi.action_time,	fi.action_user_id,	fi.action_info,	u.name as action_user_name,
-	      	'file' as type, fi.is_del,cu.name as create_user_name,fi.create_time
+	      	'file' as type, fi.is_del,cu.name as create_user_name,fi.create_time,fi.file_code
         from	t_file_info as fi 
         left join t_user as u on fi.action_user_id = u.id
         left join t_user as cu on cu.id = fi.create_user_id
@@ -110,12 +110,11 @@ class FileManagerlogDAO extends PSIBaseExDAO
   public function backVersion($params)
   {
     $db = $this->db;
-    $rs["success"] = false;
 
     $toVersion = $db->query("select * from t_log where id = '%s' and is_del = 0", $params["id"]);
     if (!count($toVersion)) {
-      $rs["msg"] = "没有对应版本，请刷新";
-      return $rs;
+      $msg = "没有对应版本，请刷新";
+      return $this->failAction($msg);
     }
 
     $versions = $db->query("select id,action_time from t_log where action_time >= '%s' and is_del = 0 
@@ -133,13 +132,12 @@ class FileManagerlogDAO extends PSIBaseExDAO
       }
     } catch (Exception $e) {
       $db->rollback();
-      $rs["msg"] = "操作失败：" + $e->getMessage();
-      return $rs;
+      $msg = "操作失败：" + $e->getMessage();
+      return $this->failAction($msg);
     }
-    $rs["success"] = true;
-    $rs["msg"] = "操作成功";
+    $msg = "操作成功";
     $db->commit();
-    return $rs;
+    return $this->successAction($msg);
   }
 
   private function backAction($params, &$db)
@@ -169,8 +167,8 @@ class FileManagerlogDAO extends PSIBaseExDAO
         $db->execute("delete from t_file_info where id = '%s'", $params["file_id"]);
         $sql = "insert into t_useless_data
             (id, file_name, file_path, file_size, file_suffix, parent_dir_id, file_version,
-            file_fid, action_user_id, action_time, is_del,create_user_id,create_time, action_info) 
-            values ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s','%s','%s')";
+            file_fid, action_user_id, action_time, is_del,create_user_id,create_time, action_info,file_code) 
+            values ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s','%s','%s','%s')";
 
         $rs_info = $db->execute($sql, $info[0]);
         if (!$rs_info) {
@@ -190,7 +188,6 @@ class FileManagerlogDAO extends PSIBaseExDAO
   public function revokeFile($params)
   {
     $db = $this->db;
-    $rs['success'] = false;
     $old_file_info = $db->query("select * from t_file_info where id = '%s' and is_del = 1000", $params['id']);
 
     //验证目录是否存在相同文件
@@ -199,8 +196,8 @@ class FileManagerlogDAO extends PSIBaseExDAO
       $old_file_info[0]["parent_dir_id"], $old_file_info[0]["file_name"], $old_file_info[0]["file_suffix"]);
     if (count($is_container)) {
       $this->deleteLog($params["log_id"]);
-      $rs["msg"] = "当前目录存在相同文件[" . $old_file_info[0]["file_name"] . "]，无法撤回，";
-      return $rs;
+      $msg = "当前目录存在相同文件[" . $old_file_info[0]["file_name"] . "]，无法撤回，";
+      return $this->failAction($msg);
     }
 
 
@@ -220,8 +217,8 @@ class FileManagerlogDAO extends PSIBaseExDAO
 
       $insert_sql = "insert into t_file_info 
         (id, file_name, file_path, file_size, file_suffix, parent_dir_id, file_version,
-        file_fid,action_user_id, action_time, is_del,create_user_id,create_time, action_info)
-        values	( '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s','%s','%s')";
+        file_fid,action_user_id, action_time, is_del,create_user_id,create_time, action_info,file_code)
+        values	( '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s','%s','%s','%s')";
 
       $old_file_path = $old_file_info[0]["file_path"];
       $old_file_version = $old_file_info[0]["file_version"];
@@ -235,8 +232,9 @@ class FileManagerlogDAO extends PSIBaseExDAO
       $info = $db->execute($insert_sql, $old_file_info[0]);
       if (!$info) {
         $this->delLog($params["log_id"]);
-        $rs["msg"] = "操作失败";
+        $msg = "操作失败";
         $db->rollback();
+        return $this->failAction($msg);
       } else {
         copy($old_file_path . $old_file_version . "." . $old_file_info[0]["file_suffix"],
           $now_file_info[0]["file_path"] . $old_file_info[0]["file_version"] .
@@ -247,15 +245,14 @@ class FileManagerlogDAO extends PSIBaseExDAO
         $data["log_id"] = $params["log_id"];
         $this->addLogAction($data);
         $db->commit();
-        $rs["msg"] = "操作成功";
-        $rs["success"] = true;
-        return $rs;
+        $msg = "操作成功";
+        return $this->successAction($msg);
       }
 
     } else {
       $this->delLog($params["log_id"]);
-      $rs["msg"] = "请选择旧版本";
-      return $rs;
+      $msg = "请选择旧版本";
+      return $this->failAction($msg);
     }
 
   }

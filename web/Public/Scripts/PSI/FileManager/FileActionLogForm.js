@@ -7,7 +7,8 @@ Ext.define("PSI.FileManager.FileActionLogForm", {
     var modelName = "ActionLogModel";
     Ext.define(modelName, {
       extend: "Ext.data.Model",
-      fields: ['id', 'action_time', 'action_user_id', 'action_info', 'action_user_name', 'type', 'name']
+      fields: ['id', 'action_time', 'action_user_id', 'action_info',
+        'action_user_name', 'type', 'name',"file_code"]
     });
 
     var myStore = Ext.create('Ext.data.Store', {
@@ -74,20 +75,9 @@ Ext.define("PSI.FileManager.FileActionLogForm", {
           },
           items: [
             {
-              text: '版本号',
-              width: "10%",
-              dataIndex: "id",
-              renderer: function (value) {
-                var version = value.slice(0, 8);
-                var html = "<a href='#'>" + version + " </a>";
-                return html;
-              },
-              listeners: {
-                click: {
-                  fn: me.lookOldVersion,
-                  scope: me
-                }
-              }
+              text: '文件编码',
+              dataIndex: "file_code",
+              width: "10%"
             },
             {
               text: "名称",
@@ -104,12 +94,28 @@ Ext.define("PSI.FileManager.FileActionLogForm", {
               dataIndex: "action_user_name",
               width: "15%"
             },
+            // {
+            //   text: "预览",
+            //   width: "10%",
+            //   dataIndex: "type",
+            //   renderer: function (value) {
+            //     var html = "<img src='' width='50%' height='50%' class='PSI-fid-2003'/>";
+            //     return html;
+            //   },
+            //   listeners: {
+            //     click: {
+            //       fn: me.lookOldVersion,
+            //       scope: me
+            //     }
+            //   }
+            // },
             {
-              text: "预览",
+              text: '版本号',
               width: "10%",
-              dataIndex: "type",
+              dataIndex: "id",
               renderer: function (value) {
-                var html = "<img src='' width='50%' height='50%' class='PSI-fid-2003'/>";
+                var version = value.slice(0, 8);
+                var html = "<a href='#'>" + version + " </a>";
                 return html;
               },
               listeners: {
