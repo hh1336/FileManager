@@ -81,7 +81,7 @@ class UserController extends PSIBaseController
 
     $this->assign("title", "登录");
 
-    $this->assign("returnPage", I("get.returnPage"));
+    //$this->assign("returnPage", I("get.returnPage"));
 
     $this->assign("year", date("Y"));
 
