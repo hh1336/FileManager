@@ -1,0 +1,50 @@
+<layout name="layout"/>
+
+<style>
+  #DesignContainer, #Preview {
+    position: relative;
+    height: 600px;
+  }
+
+  #DesignContainer div.item, #Preview div.item {
+    position: absolute;
+    width: fit-content;
+    width: -webkit-fit-content;
+    width: -moz-fit-content;
+    text-align: center;
+    line-height: 25px;
+    height: 40px;
+    background-color: white;
+    color: #5e96db;
+    font-weight: 700;
+    font-size: 14px;
+    padding: 3px 6px;
+    border: 1px solid #b4b4b4;
+    cursor: pointer;
+  }
+</style>
+
+<script src="{$uri}Public/jsplumb/jsplumb.min.js?dt={$dtFlag}" type="text/javascript"></script>
+<script src="{$uri}Public/Scripts/PSI/ProcessDesign/MainForm.js?dt={$dtFlag}" type="text/javascript"></script>
+<script src="{$uri}Public/Scripts/PSI/ProcessDesign/AddOrEditProcessForm.js?dt={$dtFlag}"
+        type="text/javascript"></script>
+<script src="{$uri}Public/Scripts/PSI/ProcessDesign/DesignFlowWindow.js?dt={$dtFlag}" type="text/javascript"></script>
+<script src="{$uri}Public/Scripts/PSI/ProcessDesign/SelectUserWindow.js?dt={$dtFlag}" type="text/javascript"></script>
+<script src="{$uri}Public/Scripts/PSI/ProcessDesign/SelectRoleWindow.js?dt={$dtFlag}" type="text/javascript"></script>
+
+<script>
+    Ext.onReady(function () {
+        var app = Ext.create('PSI.App', {
+            userName: "{$loginUserName}",
+            productionName: "{$productionName}",
+            showCopyright: true
+        })
+        app.add(Ext.create('PSI.ProcessDesign.MainForm', {
+            AddDir: "{$AddDir}",
+        }));
+        app.setAppHeader({
+            title: "{$title}",
+            iconCls: "PSI-fid--0202"
+        });
+    })
+</script>

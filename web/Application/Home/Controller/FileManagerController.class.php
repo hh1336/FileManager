@@ -253,7 +253,10 @@ class FileManagerController extends PSIBaseController
 
 
         if (in_array(strtolower($data["file_suffix"]), $officeType) || $data["file_suffix"] == "pdf") {
-
+          //解决跨域请求问题
+          header("Access-Control-Allow-Origin: *");
+          header('Access-Control-Allow-Headers: X-Requested-With,X_Requested_With');
+          header("Content-type: text/json; charset=utf-8");
           //按照字节大小返回
           header("Accept-Ranges: bytes");
           header("Pragma:No-cache;");

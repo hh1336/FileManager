@@ -305,7 +305,7 @@ Ext.define('PSI.FileManager.MainForm', {
       }
     });
 
-    var itemmenu = new Ext.menu.Menu();
+    let itemmenu = new Ext.menu.Menu();
     itemmenu.add({text: "下载", handler: me.itemContextClick, scope: me}, "-");
     itemmenu.add({text: "查看历史版本", handler: me.onLookFileLog, scope: me});
     if (!(me.getFilePermission() == "0")) {
@@ -313,7 +313,7 @@ Ext.define('PSI.FileManager.MainForm', {
     }
     itemmenu.add("-", {text: "刷新", handler: me.freshFileGrid, scope: me});
 
-    var treemenu = new Ext.menu.Menu();
+    let treemenu = new Ext.menu.Menu();
     treemenu.add({text: "新建文件夹", handler: me.containercontext, scope: me, cls: "PSI"}, "-");
     treemenu.add({
       text: "上传文件", handler: function () {
@@ -560,7 +560,6 @@ Ext.define('PSI.FileManager.MainForm', {
     var data = selected.map[id].data;
     data["action"] = action;
     return data;
-
   },
   //添加文件夹事件
   onAddDir: function () {

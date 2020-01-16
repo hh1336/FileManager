@@ -145,7 +145,7 @@ class PSIBaseExDAO extends PSIBaseDAO
    * @param $msg
    * @return mixed
    */
-  protected function failAction($msg){
+  protected function failAction($msg = ""){
     $rs["success"] = false;
     $rs["msg"] = $msg;
     return $rs;
@@ -156,9 +156,10 @@ class PSIBaseExDAO extends PSIBaseDAO
    * @param $msg
    * @return mixed
    */
-  protected function successAction($msg){
+  protected function successAction($msg = "",$other = []){
     $rs["success"] = true;
     $rs["msg"] = $msg;
+    $rs["data"] = $other;
     return $rs;
   }
 }

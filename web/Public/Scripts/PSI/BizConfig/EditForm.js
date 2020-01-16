@@ -101,7 +101,7 @@ Ext.define("PSI.BizConfig.EditForm", {
                 xtype: "panel",
                 width: "100%",
                 border: 0,
-                html: "<div class='x-form-display-field'>其他类型</div>"
+                html: "<div class='x-form-display-field'>其他可上传类型</div>"
               },
               {
                 id: "otherSuffix",
@@ -110,43 +110,102 @@ Ext.define("PSI.BizConfig.EditForm", {
 
             ]
           },
+          //--------
           {
-          title: "公司",
-          border: 0,
-          layout: "form",
-          iconCls: "PSI-fid2008",
-          items: [{
-            id: "editName9000-01",
-            xtype: "displayfield"
-          }, {
-            id: "editValue9000-01",
-            xtype: "textfield"
-          }, {
-            id: "editName9000-02",
-            xtype: "displayfield"
-          }, {
-            id: "editValue9000-02",
-            xtype: "textfield"
-          }, {
-            id: "editName9000-03",
-            xtype: "displayfield"
-          }, {
-            id: "editValue9000-03",
-            xtype: "textfield"
-          }, {
-            id: "editName9000-04",
-            xtype: "displayfield"
-          }, {
-            id: "editValue9000-04",
-            xtype: "textfield"
-          }, {
-            id: "editName9000-05",
-            xtype: "displayfield"
-          }, {
-            id: "editValue9000-05",
-            xtype: "textfield"
-          }]
-        },
+            title: "审核功能",
+            border: 0,
+            layout: "form",
+            items: [
+              {
+                xtype: 'checkboxgroup',
+                fieldLabel: '开启审核功能',
+                columns: 1,
+                vertical: true,
+                items: [
+                  {boxLabel: '开启', name: 'open_reviewing', id: "open_reviewing", inputValue: '1'}
+                ],
+                listeners: {
+                  change: {
+                    fn: function (thisform, newValue) {
+                      if (newValue["open_reviewing"]) {
+                        Ext.getCmp("open_file_reviewing").setDisabled(false);
+                        Ext.getCmp("open_dir_reviewing").setDisabled(false);
+                      } else {
+                        Ext.getCmp("open_file_reviewing").setDisabled(true);
+                        Ext.getCmp("open_dir_reviewing").setDisabled(true);
+                      }
+                    },
+                    scope: me
+                  }
+                }
+              }, {
+                xtype: 'checkboxgroup',
+                fieldLabel: '启用文件审核',
+                columns: 1,
+                vertical: true,
+                items: [
+                  {
+                    boxLabel: '开启',
+                    name: 'open_file_reviewing',
+                    id: "open_file_reviewing",
+                    inputValue: '1',
+                    disabled: true
+                  }
+                ]
+              },
+              {
+                xtype: 'checkboxgroup',
+                fieldLabel: '启用文件夹审核',
+                columns: 1,
+                vertical: true,
+                items: [
+                  {boxLabel: '开启',
+                    name: 'open_dir_reviewing',
+                    id: "open_dir_reviewing",
+                    inputValue: '1',
+                    disabled: true
+                  }
+                ]
+              },
+            ]
+          },
+          {
+            title: "公司",
+            border: 0,
+            layout: "form",
+            iconCls: "PSI-fid2008",
+            items: [{
+              id: "editName9000-01",
+              xtype: "displayfield"
+            }, {
+              id: "editValue9000-01",
+              xtype: "textfield"
+            }, {
+              id: "editName9000-02",
+              xtype: "displayfield"
+            }, {
+              id: "editValue9000-02",
+              xtype: "textfield"
+            }, {
+              id: "editName9000-03",
+              xtype: "displayfield"
+            }, {
+              id: "editValue9000-03",
+              xtype: "textfield"
+            }, {
+              id: "editName9000-04",
+              xtype: "displayfield"
+            }, {
+              id: "editValue9000-04",
+              xtype: "textfield"
+            }, {
+              id: "editName9000-05",
+              xtype: "displayfield"
+            }, {
+              id: "editValue9000-05",
+              xtype: "textfield"
+            }]
+          },
           {
             title: "采购",
             border: 0,
@@ -218,7 +277,6 @@ Ext.define("PSI.BizConfig.EditForm", {
               value: "0"
             }]
           },
-
           {
             title: "销售",
             border: 0,
@@ -305,7 +363,6 @@ Ext.define("PSI.BizConfig.EditForm", {
               value: "0"
             }]
           },
-
           {
             title: "存货",
             border: 0,
@@ -344,7 +401,6 @@ Ext.define("PSI.BizConfig.EditForm", {
               allowDecimals: false
             }]
           },
-
           {
             title: "单号前缀",
             border: 0,
@@ -491,8 +547,24 @@ Ext.define("PSI.BizConfig.EditForm", {
       }
     });
     me.onloadSuffix();
+    me.onloadReview();
     me.callParent(arguments);
   },
+  //加载审核设置
+  onloadReview: function () {
+    var me = this;
+    me.ajax({
+      url: me.URL("Home/ProcessDesign/loadConfig"),
+      success: function (response) {
+        var data = me.decodeJSON(response.responseText);
+        Ext.getCmp("open_reviewing").setValue(data["data"]["0"]["value"]);
+        Ext.getCmp("open_file_reviewing").setValue(data["data"]["1"]["value"]);
+        Ext.getCmp("open_dir_reviewing").setValue(data["data"]["2"]["value"]);
+      }
+    });
+
+  },
+  //加载文件后缀设置
   onloadSuffix: function () {
     var me = this;
 
@@ -552,7 +624,10 @@ Ext.define("PSI.BizConfig.EditForm", {
   onOK: function (thenAdd) {
     var me = this;
     Ext.getBody().mask("正在保存中...");
+    //保存后缀配置
     me.onSaveSuffix(me);
+    //保存流程配置
+    me.onSaveProcessConfig(me);
     Ext.Ajax.request({
       url: PSI.Const.BASE_URL + "Home/BizConfig/edit",
       method: "POST",
@@ -573,6 +648,17 @@ Ext.define("PSI.BizConfig.EditForm", {
         }
       }
     });
+  },
+  //保存流程配置
+  onSaveProcessConfig:function(me){
+      var params = {};
+      params['open_reviewing'] = ~~Ext.getCmp("open_reviewing").getValue();
+      params['open_file_reviewing'] = ~~Ext.getCmp("open_file_reviewing").getValue();
+      params['open_dir_reviewing'] = ~~Ext.getCmp("open_dir_reviewing").getValue();
+      me.ajax({
+        url:me.URL("Home/ProcessDesign/saveConfig"),
+        params:params
+      });
   },
 
   //保存文件类型
