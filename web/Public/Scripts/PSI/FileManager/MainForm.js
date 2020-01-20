@@ -179,7 +179,7 @@ Ext.define('PSI.FileManager.MainForm', {
       extend: "Ext.data.Model",
       fields: ["id", "id2", "children", "actionUserID", "actionTime", "parentDirID",
         "userName", "actionInfo", "leaf", "Version", "Name", "fileSize", "fileSuffix",
-        "createUserName", "createTime","fileCode"
+        "createUserName", "createTime", "fileCode"
       ]
     });
 
@@ -542,8 +542,11 @@ Ext.define('PSI.FileManager.MainForm', {
         title: me.formatGridHeaderTitle("文件预览")
       },
       layout: "column",
-      html: "<iframe id='mainframe' src='' frameborder='0' width='100%' height='100%'></iframe>"
-      //html: "<embed id='mainframe' src='' width='100%' height='100%' type='application/pdf'>"
+      // html: "<iframe id='mainframe' src='' frameborder='0' width='100%' height='100%'></iframe>"
+      // html: "<embed id='mainframe' src='' width='100%' height='100%' type='application/pdf'>"
+      // html: "<embed id='CkplayerContainer' src='" + me.URL("Public/ckplayer/ckplayer.swf") + "' flashvars=''  quality='high' width='480' height='480' align='middle' allowScriptAccess='always' allowFullscreen='false' type='application/x-shockwave-flash'></embed>" +
+      //   "<embed id='mainframe' src='' width='100%' height='100%'>"
+      html:"<div id='CkplayerContainer'></div><embed id='mainframe' src='' width='100%' height='100%'>"
     });
     return me.__filePanel;
   },
@@ -766,10 +769,24 @@ Ext.define('PSI.FileManager.MainForm', {
           if (rsdata.success) {
             var dom = Ext.get("mainframe");
             dom.set({"src": ""});
+            if (rsdata['file_suffix'] == "mp4") {
+              let videoObject = {
+                container: '#CkplayerContainer',//“#”代表容器的ID，“.”或“”代表容器的class
+                variable: 'player',//该属性必需设置，值等于下面的new chplayer()的对象
+                flashplayer: true,//如果强制使用flashplayer则设置成true
+                video: me.URL("Home/FileManager/getFile?fileid=" + rsdata.id)//视频地址
+              };
+              let player = new ckplayer(videoObject);
+              // let d = document.getElementById('CkplayerContainer');
+              // d.setAttribute('flashvars', me.URL("Home/FileManager/getFile?fileid=" + rsdata.id));
+
+              return;
+            }
             if (!(rsdata.file_suffix == "pdf")) {
               dom.set({"src": me.URL("Home/FileManager/getFile?fileid=" + rsdata.id)});
               return true;
             }
+
             dom.set({"src": me.URL("Public/pdfjs/web/viewer.html?file=" + me.URL("Home/FileManager/getFile/fileid/" + rsdata.id))})
           } else {
             me.showInfo(rsdata.msg);

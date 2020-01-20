@@ -584,7 +584,7 @@ class FileManagerDAO extends PSIBaseExDAO
       $data["file_id"] = $dir_info[0]["id"];
       if (!$permissionService->hasPermission($data, FIdConst::WJGL_MOVE_DIR)) {
         $logService->deleteLog($params["log_id"]);
-        $msg = "你没有权限对[".$dir_info[0]["file_name"]."]这个文件进行移动的权限。";
+        $msg = "你没有权限对[" . $dir_info[0]["file_name"] . "]这个文件进行移动的权限。";
         return $this->failAction($msg);
       }
 
@@ -604,7 +604,7 @@ class FileManagerDAO extends PSIBaseExDAO
       $data["file_id"] = $file_info[0]["id"];
       if (!$permissionService->hasPermission($data, FIdConst::WJGL_MOVE_FILE)) {
         $logService->deleteLog($params["log_id"]);
-        $msg = "你没有权限对[".$file_info[0]["file_name"]."]这个文件进行移动的权限。";
+        $msg = "你没有权限对[" . $file_info[0]["file_name"] . "]这个文件进行移动的权限。";
         return $this->failAction($msg);
       }
 
@@ -614,8 +614,8 @@ class FileManagerDAO extends PSIBaseExDAO
         $dir_info["id"], $file_info[0]["file_name"], $file_info[0]["file_suffix"]);
       if (count($is_container)) {
         $logService->deleteLog($params["log_id"]);
-        $msg = "文件夹[".$dir_info["dir_name"]."]中，
-        已存在名为[".$file_info[0]["file_name"]."]的文件";
+        $msg = "文件夹[" . $dir_info["dir_name"] . "]中，
+        已存在名为[" . $file_info[0]["file_name"] . "]的文件";
         return $this->failAction($msg);
       }
 
@@ -799,7 +799,7 @@ class FileManagerDAO extends PSIBaseExDAO
     $logService->deleteLog($params["log_id"]);
     $sql = "delete from t_file_info where id = '%s';
             delete from t_log_action where log_id = '%s'";
-    $db->execute(" ", $params["id"],$params["log_id"]);
+    $db->execute($sql, $params["id"], $params["log_id"]);
   }
 
   /**
@@ -1092,6 +1092,7 @@ class FileManagerDAO extends PSIBaseExDAO
     $suffixService = new SuffixConfigService();
     $officeType = $suffixService->getSuffixs('office');
     $imgType = $suffixService->getSuffixs('picture');
+    $move = array('mp4', 'avi', 'flv', 'wmv', 'mkv');
     $data = $db->query($sql, $params);
     if (!$data) {
       $msg = "文件已不存在";
@@ -1107,6 +1108,14 @@ class FileManagerDAO extends PSIBaseExDAO
     //图片不需要转换
     if (in_array(strtolower($data[0]["file_suffix"]), $imgType) ||
       $data[0]["file_suffix"] == "pdf") {
+      $rs["msg"] = "操作成功";
+      $rs["success"] = true;
+      $rs["id"] = $data[0]["id"];
+      $rs["file_suffix"] = $data[0]['file_suffix'];
+      return $rs;
+    }
+
+    if (in_array(strtolower($data[0]["file_suffix"]), $move)) {
       $rs["msg"] = "操作成功";
       $rs["success"] = true;
       $rs["id"] = $data[0]["id"];
