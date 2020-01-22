@@ -174,10 +174,10 @@ Ext.define("PSI.FileManager.UploadMultipleFile", {
                   var actionInfo = Ext.getCmp("actionInfo").getValue();
                   var fileCode = Ext.getCmp("fileCode").getValue();
                   uploader.setOption({
-                    multipart_params:{
+                    multipart_params: {
                       parentDirID: parentDirId,
                       actionInfo: actionInfo,
-                      fileCode:fileCode
+                      fileCode: fileCode
                     }
                   });
                   uploader.start();
@@ -193,7 +193,6 @@ Ext.define("PSI.FileManager.UploadMultipleFile", {
             },
 
             FilesAdded: function (up, files) {
-
               plupload.each(files, function (file) {
                 document.getElementById("filesInfo").innerHTML +=
                   '<span style="margin-right: 10px;" id="' + file.id + '">' + file.name + ' (' +
@@ -207,9 +206,17 @@ Ext.define("PSI.FileManager.UploadMultipleFile", {
         uploader.init();
 
         uploader.bind("UploadComplete", function (uploader, file) {
-          me.close();
-          me.getParentForm().freshFileGrid();
-          el.unmask();
+          console.log(uploader);
+          console.log(file);
+          me.showInfo("上传完成",function () {
+            me.close();
+            me.getParentForm().freshFileGrid();
+            el.unmask();
+          });
+        });
+        uploader.bind("Error",function (uploader,err) {
+          console.log(uploader);
+          console.log(err);
         })
 
       }

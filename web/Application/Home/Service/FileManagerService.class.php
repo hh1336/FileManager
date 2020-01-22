@@ -20,7 +20,8 @@ class FileManagerService extends PSIBaseExService
     return $tree_data;
   }
 
-  public function queryTree(){
+  public function queryTree()
+  {
     if ($this->isNotOnline()) {
       return $this->emptyResult();
     }
@@ -75,12 +76,37 @@ class FileManagerService extends PSIBaseExService
     if ($this->isNotOnline()) {
       return $this->emptyResult();
     }
+    $permissionService = new FileManagerPermissionService();
+    if ($params["id"]) {
+      if (!$this->hasPermission(FIdConst::WJGL_EDIT_DIR))
+        return $this->notPermission();
+      $data["file_id"] = $params["id"];
+      if (!$permissionService->hasPermission($data, FIdConst::WJGL_EDIT_DIR)) {
+        $msg = "你没有编辑这个文件夹的权限";
+        return $this->failAction($msg);
+      }
+    } else {
+      if (!$this->hasPermission(FIdConst::WJGL_ADD_DIR))
+        return $this->notPermission();
+    }
+
+
+    //检测是否需要发起流程
+    $params['vType'] = "dir";
+    $params['vAction'] = empty($params["id"]) ? 'create' : 'edit';
+    $params['service_name'] = __CLASS__;
+    $params['function_name'] = __FUNCTION__;
+    $pValidation = new ProcessValidationService();
+    if ($pValidation->isOpenValidation($params['vType']) & !isset($params['validated']) ?? true) {//没有经过审核
+      return $pValidation->validation($params);
+    }
+
     $dao = new FileManagerDAO($this->db());
     $params["log_info"] = empty($params["id"]) ?
       "创建文件夹[" . $params["dir_name"] . "]" :
       "编辑文件夹[" . $params["dir_name"] . "]";
-    $this->logAction($params);
 
+    $this->logAction($params);
     return $dao->createDir($params);
 
   }
@@ -112,6 +138,24 @@ class FileManagerService extends PSIBaseExService
     if ($this->isNotOnline()) {
       return $this->emptyResult();
     }
+    if (!$this->hasPermission(FIdConst::WJGL_DEL_DIR))
+      return $this->notPermission();
+    $permissionService = new FileManagerPermissionService();
+
+    $data["file_id"] = $params["id"];
+    if (!$permissionService->hasPermission($data, FIdConst::WJGL_DEL_DIR)) {
+      return $this->notPermission();
+    }
+
+    //检测是否需要发起流程
+    $params['vType'] = "dir";
+    $params['vAction'] = 'delete';
+    $params['service_name'] = __CLASS__;
+    $params['function_name'] = __FUNCTION__;
+    $pValidation = new ProcessValidationService();
+    if ($pValidation->isOpenValidation($params['vType']) & !isset($params['validated']) ?? true) {//没有经过审核
+      return $pValidation->validation($params);
+    }
     $dao = new FileManagerDAO($this->db());
     $params["log_info"] = "删除文件夹[" . $params["name"] . "]";
     $this->logAction($params);
@@ -123,6 +167,28 @@ class FileManagerService extends PSIBaseExService
     if ($this->isNotOnline()) {
       return $this->emptyResult();
     }
+
+    if (!$this->hasPermission(FIdConst::WJGL_DEL_FILE)) {
+      return $this->notPermission();
+    }
+
+    //验证单文件权限
+    $permissionService = new FileManagerPermissionService();
+    $data["file_id"] = $params["id"];
+    if (!$permissionService->hasPermission($data, FIdConst::WJGL_DEL_FILE)) {
+      return $this->notPermission();
+    }
+
+    //检测是否需要发起流程
+    $params['vType'] = "file";
+    $params['vAction'] = 'delete';
+    $params['service_name'] = __CLASS__;
+    $params['function_name'] = __FUNCTION__;
+    $pValidation = new ProcessValidationService();
+    if ($pValidation->isOpenValidation($params['vType']) & !isset($params['validated']) ?? true) {//没有经过审核
+      return $pValidation->validation($params);
+    }
+
     $dao = new FileManagerDAO($this->db());
     $params["log_info"] = "删除文件[" . $params["name"] . "]";
     $this->logAction($params);
@@ -138,25 +204,31 @@ class FileManagerService extends PSIBaseExService
     $dao->cancelUpLoadFile($params);
   }
 
-  public function upLoadFile(&$params, $arr)
+  public function upLoadFile($params)
   {
     if ($this->isNotOnline()) {
       return $this->emptyResult();
     }
-    $params["file_suffix"] = substr($params["path"],
-      (strripos($params["path"], '.') + 1), strlen($params["path"]));
-    $params["file_name"] = substr($params["path"], 0, (-1 - strlen($params["file_suffix"])));
+
     if (!$this->hasPermission(FIdConst::WJGL_UP_FILE)) {
       return $this->notPermission();
     }
-
-    if (!in_array(strtolower($params["file_suffix"]), $arr)) {
-      return $this->failAction("非法文件，请上传有效格式");
+    //检测是否需要发起流程
+    $params['vType'] = "file";
+    $params['vAction'] = 'create';
+    $params['service_name'] = __CLASS__;
+    $params['function_name'] = __FUNCTION__;
+    $pValidation = new ProcessValidationService();
+    if ($pValidation->isOpenValidation($params['vType']) & !isset($params['validated']) ?? true) {//没有经过审核
+      return $pValidation->validation($params);
     }
+
     $dao = new FileManagerDAO($this->db());
-    $params["log_info"] = "上传文件[" . $params["file_name"] . "." . $params["file_suffix"] . "]";
+    $params["log_info"] = "上传文件[" . $params["name"] . "." . $params["suffix"] . "]";
+
     $this->logAction($params);
-    return $dao->upLoadFile($params);
+    $rs = $dao->upLoadFile($params);
+    return $rs;
   }
 
   public function editFile($params, $info)
@@ -167,6 +239,15 @@ class FileManagerService extends PSIBaseExService
 
     if (!$this->hasPermission(FIdConst::WJGL_DEL_FILE)) {
       return $this->notPermission();
+    }
+    //检测是否需要发起流程
+    $params['vType'] = "file";
+    $params['vAction'] = 'edit';
+    $params['service_name'] = __CLASS__;
+    $params['function_name'] = __FUNCTION__;
+    $pValidation = new ProcessValidationService();
+    if ($pValidation->isOpenValidation($params['vType']) & !isset($params['validated']) ?? true) {//没有经过审核
+      return $pValidation->validation($params);
     }
 
     $params["log_info"] = "编辑文件[" . $params["file_name"] . "]";

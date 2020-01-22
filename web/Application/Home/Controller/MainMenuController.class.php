@@ -68,6 +68,11 @@ class MainMenuController extends PSIBaseController
           //流程设计
           redirect(__ROOT__ . "/Home/ProcessDesign/index");
           break;
+          case FIdConst::WJGL_FQLC:
+          //发起流程
+          redirect(__ROOT__ . "/Home/StartFlow/index");
+          break;
+
         case FIdConst::ABOUT:
           // 修改我的密码
           redirect(__ROOT__ . "/Home/About/index");

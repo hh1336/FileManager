@@ -169,6 +169,13 @@ class FIdConst
    */
   const WJGL_LCSZ = "-0202";
 
+  /**
+   *  文件管理-流程设置
+   */
+  const WJGL_FQLC = "-0203";
+
+
+
   /** 文件夹操作
    */
   const WJGL_ADD_DIR = '-9998-02';

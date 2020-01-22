@@ -381,167 +381,156 @@ class FileManagerDAO extends PSIBaseExDAO
       $msg = "文件名为空";
       return $this->failAction($msg);
     }
-    $us = new UserService();
     if ($params["id"]) {//编辑
-      if ($us->hasPermission(FIdConst::WJGL_EDIT_DIR)) {
+      //判断这个文件夹是否存在
+      $dir_info = $db->query("select * from t_dir_info where id = '%s' and is_del = 0", $params["id"]);
 
-        $data["file_id"] = $params["id"];
-        if (!$permissionService->hasPermission($data, FIdConst::WJGL_EDIT_DIR)) {
-          $logService->deleteLog($params["log_id"]);
-          $msg = "你没有编辑这个文件夹的权限";
-          return $this->failAction($msg);
-        }
+      //保存旧id，用来修改子文件夹
+      $old_dir_id = $dir_info[0]["id"];
 
-        //判断这个文件夹是否存在
-        $dir_info = $db->query("select * from t_dir_info where id = '%s' and is_del = 0", $params["id"]);
+      if (!count($dir_info)) {
+        $logService->deleteLog($params["log_id"]);
+        $msg = "文件夹已不存在";
+        return $this->failAction($msg);
+      }
+      if (!$dir_info[0]["parent_dir_id"]) {
+        $logService->deleteLog($params["log_id"]);
+        $msg = "不能编辑根目录";
+        return $this->failAction($msg);
+      }
 
-        //保存旧id，用来修改子文件夹
-        $old_dir_id = $dir_info[0]["id"];
+      $db->startTrans();
+      //修改为已删除
+      $db->execute("update t_dir_info set is_del = 1000 where id = '%s'", $params['id']);
 
-        if (!count($dir_info)) {
-          $logService->deleteLog($params["log_id"]);
-          $msg = "文件夹已不存在";
-          return $this->failAction($msg);
-        }
-        if (!$dir_info[0]["parent_dir_id"]) {
-          $logService->deleteLog($params["log_id"]);
-          $msg = "不能编辑根目录";
-          return $this->failAction($msg);
-        }
+      $logData["log_id"] = $params["log_id"];
+      $logData["action_type"] = "delete";
+      $logData["file_type"] = "dir";
+      $logData["file_id"] = $params['id'];
+      $logService->addLogAction($logData);
 
-        $db->startTrans();
-        //修改为已删除
-        $db->execute("update t_dir_info set is_del = 1000 where id = '%s'", $params['id']);
-
-        $logData["log_id"] = $params["log_id"];
-        $logData["action_type"] = "delete";
-        $logData["file_type"] = "dir";
-        $logData["file_id"] = $params['id'];
-        $logService->addLogAction($logData);
-
-        //构造t_dir_info数据
-        $insert_dir_sql = "insert into t_dir_info ( id, dir_name, dir_path,  dir_version, dir_fid,
+      //构造t_dir_info数据
+      $insert_dir_sql = "insert into t_dir_info ( id, dir_name, dir_path,  dir_version, dir_fid,
                   action_user_id, action_time, is_del,create_user_id,create_time, parent_dir_id, action_info )
                   values	('%s','%s','%s','%s','%s','%s','%s','%d','%s','%s','%s','%s');";
 
-        $dir_info[0]["id"] = $this->newId();
-        $dir_info[0]["dir_name"] = $params["dir_name"];
-        $dir_info[0]["dir_version"] = $this->newId();
-        $dir_info[0]["parent_dir_id"] = $params["parent_dir_id"];
-        $dir_info[0]["action_user_id"] = $params["login_user_id"];
-        $dir_info[0]["action_time"] = Date("Y-m-d H:i:s");
-        $dir_info[0]["action_info"] = $params["action_info"];
+      $dir_info[0]["id"] = $this->newId();
+      $dir_info[0]["dir_name"] = $params["dir_name"];
+      $dir_info[0]["dir_version"] = $this->newId();
+      $dir_info[0]["parent_dir_id"] = $params["parent_dir_id"];
+      $dir_info[0]["action_user_id"] = $params["login_user_id"];
+      $dir_info[0]["action_time"] = Date("Y-m-d H:i:s");
+      $dir_info[0]["action_info"] = $params["action_info"];
 
-        //验证该路径下是否存在相同文件夹
-        $is_dirName = $db->query("select count(*) from t_dir_info
+      //验证该路径下是否存在相同文件夹
+      $is_dirName = $db->query("select count(*) from t_dir_info
             where parent_dir_id = '%s' and is_del = 0 and dir_name in ('%s')",
-          $dir_info[0]["parent_dir_id"], $dir_info[0]["dir_name"]);
-        if ($is_dirName[0]["count(*)"]) {
-          $db->rollback();
-          $logService->deleteLog($params["log_id"]);
-          $msg = "文件夹已存在";
-          return $this->failAction($msg);
-        }
-
-        $logData["action_type"] = "insert";
-        $logData["file_id"] = $dir_info[0]['id'];
-        $logService->addLogAction($logData);
-
-        //构建目录
-        $dir_info[0]["dir_path"] = $this->getFullPath($dir_info[0]["parent_dir_id"], $db) .
-          $dir_info[0]["dir_version"] . "\\";
-
-        $edmkinfo = $db->execute($insert_dir_sql, $dir_info[0]);
-        if (!$edmkinfo) {
-          $db->rollback();
-          $logService->deleteLog($params["log_id"]);
-          $msg = "操作失败";
-          return $this->failAction($msg);
-        }
-
-        //迁移所有文件和文件夹到当前版本
-        $childrenDir = $db->query("select * from t_dir_info where parent_dir_id = '%s' and is_del = 0", $old_dir_id);
-        $this->moveChildrenVersion($childrenDir, $old_dir_id, $dir_info[0]["id"],
-          $db, $params["login_user_id"], $params["action_info"], $logData);
-
-        $db->commit();
-        $msg = "操作成功";
-        return $this->successAction($msg);
+        $dir_info[0]["parent_dir_id"], $dir_info[0]["dir_name"]);
+      if ($is_dirName[0]["count(*)"]) {
+        $db->rollback();
+        $logService->deleteLog($params["log_id"]);
+        $msg = "文件夹已存在";
+        return $this->failAction($msg);
       }
-    } else {
-      if ($us->hasPermission(FIdConst::WJGL_ADD_DIR)) {
-        //开始事务
-        $db->startTrans();
-        //构造数据
-        $data['id'] = $this->newId();
-        $data['dir_name'] = $params['dir_name'];
-        $data['dir_path'] = "/";
-        $data['dir_version'] = $this->newId();
-        $data['dir_fid'] = $this->newId();;
-        $data['action_user_id'] = $params['login_user_id'];
-        $data['action_time'] = Date("Y-m-d H:i:s");
-        $data['is_del'] = 0;
-        $data['parent_dir_id'] = $params['parent_dir_id'];
-        $data['action_info'] = $params['action_info'];
-        $data["create_user_id"] = $params['login_user_id'];
-        $data["create_time"] = Date("Y-m-d H:i:s");
 
-        $dir_info_sql = "insert into t_dir_info
+      $logData["action_type"] = "insert";
+      $logData["file_id"] = $dir_info[0]['id'];
+      $logService->addLogAction($logData);
+
+      //构建目录
+      $dir_info[0]["dir_path"] = $this->getFullPath($dir_info[0]["parent_dir_id"], $db) .
+        $dir_info[0]["dir_version"] . "\\";
+
+      $edmkinfo = $db->execute($insert_dir_sql, $dir_info[0]);
+      if (!$edmkinfo) {
+        $db->rollback();
+        $logService->deleteLog($params["log_id"]);
+        $msg = "操作失败";
+        return $this->failAction($msg);
+      }
+
+      //迁移所有文件和文件夹到当前版本
+      $childrenDir = $db->query("select * from t_dir_info where parent_dir_id = '%s' and is_del = 0", $old_dir_id);
+      $this->moveChildrenVersion($childrenDir, $old_dir_id, $dir_info[0]["id"],
+        $db, $params["login_user_id"], $params["action_info"], $logData);
+
+      $db->commit();
+      $msg = "操作成功";
+      return $this->successAction($msg);
+
+    } else {
+      //开始事务
+      $db->startTrans();
+      //构造数据
+      $data['id'] = $this->newId();
+      $data['dir_name'] = $params['dir_name'];
+      $data['dir_path'] = "/";
+      $data['dir_version'] = $this->newId();
+      $data['dir_fid'] = $this->newId();;
+      $data['action_user_id'] = $params['login_user_id'];
+      $data['action_time'] = Date("Y-m-d H:i:s");
+      $data['is_del'] = 0;
+      $data['parent_dir_id'] = $params['parent_dir_id'];
+      $data['action_info'] = $params['action_info'];
+      $data["create_user_id"] = $params['login_user_id'];
+      $data["create_time"] = Date("Y-m-d H:i:s");
+
+      $dir_info_sql = "insert into t_dir_info
                     (id,dir_name,dir_path,dir_version,dir_fid,action_user_id,action_time,
                     is_del,parent_dir_id,action_info,create_user_id,create_time) 
                     values ('%s','%s','%s','%s','%s','%s','%s','%d','%s','%s','%s','%s')";
-        //判断是否存在上级目录，不存在就设置root为目录
-        $is_parent_id = $db->query("select count(*) from t_dir_info where id = '%s' and is_del = 0",
-          $params['parent_dir_id']);
-        if (!$params['parent_dir_id'] || !$is_parent_id[0]["count(*)"]) {
-          $rootDir = $db->query('select id from t_dir_info where parent_dir_id is null');
-          $data['parent_dir_id'] = $rootDir[0]['id'];
-        } else {
-          //验证单文件权限
-          $data["file_id"] = $params["parent_dir_id"];
-          if (!$permissionService->hasPermission($data, FIdConst::WJGL_ADD_DIR)) {
-            $logService->deleteLog($params["log_id"]);
-            $msg = "你没有在此处创建文件夹的权限";
-            return $this->failAction($msg);
-          }
-        }
-        //验证该路径下是否存在相同文件夹
-        $is_dirName = $db->query("select count(*) from t_dir_info
-        where parent_dir_id = '%s' and is_del = 0 and dir_name in ('%s')", $data["parent_dir_id"], $data["dir_name"]);
-        if ($is_dirName[0]["count(*)"]) {
-          $db->rollback();
+      //判断是否存在上级目录，不存在就设置root为目录
+      $is_parent_id = $db->query("select count(*) from t_dir_info where id = '%s' and is_del = 0",
+        $params['parent_dir_id']);
+      if (!$params['parent_dir_id'] || !$is_parent_id[0]["count(*)"]) {
+        $rootDir = $db->query('select id from t_dir_info where parent_dir_id is null');
+        $data['parent_dir_id'] = $rootDir[0]['id'];
+      } else {
+        //验证单文件权限
+        $data["file_id"] = $params["parent_dir_id"];
+        if (!$permissionService->hasPermission($data, FIdConst::WJGL_ADD_DIR)) {
           $logService->deleteLog($params["log_id"]);
-          $msg = "文件夹已存在";
-          return $this->failAction($msg);
-        }
-
-        //构建路径
-        $data["dir_path"] = $this->getFullPath($data['parent_dir_id'], $db) . $data["dir_version"] . "\\";
-
-        //插入数据
-        $mkinfo = $db->execute($dir_info_sql, $data);
-
-        if ($mkinfo) {
-          //增加日志
-          $logData["log_id"] = $params["log_id"];
-          $logData["action_type"] = "insert";
-          $logData["file_type"] = "dir";
-          $logData["file_id"] = $data["id"];
-          $logService->addLogAction($logData);
-          $db->commit();
-          //上传后给自己设置权限
-          $permissionDara["file_id"] = $data["id"];
-          $permissionDara["checked"] = true;
-          $permissionService->setFileCRUDPermission($permissionDara, "dir");
-          $msg = "操作成功";
-          return $this->successAction($msg);
-        } else {
-          $db->rollback();
-          $logService->deleteLog($params["log_id"]);
-          $msg = "操作失败";
+          $msg = "你没有在此处创建文件夹的权限";
           return $this->failAction($msg);
         }
       }
+      //验证该路径下是否存在相同文件夹
+      $is_dirName = $db->query("select count(*) from t_dir_info
+        where parent_dir_id = '%s' and is_del = 0 and dir_name in ('%s')", $data["parent_dir_id"], $data["dir_name"]);
+      if ($is_dirName[0]["count(*)"]) {
+        $db->rollback();
+        $logService->deleteLog($params["log_id"]);
+        $msg = "文件夹已存在";
+        return $this->failAction($msg);
+      }
+
+      //构建路径
+      $data["dir_path"] = $this->getFullPath($data['parent_dir_id'], $db) . $data["dir_version"] . "\\";
+
+      //插入数据
+      $mkinfo = $db->execute($dir_info_sql, $data);
+
+      if ($mkinfo) {
+        //增加日志
+        $logData["log_id"] = $params["log_id"];
+        $logData["action_type"] = "insert";
+        $logData["file_type"] = "dir";
+        $logData["file_id"] = $data["id"];
+        $logService->addLogAction($logData);
+        $db->commit();
+        //上传后给自己设置权限
+        $permissionDara["file_id"] = $data["id"];
+        $permissionDara["checked"] = true;
+        $permissionService->setFileCRUDPermission($permissionDara, "dir");
+        $msg = "操作成功";
+        return $this->successAction($msg);
+      } else {
+        $db->rollback();
+        $logService->deleteLog($params["log_id"]);
+        $msg = "操作失败";
+        return $this->failAction($msg);
+      }
+
     }
     $logService->deleteLog($params["log_id"]);
     return $this->notPermission();
@@ -584,7 +573,7 @@ class FileManagerDAO extends PSIBaseExDAO
       $data["file_id"] = $dir_info[0]["id"];
       if (!$permissionService->hasPermission($data, FIdConst::WJGL_MOVE_DIR)) {
         $logService->deleteLog($params["log_id"]);
-        $msg = "你没有权限对[".$dir_info[0]["file_name"]."]这个文件进行移动的权限。";
+        $msg = "你没有权限对[" . $dir_info[0]["file_name"] . "]这个文件进行移动的权限。";
         return $this->failAction($msg);
       }
 
@@ -604,7 +593,7 @@ class FileManagerDAO extends PSIBaseExDAO
       $data["file_id"] = $file_info[0]["id"];
       if (!$permissionService->hasPermission($data, FIdConst::WJGL_MOVE_FILE)) {
         $logService->deleteLog($params["log_id"]);
-        $msg = "你没有权限对[".$file_info[0]["file_name"]."]这个文件进行移动的权限。";
+        $msg = "你没有权限对[" . $file_info[0]["file_name"] . "]这个文件进行移动的权限。";
         return $this->failAction($msg);
       }
 
@@ -614,8 +603,8 @@ class FileManagerDAO extends PSIBaseExDAO
         $dir_info["id"], $file_info[0]["file_name"], $file_info[0]["file_suffix"]);
       if (count($is_container)) {
         $logService->deleteLog($params["log_id"]);
-        $msg = "文件夹[".$dir_info["dir_name"]."]中，
-        已存在名为[".$file_info[0]["file_name"]."]的文件";
+        $msg = "文件夹[" . $dir_info["dir_name"] . "]中，
+        已存在名为[" . $file_info[0]["file_name"] . "]的文件";
         return $this->failAction($msg);
       }
 
@@ -672,7 +661,7 @@ class FileManagerDAO extends PSIBaseExDAO
    * @param $db
    * @return string
    */
-  private function getFullPath(&$parentId, $db)
+  private function getFullPath($parentId, &$db)
   {
     $parentDir = $db->query("select dir_name,parent_dir_id,dir_version from t_dir_info
     where id = '%s' and is_del = 0", $parentId);
@@ -714,20 +703,8 @@ class FileManagerDAO extends PSIBaseExDAO
   public function deleteDir($params)
   {
     $db = $this->db;
-    $us = new UserService();
     $logService = new FileManagerlogService();
-    if (!$us->hasPermission(FIdConst::WJGL_DEL_DIR)) {
-      $logService->deleteLog($params["log_id"]);
-      return $this->notPermission();
-    }
     //验证单文件权限
-    $permissionService = new FileManagerPermissionService();
-    $data["file_id"] = $params["id"];
-    if (!$permissionService->hasPermission($data, FIdConst::WJGL_DEL_DIR)) {
-      $logService->deleteLog($params["log_id"]);
-      return $this->notPermission();
-    }
-
     $dir_info = $db->query("select * from t_dir_info where id = '%s' and parent_dir_id is not null", $params["id"]);
     if (!count($dir_info)) {
       $logService->deleteLog($params["log_id"]);
@@ -754,20 +731,8 @@ class FileManagerDAO extends PSIBaseExDAO
    */
   public function deleteFile($params)
   {
-    $us = new UserService();
     $db = $this->db;
     $logService = new FileManagerlogService();
-    if (!$us->hasPermission(FIdConst::WJGL_DEL_FILE)) {
-      $logService->deleteLog($params["log_id"]);
-      return $this->notPermission();
-    }
-    //验证单文件权限
-    $permissionService = new FileManagerPermissionService();
-    $data["file_id"] = $params["id"];
-    if (!$permissionService->hasPermission($data, FIdConst::WJGL_DEL_FILE)) {
-      $logService->deleteLog($params["log_id"]);
-      return $this->notPermission();
-    }
 
     $file_info = $db->query("select * from t_file_info where id = '%s' and is_del = 0", $params["id"]);
     if (!count($file_info)) {
@@ -797,9 +762,9 @@ class FileManagerDAO extends PSIBaseExDAO
     $db = $this->db;
     $logService = new FileManagerlogService();
     $logService->deleteLog($params["log_id"]);
-    $sql = "delete from t_file_info where id = '%s';
-            delete from t_log_action where log_id = '%s'";
-    $db->execute(" ", $params["id"],$params["log_id"]);
+//    delete from t_file_info where id = '%s';
+    $sql = "delete from t_log_action where log_id = '%s'";
+    $db->execute($sql, $params["log_id"]);
   }
 
   /**
@@ -843,7 +808,7 @@ class FileManagerDAO extends PSIBaseExDAO
    * @param $param
    * @return mixed
    */
-  public function upLoadFile(&$param)
+  public function upLoadFile($param)
   {
     $db = $this->db;
     $logService = new FileManagerlogService();
@@ -851,7 +816,7 @@ class FileManagerDAO extends PSIBaseExDAO
     //验证名称
     $file_info = $db->query("select * from t_file_info
     where parent_dir_id = '%s' and is_del = 0 and file_name in ('%s') and file_suffix in ('%s')",
-      $param["parent_dir_id"], $param["file_name"], $param["file_suffix"]);
+      $param["parent_dir_id"], $param["name"], $param["suffix"]);
     $db->startTrans();
     if (count($file_info)) {//更新文件
 
@@ -875,6 +840,7 @@ class FileManagerDAO extends PSIBaseExDAO
       $file_info[0]["file_version"] = $this->newId();
       $file_info[0]["action_info"] = $param["action_info"];
       $file_info[0]["action_time"] = Date("Y-m-d H:i:s");
+
       $file_info_sql = "insert into t_file_info
     (id, file_name, file_path, file_size, file_suffix, parent_dir_id, file_version, file_fid,
     action_user_id, action_time, is_del,create_user_id,create_time, action_info,file_code) 
@@ -891,7 +857,7 @@ class FileManagerDAO extends PSIBaseExDAO
       $logData["action_type"] = "insert";
       $logData["file_id"] = $file_id;
       $logService->addLogAction($logData);
-      $remarks = "更新了文件[" . $param["file_name"] . "." . $param["file_suffix"] . "]";
+      $remarks = "更新了文件[" . $param["name"] . "." . $param["suffix"] . "]";
       $logService->editLogRemarksById($param["log_id"], $remarks);
       $param["data"] = $file_info[0];
       $msg = "更新成功";
@@ -904,10 +870,10 @@ class FileManagerDAO extends PSIBaseExDAO
     values ('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%d','%s','%s','%s','%s')";
 
     $data["id"] = $this->newId();
-    $data["file_name"] = $param["file_name"];
+    $data["file_name"] = $param["name"];
     $data["file_path"] = "/";
-    $data["file_size"] = "0";
-    $data["file_suffix"] = $param["file_suffix"];
+    $data["file_size"] = $param['size'];
+    $data["file_suffix"] = $param["suffix"];
     $data["parent_dir_id"] = $param["parent_dir_id"];
     $data["file_version"] = $this->newId();
     $data["file_fid"] = $this->newId();
@@ -956,7 +922,11 @@ class FileManagerDAO extends PSIBaseExDAO
     $permissionService->setFileCRUDPermission($permissionDara, "file");
 
     $param["data"] = $data;
+    $param['id'] = $data["id"];
     $msg = "上传成功";
+    copy($param['path'], $data['file_path'] . $data['file_name']);
+    unlink($param['path']);
+    $this->convertFile($param);
     return $this->successAction($msg);
   }
 

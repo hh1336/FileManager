@@ -1,0 +1,21 @@
+<layout name="layout"/>
+
+
+<script src="{$uri}Public/Scripts/PSI/StartFlow/MainForm.js?dt={$dtFlag}" type="text/javascript"></script>
+<script src="{$uri}Public/Scripts/PSI/StartFlow/EditFlowWindow.js?dt={$dtFlag}" type="text/javascript"></script>
+<script>
+    Ext.onReady(function () {
+        var app = Ext.create('PSI.App', {
+            userName: "{$loginUserName}",
+            productionName: "{$productionName}",
+            showCopyright: true
+        });
+        app.add(Ext.create('PSI.StartFlow.MainForm', {
+
+        }));
+        app.setAppHeader({
+            title: "{$title}",
+            iconCls: "PSI-fid--0203"
+        });
+    })
+</script>

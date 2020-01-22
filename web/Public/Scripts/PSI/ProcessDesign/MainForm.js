@@ -35,7 +35,6 @@ Ext.define('PSI.ProcessDesign.MainForm', {
             }
           ]
         },
-
       ],
       items: [
         {
@@ -74,12 +73,83 @@ Ext.define('PSI.ProcessDesign.MainForm', {
     me.callParent(arguments);
     me.loadjsPlumb();
   },
-  //加载jsPlumb工具
-  loadjsPlumb: function () {
+  //搜索栏
+  getQueryCmp: function () {
     let me = this;
-    jsPlumb.ready(function () {
-      me.__jsPlumb = jsPlumb.getInstance();
-    });
+    return [{
+      id: "editQueryName",
+      labelWidth: 60,
+      labelAlign: "right",
+      labelSeparator: "",
+      fieldLabel: "名称",
+      margin: "5, 0, 0, 0",
+      xtype: "textfield"
+    },
+    //   {
+    //   id: "editFileType",
+    //   xtype: "combo",
+    //   queryMode: "local",
+    //   editable: true,
+    //   valueField: "id",
+    //   labelWidth: 60,
+    //   labelAlign: "right",
+    //   labelSeparator: "",
+    //   fieldLabel: "文件类型",
+    //   margin: "5, 0, 0, 0",
+    //   store: Ext.create("Ext.data.ArrayStore", {
+    //     fields: ["id", "text"],
+    //     data: [["file", "文件"], ["dir", "文件夹"]]
+    //   }),
+    //   value: ""
+    // },
+    //   {
+    //     id: "editActionType",
+    //     xtype: "combo",
+    //     queryMode: "local",
+    //     editable: true,
+    //     valueField: "id",
+    //     labelWidth: 60,
+    //     labelAlign: "right",
+    //     labelSeparator: "",
+    //     fieldLabel: "流程类型",
+    //     margin: "5, 0, 0, 0",
+    //     store: Ext.create("Ext.data.ArrayStore", {
+    //       fields: ["id", "text"],
+    //       data: [["create", "新建"], ["edit", "修订"], ["delete", "删除"], ["voided", "作废"]]
+    //     }),
+    //     value: ""
+    //   },
+      {
+        xtype: "container",
+        items: [{
+          xtype: "button",
+          text: "查询",
+          width: 100,
+          height: 26,
+          margin: "5, 0, 0, 20",
+          handler: me.freshProcessDesignGrid,
+          scope: me
+        }, {
+          xtype: "button",
+          text: "清空查询条件",
+          width: 100,
+          height: 26,
+          margin: "5, 0, 0, 5",
+          handler: me.onClearQuery,
+          scope: me
+        }, {
+          xtype: "button",
+          text: "隐藏查询条件栏",
+          width: 130,
+          height: 26,
+          iconCls: "PSI-button-hide",
+          margin: "5 0 0 10",
+          handler: function () {
+            Ext.getCmp("panelQueryCmp").collapse();
+          },
+          scope: me
+        }]
+      }];
   },
   //grid
   getProcessDesignGrid: function () {
@@ -134,52 +204,52 @@ Ext.define('PSI.ProcessDesign.MainForm', {
       store: ProcessStory,
       features: [{ftype: "summary"}],
       columns: [
-        {xtype: "rownumberer", width: "5%", header: "序号"},
-        {
-          header: "流程类型",
-          dataIndex: "FlowType",
-          menuDisabled: true,
-          sortable: false,
-          width: "8%",
-          renderer: function (value) {
-            let flowtype;
-            switch (value) {
-              case "create":
-                flowtype = "新建";
-                break;
-              case "edit":
-                flowtype = "修订";
-                break;
-              case "delete":
-                flowtype = "删除";
-                break;
-              case "voided":
-                flowtype = "移动";
-                break;
-              default:
-                flowtype = value;
-                break;
-            }
-            return flowtype;
-          }
-        },
-        {
-          header: "操作类型",
-          dataIndex: "FileType",
-          menuDisabled: true,
-          sortable: false,
-          width: "8%",
-          renderer: function (value) {
-            return value == "file" ? "文件" : "文件夹";
-          }
-        },
-        {header: "流程名称", dataIndex: "FlowName", menuDisabled: true, sortable: false, width: "31%"},
+        {xtype: "rownumberer", width: "10%", header: "序号"},
+        // {
+        //   header: "流程类型",
+        //   dataIndex: "FlowType",
+        //   menuDisabled: true,
+        //   sortable: false,
+        //   width: "8%",
+        //   renderer: function (value) {
+        //     let flowtype;
+        //     switch (value) {
+        //       case "create":
+        //         flowtype = "新建";
+        //         break;
+        //       case "edit":
+        //         flowtype = "修订";
+        //         break;
+        //       case "delete":
+        //         flowtype = "删除";
+        //         break;
+        //       case "voided":
+        //         flowtype = "移动";
+        //         break;
+        //       default:
+        //         flowtype = value;
+        //         break;
+        //     }
+        //     return flowtype;
+        //   }
+        // },
+        // {
+        //   header: "操作类型",
+        //   dataIndex: "FileType",
+        //   menuDisabled: true,
+        //   sortable: false,
+        //   width: "8%",
+        //   renderer: function (value) {
+        //     return value == "file" ? "文件" : "文件夹";
+        //   }
+        // },
+        {header: "流程名称", dataIndex: "FlowName", menuDisabled: true, sortable: false, width: "30%"},
         {
           header: "状态",
           dataIndex: "Status",
           menuDisabled: true,
           sortable: false,
-          width: "9%",
+          width: "10%",
           renderer: function (value) {
             switch (value) {
               case "0":
@@ -194,9 +264,9 @@ Ext.define('PSI.ProcessDesign.MainForm', {
             return value;
           }
         },
-        {header: "排序", dataIndex: "SortOrder", menuDisabled: true, sortable: false, width: "8%"},
+        {header: "排序", dataIndex: "SortOrder", menuDisabled: true, sortable: false, width: "10%"},
         {header: "创建时间", dataIndex: "AddTime", menuDisabled: true, sortable: false, width: "20%"},
-        {header: "创建用户", dataIndex: "UName", menuDisabled: true, sortable: false, width: "11%"}
+        {header: "创建用户", dataIndex: "UName", menuDisabled: true, sortable: false, width: "20%"}
       ]
     });
 
@@ -207,82 +277,12 @@ Ext.define('PSI.ProcessDesign.MainForm', {
 
     return me.__processDesignGrid;
   },
-  //搜索栏
-  getQueryCmp: function () {
+  //加载jsPlumb工具
+  loadjsPlumb: function () {
     let me = this;
-    return [{
-      id: "editQueryName",
-      labelWidth: 60,
-      labelAlign: "right",
-      labelSeparator: "",
-      fieldLabel: "名称",
-      margin: "5, 0, 0, 0",
-      xtype: "textfield"
-    }, {
-      id: "editFileType",
-      xtype: "combo",
-      queryMode: "local",
-      editable: true,
-      valueField: "id",
-      labelWidth: 60,
-      labelAlign: "right",
-      labelSeparator: "",
-      fieldLabel: "文件类型",
-      margin: "5, 0, 0, 0",
-      store: Ext.create("Ext.data.ArrayStore", {
-        fields: ["id", "text"],
-        data: [["file", "文件"], ["dir", "文件夹"]]
-      }),
-      value: "dir"
-    },
-      {
-        id: "editActionType",
-        xtype: "combo",
-        queryMode: "local",
-        editable: true,
-        valueField: "id",
-        labelWidth: 60,
-        labelAlign: "right",
-        labelSeparator: "",
-        fieldLabel: "流程类型",
-        margin: "5, 0, 0, 0",
-        store: Ext.create("Ext.data.ArrayStore", {
-          fields: ["id", "text"],
-          data: [["create", "新建"], ["edit", "修订"], ["delete", "删除"], ["voided", "作废"]]
-        }),
-        value: "create"
-      },
-      {
-        xtype: "container",
-        items: [{
-          xtype: "button",
-          text: "查询",
-          width: 100,
-          height: 26,
-          margin: "5, 0, 0, 20",
-          handler: me.freshProcessDesignGrid,
-          scope: me
-        }, {
-          xtype: "button",
-          text: "清空查询条件",
-          width: 100,
-          height: 26,
-          margin: "5, 0, 0, 5",
-          handler: me.onClearQuery,
-          scope: me
-        }, {
-          xtype: "button",
-          text: "隐藏查询条件栏",
-          width: 130,
-          height: 26,
-          iconCls: "PSI-button-hide",
-          margin: "5 0 0 10",
-          handler: function () {
-            Ext.getCmp("panelQueryCmp").collapse();
-          },
-          scope: me
-        }]
-      }];
+    jsPlumb.ready(function () {
+      me.__jsPlumb = jsPlumb.getInstance();
+    });
   },
   //流程预览panel
   getViewProcess: function () {
@@ -406,6 +406,9 @@ Ext.define('PSI.ProcessDesign.MainForm', {
   onEditProcess: function () {
     let me = this;
     let data = me.getSelectNodeData("edit");
+    if(data['Status'] == 1){
+      return me.showInfo("流程在运行中，无法编辑");
+    }
     let form = Ext.create("PSI.ProcessDesign.AddOrEditProcessForm", {
       parentForm: me,
       entity: data
@@ -445,9 +448,6 @@ Ext.define('PSI.ProcessDesign.MainForm', {
     if (!data["Id"]) {
       return me.showInfo("请选择要操作的对象");
     }
-    if (data["Status"] == 0) {
-      return me.showInfo("已启用，无需重复操作")
-    }
     me.ajax({
       url: me.URL("Home/ProcessDesign/openFlow"),
       params: {
@@ -474,4 +474,4 @@ Ext.define('PSI.ProcessDesign.MainForm', {
     window.show();
   }
 
-})
+});

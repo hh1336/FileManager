@@ -146,7 +146,6 @@ class FileManagerController extends PSIBaseController
   {
     if (IS_POST) {
       $params = [
-        "path" => I("post.name"),
         "parent_dir_id" => I("post.parentDirID"),
         "action_info" => I("post.actionInfo"),
         "file_code" => I("post.fileCode")
@@ -156,10 +155,6 @@ class FileManagerController extends PSIBaseController
       $upType = $suffixService->getSuffixs();
 
       $fms = new FileManagerService();
-      $rs = $fms->upLoadFile($params, $upType);
-      if (!$rs["success"]) {
-        return $this->ajaxReturn($rs);
-      }
 
       $upload = new \Think\Upload();// 实例化上传类
       $upload->maxSize = 20971520;// 设置附件上传大小 5M
@@ -167,8 +162,6 @@ class FileManagerController extends PSIBaseController
       $upload->savePath = ''; // 设置附件上传（子）目录
       $upload->autoSub = false;
       $upload->hash = false;
-      $upload->rootPath = $params["data"]["file_path"]; // 设置附件上传根目录
-      $upload->saveName = $params["data"]["file_version"];
 
       $info = $upload->upload();
 
@@ -180,13 +173,13 @@ class FileManagerController extends PSIBaseController
         $fms->cancelUpLoadFile($del_params);
         $this->ajaxReturn($rs);
       } else {// 上传成功
-        $rs["success"] = true;
-        $rs["fileId"] = $params["data"]["id"];
-        $fms->setFileSize($params["data"]["id"], $info["file"]["size"]);
-        $data["id"] = $params["data"]["id"];
-        $fms->convertFile($data);
+        $params['name'] = $info['file']['name'];
+        $params['save_name'] = $info['file']['savename'];
+        $params['path'] = 'Uploads/' . $info['file']['savename'];
+        $params['size'] = $info['file']['size'];
+        $params['suffix'] = $info['file']['ext'];
+        $rs = $fms->upLoadFile($params);
         $this->ajaxReturn($rs);
-
       }
     }
   }

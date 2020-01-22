@@ -2,7 +2,6 @@ Ext.define("PSI.ProcessDesign.DesignFlowWindow", {
   extend: "PSI.AFX.BaseDialogForm",
   initComponent: function () {
     let me = this;
-    let entity = me.getEntity();
 
     Ext.apply(me, {
       cls: "PSI",

@@ -47,12 +47,12 @@ class ProcessDesignDAO extends PSIBaseExDAO
     if ($params["flow_name"]) {
       $sql .= " and flow_name like('%" . $params["flow_name"] . "%')";
     }
-    if ($params["flow_type"]) {
-      $sql .= " and flow_type like('%" . $params["flow_type"] . "%')";
-    }
-    if ($params["file_type"]) {
-      $sql .= " and file_type like('%" . $params["file_type"] . "%')";
-    }
+//    if ($params["flow_type"]) {
+//      $sql .= " and flow_type like('%" . $params["flow_type"] . "%')";
+//    }
+//    if ($params["file_type"]) {
+//      $sql .= " and file_type like('%" . $params["file_type"] . "%')";
+//    }
     if ($params["status"]) {
       $sql .= " and status = " . $params["status"];
     }
@@ -63,8 +63,8 @@ class ProcessDesignDAO extends PSIBaseExDAO
     $list = [];
     foreach ($data as $i => $item) {
       $list[$i]["Id"] = $item["id"];
-      $list[$i]["FlowType"] = $item["flow_type"];
-      $list[$i]["FileType"] = $item["file_type"];
+//      $list[$i]["FlowType"] = $item["flow_type"];
+//      $list[$i]["FileType"] = $item["file_type"];
       $list[$i]["FlowName"] = $item["flow_name"];
       $list[$i]["SortOrder"] = $item["sort_order"];
       $list[$i]["Status"] = $item["status"];
@@ -72,7 +72,7 @@ class ProcessDesignDAO extends PSIBaseExDAO
       $list[$i]["UName"] = $item["uname"];
       $list[$i]["AddTime"] = date("Y-m-d H:i:s", $item["add_time"]);
     }
-    $rs["totalCount"] = count($data);
+//    $rs["totalCount"] = count($data);
     $rs["dataList"] = $list;
     return $rs;
   }
@@ -98,14 +98,15 @@ class ProcessDesignDAO extends PSIBaseExDAO
         $db->rollback();
         return $this->failAction("流程正在使用中或已删除，请刷新或关闭流程后重试");
       }
+      //flow_type = '%s', file_type = '%s',
       $sql = "update t_flow set
-      flow_type = '%s', file_type = '%s', flow_name = '%s',
-      sort_order = '%s', last_edit_time = '%s', last_edit_uid = '%s',
+      flow_name = '%s', sort_order = '%s',
+       last_edit_time = '%s', last_edit_uid = '%s',
       last_edit_uname = '%s'
       where	id = '%s'";
 
-      $data["flow_type"] = $params["flow_type"];
-      $data["file_type"] = $params["file_type"];
+//      $data["flow_type"] = $params["flow_type"];
+//      $data["file_type"] = $params["file_type"];
       $data["flow_name"] = $params["flow_name"];
       $data["sort_order"] = $params["sort_order"];
       $data["last_edit_time"] = time();
@@ -117,11 +118,12 @@ class ProcessDesignDAO extends PSIBaseExDAO
 
 
     } else {
-      $sql = "insert into t_flow (id,	flow_type,	file_type,	flow_name,	sort_order,	status,	is_del,	uid,
-        uname,	add_time) values ('%s','%s','%s','%s','%d','%d','%d','%s','%s','%s')";
+      //flow_type,	file_type,
+      $sql = "insert into t_flow (id,	flow_name,	sort_order,	status,	is_del,	uid,
+        uname,	add_time) values ('%s','%s','%d','%d','%d','%s','%s','%s')";
       $data["id"] = $this->newId();
-      $data["flow_type"] = $params["flow_type"];
-      $data["file_type"] = $params["file_type"];
+//      $data["flow_type"] = $params["flow_type"];
+//      $data["file_type"] = $params["file_type"];
       $data["flow_name"] = $params["flow_name"];
       $data["sort_order"] = $params["sort_order"];
       $data["status"] = 0;
