@@ -35,16 +35,16 @@ class ProcessValidationDAO extends PSIBaseExDAO
     $db->startTrans();
     $params['login_id'] = $userId;
 
-    $is_have_flow = $db->query("select	f.id,	f.flow_name as name from t_flow as f
-    left join t_flow_process as p on f.id = p.flow_id
-    left join t_role_user ru on ru.user_id = '%s'
-    where	p.process_type = 'StartStep' and (p.user_ids like (ru.user_id) 
-    or p.role_ids like (ru.role_id)) and f.status = 0 and f.is_del = 0", $userId);
-
-    if (!count($is_have_flow)) {
-      if (isset($params['path'])) unlink($params['path']);
-      return $this->failAction('请先设计流程');
-    }
+//    $is_have_flow = $db->query("select	f.id,	f.flow_name as name from t_flow as f
+//    left join t_flow_process as p on f.id = p.flow_id
+//    left join t_role_user ru on ru.user_id = '%s'
+//    where	p.process_type = 'StartStep' and (p.user_ids like (ru.user_id)
+//    or p.role_ids like (ru.role_id)) and f.status = 0 and f.is_del = 0", $userId);
+//
+//    if (!count($is_have_flow)) {
+//      if (isset($params['path'])) unlink($params['path']);
+//      return $this->failAction('请先设计流程');
+//    }
 
     $run_sql = "insert into t_flow_run (id,	uid,action,run_name, params_json,
     updatetime, status,is_urgent, is_del) values ('%s','%s','%s','%s','%s','%s','%s','%s','%s')";

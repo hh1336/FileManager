@@ -162,17 +162,17 @@ class FIdConst
   /**
    *  文件管理-我的审批
    */
-  const WJGL_WDSP = "-0201";
+  const WJGL_WDSP = "-9995-01";
 
   /**
-   *  文件管理-流程设置
+   *  文件管理-流程设计
    */
-  const WJGL_LCSZ = "-0202";
+  const WJGL_LCSZ = "-9995-02";
 
   /**
-   *  文件管理-流程设置
+   *  发起流程
    */
-  const WJGL_FQLC = "-0203";
+  const WJGL_FQLC = "-9995-03";
 
 
 

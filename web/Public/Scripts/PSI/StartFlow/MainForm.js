@@ -19,6 +19,11 @@ Ext.define('PSI.StartFlow.MainForm', {
           handler: me.onStartFlow,
           scope: me
         },
+        {
+          text: "刷新",
+          handler: me.freshGrid,
+          scope: me
+        }
       ],
       items: [
         {
@@ -236,8 +241,8 @@ Ext.define('PSI.StartFlow.MainForm', {
     let me = this;
     let store = me.getCensorGrid().getStore();
     store.proxy.extraParams = {
-      ProcessName: Ext.getCmp("editQueryName").getValue(),
-      ProcessType: Ext.getCmp("editType").getValue()
+      queryName: Ext.getCmp("editQueryName").getValue(),
+      queryType: Ext.getCmp("editType").getValue()
     };
     store.reload();
   },
@@ -263,23 +268,29 @@ Ext.define('PSI.StartFlow.MainForm', {
       entity: data
     });
     from.show();
-
-
-  }
-  ,
+  },
   //查看详情
   onSelectInfo: function () {
     let me = this;
-  }
-  ,
+  },
   //启动工作流
   onStartFlow: function () {
     let me = this;
     let data = me.getSelectNodeData();
-    console.log(data);
     if (JSON.stringify(data) == "{}") {
       return me.showInfo('请选择工作流');
     }
+    me.ajax({
+      url: me.URL("/Home/StartFlow/startFlow"),
+      params: {
+        id: data['id']
+      },
+      success: function (response) {
+        let data = me.decodeJSON(response['responseText']);
+        me.showInfo(data['msg']);
+        me.freshGrid();
+      }
+    });
 
   }
 

@@ -62,7 +62,7 @@ class MainMenuController extends PSIBaseController
           break;
         case FIdConst::WJGL_WDSP:
           //我的审批
-          redirect(__ROOT__ . "/Home/MyCensor/index");
+          redirect(__ROOT__ . "/Home/Examine/index");
           break;
         case FIdConst::WJGL_LCSZ:
           //流程设计

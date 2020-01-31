@@ -15,7 +15,7 @@ class StartFlowController extends PSIBaseController
     if (!$us->hasPermission(FIdConst::WJGL_FQLC)) {
       $this->gotoLoginPage("/Home/User/index");
     }
-    $this->assign("title", "文件管理");
+    $this->assign("title", "发起流程");
 
     $this->display();
   }
@@ -23,7 +23,10 @@ class StartFlowController extends PSIBaseController
   public function loadRunFlow()
   {
     if (IS_POST) {
-      $params = array();
+      $params = array(
+        'query_name' => I("post.queryName"),
+        'query_type' => I("post.queryType")
+      );
       $sf = new StartFlowService();
       $this->ajaxReturn($sf->loadRunFlow($params));
     }
@@ -62,6 +65,17 @@ class StartFlowController extends PSIBaseController
       );
       $sf = new StartFlowService();
       $this->ajaxReturn($sf->saveFlow($params));
+    }
+  }
+
+  public function startFlow()
+  {
+    if (IS_POST) {
+      $params = array(
+        'id' => I("post.id")
+      );
+      $sf = new StartFlowService();
+      $this->ajaxReturn($sf->startFlow($params));
     }
   }
 }

@@ -53,7 +53,15 @@ class StartFlowService extends PSIBaseExService
     }
     $sfd = new StartFlowDAO($this->db());
     return $sfd->saveFlow($params);
+  }
 
+  public function startFlow($params)
+  {
+    if ($this->isNotOnline()) {
+      return $this->emptyResult();
+    }
+    $sfd = new StartFlowDAO($this->db());
+    return $sfd->startFlow($params);
   }
 
 }

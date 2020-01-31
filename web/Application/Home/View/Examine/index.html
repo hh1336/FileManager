@@ -1,0 +1,20 @@
+<layout name="layout"/>
+
+<script src="{$uri}Public/Scripts/PSI/Examine/MainForm.js?dt={$dtFlag}" type="text/javascript"></script>
+
+<script>
+    Ext.onReady(function () {
+        var app = Ext.create('PSI.App', {
+            userName: "{$loginUserName}",
+            productionName: "{$productionName}",
+            showCopyright: true
+        })
+        app.add(Ext.create('PSI.Examine.MainForm', {
+
+        }));
+        app.setAppHeader({
+            title: "{$title}",
+            iconCls: "PSI-fid--9995-01"
+        });
+    })
+</script>
