@@ -677,12 +677,12 @@ class FileManagerDAO extends PSIBaseExDAO
     $parentDir = $db->query("select dir_name,parent_dir_id,dir_version from t_dir_info
     where id = '%s' and is_del = 0", $parentId);
     $path = $parentDir[0]['dir_version'];
-    $parentPath = "Uploads\\";
+    $parentPath = "Uploads/";
     if ($parentDir[0]["parent_dir_id"]) {
       $parentPath = $this->getFullPath($parentDir[0]["parent_dir_id"], $db);
     }
 
-    $path = $parentPath . $path . "\\";
+    $path = $parentPath . $path . "/";
     return $path;
   }
 
@@ -1264,10 +1264,10 @@ class FileManagerDAO extends PSIBaseExDAO
   {
     $temp = "";
     $temppath = substr($path, 0, strlen($path) - 1);
-    $dirNames = explode('\\', $temppath);
+    $dirNames = explode('/', $temppath);
     foreach ($dirNames as $p) {
       if (!empty($p)) {
-        $temp .= $p . "\\";
+        $temp .= $p . "/";
         mkdir($temp);
       }
     }
