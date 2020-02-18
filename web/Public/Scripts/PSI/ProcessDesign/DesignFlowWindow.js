@@ -532,7 +532,8 @@ Ext.define("PSI.ProcessDesign.DesignFlowWindow", {
       }
     }
     if (entity[0] == 'UserIds') {
-      if (me.form['IsSing'].getValue()) {
+      if (!me.form['IsSing'].getValue()) {
+        console.log(me.form['IsSing'].getValue());
         ids = data[0]["internalId"];
         names = data[0]['data']['name'];
       }

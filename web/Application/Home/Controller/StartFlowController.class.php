@@ -12,7 +12,7 @@ class StartFlowController extends PSIBaseController
   {
     $this->initVar();
     $us = new UserService();
-    if (!$us->hasPermission(FIdConst::WJGL_FQLC)) {
+    if (!$us->hasPermission(FIdConst::GZL_FQLC)) {
       $this->gotoLoginPage("/Home/User/index");
     }
     $this->assign("title", "发起流程");
@@ -61,7 +61,8 @@ class StartFlowController extends PSIBaseController
         'id' => I("post.id"),
         'run_name' => I("post.runName"),
         'flow_id' => I("post.flowId"),
-        'is_urgent' => I("post.isUrgent")
+        'is_urgent' => I("post.isUrgent"),
+        'remark' => I("post.remark")
       );
       $sf = new StartFlowService();
       $this->ajaxReturn($sf->saveFlow($params));

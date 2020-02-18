@@ -51,6 +51,8 @@ class StartFlowService extends PSIBaseExService
     if ($this->isNotOnline()) {
       return $this->emptyResult();
     }
+
+
     $sfd = new StartFlowDAO($this->db());
     return $sfd->saveFlow($params);
   }
@@ -60,6 +62,8 @@ class StartFlowService extends PSIBaseExService
     if ($this->isNotOnline()) {
       return $this->emptyResult();
     }
+    $params['uid'] = $this->getLoginUserId();
+    $params['uname'] = $this->getLoginUserName();
     $sfd = new StartFlowDAO($this->db());
     return $sfd->startFlow($params);
   }

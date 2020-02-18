@@ -13,7 +13,7 @@ class ProcessDesignController extends PSIBaseController
   {
     $this->initVar();
     $us = new UserService();
-    if (!$us->hasPermission(FIdConst::WJGL_LCSZ)) {
+    if (!$us->hasPermission(FIdConst::GZL_LCSZ)) {
       $this->gotoLoginPage("/Home/User/index");
     }
     $this->assign("title", "流程设计");

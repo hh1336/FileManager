@@ -3,9 +3,7 @@ Ext.define("PSI.StartFlow.EditFlowWindow", {
   initComponent: function () {
     let me = this;
     let entity = me.getEntity();
-
     let params_json = me.decodeJSON(entity['json']);
-
     Ext.apply(me, {
       cls: "PSI",
       header: {
@@ -75,7 +73,7 @@ Ext.define("PSI.StartFlow.EditFlowWindow", {
               fields: ["id", "text"],
               data: entity['flows']
             }),
-            value: entity['flow_id']
+            value: entity['flowId']
           },
           {
             id: "IsUrgent",
@@ -84,7 +82,7 @@ Ext.define("PSI.StartFlow.EditFlowWindow", {
             fieldLabel: "是否需要加急",
             labelWidth: 90,
             name: "isUrgent",
-            value: entity['isUrgent']
+            checked: ~~entity['isUrgent']
           },
           {
             id: "NextProcessUser",
@@ -93,7 +91,18 @@ Ext.define("PSI.StartFlow.EditFlowWindow", {
             disabled: true,
             padding: "15 0 0 0",
             width: 370,
-            value: ""
+            value: entity['nextProcessUsers']
+          },
+          {
+            id: "Remark",
+            xtype: "textareafield",
+            fieldLabel: "备注",
+            labelWidth: 50,
+            disabled: false,
+            padding: "15 0 0 0",
+            width: "60%",
+            height: 50,
+            value: entity['remark']
           },
           {
             disabled: true,
@@ -103,7 +112,7 @@ Ext.define("PSI.StartFlow.EditFlowWindow", {
             xtype: "panel",
             width: "100%",
             id: "FileInfo",
-            height: 175,
+            height: 105,
             listeners: {
               "afterrender": {
                 fn: function () {
@@ -150,6 +159,7 @@ Ext.define("PSI.StartFlow.EditFlowWindow", {
     params['runName'] = Ext.getCmp("RunName").getValue();
     params['flowId'] = Ext.getCmp("FlowId").getValue();
     params['isUrgent'] = Ext.getCmp("IsUrgent").getValue();
+    params['remark'] = Ext.getCmp("Remark").getValue();
     me.ajax({
       url: me.URL("/Home/StartFlow/saveFlow"),
       params: params,

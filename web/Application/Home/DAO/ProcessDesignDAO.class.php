@@ -210,8 +210,8 @@ class ProcessDesignDAO extends PSIBaseExDAO
       $info = $db->execute($sql, $params['process_name'], $params['process_type'], $params['sponsor_ids'],
         $params['sponsor_text'], $params['sponsor_role'], $params['sponsor_role_text'], $params['role_ids'],
         $params['role_text'], $params['respon_ids'], $params['respon_text'], $params['user_ids'],
-        $params['user_text'], $params['is_user_end'], $params['is_sing'], $params['is_back'],
-        $params['is_userop_pass'], $params['processing_mode'], time(), $params['id']);
+        $params['user_text'], $params['is_user_end'] == "true" ? 1 : 0, $params['is_sing'] == "true" ? 1 : 0, $params['is_back'],
+        $params['is_userop_pass'] == "true" ? 1 : 0, $params['processing_mode'], time(), $params['id']);
     } else {//创建一个步骤
       if ($params["process_type"] != "Step") {
         $sel_sql = "select * from t_flow_process where flow_id = '%s' and process_type = 'StartStep' and is_del = 0";
@@ -317,7 +317,7 @@ class ProcessDesignDAO extends PSIBaseExDAO
       return $this->failAction('找不到数据');
 
     $info = $db->execute("update t_flow_process set is_del = 1,updatetime = '%s' where id = '%s'",
-      time(),$params['id']);
+      time(), $params['id']);
     if (!$info) {
       return $this->failAction("操作失败");
     }

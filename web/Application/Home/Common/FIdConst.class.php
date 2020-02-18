@@ -155,26 +155,32 @@ class FIdConst
    */
   const PORTAL_MONEY = "2011-04";
 
-  /* * 文件管理
-   */
-  const WJGL = '-9998';
 
   /**
-   *  文件管理-我的审批
+   *  我的审批
    */
-  const WJGL_WDSP = "-9995-01";
+  const GZL_WDSP = "-9995-01";
 
   /**
-   *  文件管理-流程设计
+   *  流程设计
    */
-  const WJGL_LCSZ = "-9995-02";
+  const GZL_LCSZ = "-9995-02";
 
   /**
    *  发起流程
    */
-  const WJGL_FQLC = "-9995-03";
+  const GZL_FQLC = "-9995-03";
+
+  /**
+   *  接收流程
+   */
+  const GZL_JSLC = "-9995-04";
 
 
+  /**
+   * 文件管理
+   */
+  const WJGL = '-9998';
 
   /** 文件夹操作
    */

@@ -9,7 +9,7 @@ Ext.define('PSI.Examine.MainForm', {
         text: "审批流程",
         handler: me.onExamineFlow,
         scope: me
-      },{
+      }, {
         text: "查看详细信息",
         handler: me.onSelectInfo,
         scope: me
@@ -40,14 +40,14 @@ Ext.define('PSI.Examine.MainForm', {
           collapsible: true,
           header: false,
           border: 0,
-          items: [me.getFlowGrid()]
+          items: [me.getGrid()]
         }]
     });
 
     me.callParent(arguments);
   },
   //获取主面板
-  getFlowGrid: function () {
+  getGrid: function () {
     let me = this;
     if (me.__grid)
       return me.__grid;
@@ -55,7 +55,8 @@ Ext.define('PSI.Examine.MainForm', {
     let modelName = "ExamineModel";
     Ext.define(modelName, {
       extend: "Ext.data.Model",
-      fields: ["id"]
+      fields: ["id", "runName", "runId", "uId", "uName", "runRemark", "receiveTime",
+        "status", "isBack", "remark", "isUserEnd", "flowStatus", "isUrgent"]
     });
 
     let Store = Ext.create('Ext.data.Store', {
@@ -86,34 +87,48 @@ Ext.define('PSI.Examine.MainForm', {
       border: 1,
       columnLines: true,
       viewConfig: {
-        enableTextSelection: true
+        enableTextSelection: true,
+        getRowClass: me.changeRowClass
       },
       store: Store,
       features: [{ftype: "summary"}],
       columns: [
-        {xtype: "rownumberer", width: "10%", header: "序号"},
+        {xtype: "rownumberer", width: "5%", header: "序号"},
         {
-          header: "流程名",
+          header: "流程名称",
           dataIndex: "runName",
           menuDisabled: true,
           sortable: false,
-          width: "25%"
+          width: "19%"
         },
         {
-          header: "操作类型",
-          dataIndex: "action",
+          header: "发起人",
+          dataIndex: "uName",
           menuDisabled: true,
           sortable: false,
-          width: "15%"
+          width: "8%"
         },
         {
-          header: "下一步审核人",
-          dataIndex: "nextProcessUsers",
+          header: "发起时备注",
+          dataIndex: "runRemark",
           menuDisabled: true,
           sortable: false,
-          width: "20%"
+          width: "24%"
         },
-        {header: "更新时间", dataIndex: "updatetime", menuDisabled: true, sortable: false, width: "20%"},
+        {
+          header: "接收时间",
+          dataIndex: "receiveTime",
+          menuDisabled: true,
+          sortable: false,
+          width: "10%"
+        },
+        {
+          header: "备注",
+          dataIndex: "remark",
+          menuDisabled: true,
+          sortable: false,
+          width: "24%"
+        },
         {
           header: "状态",
           dataIndex: "status",
@@ -122,17 +137,17 @@ Ext.define('PSI.Examine.MainForm', {
           width: "10%",
           renderer: function (value) {
             switch (value) {
-              case "0":
-                value = "未启动";
-                break;
-              case "1":
-                value = "流程中";
-                break;
               case "2":
-                value = "已通过";
+                value = "待办理";
                 break;
               case "3":
-                value = "退回";
+                value = "已通过";
+                break;
+              case "4":
+                value = "未通过";
+                break;
+              case "5":
+                value = "已打回";
                 break;
               default:
                 break;
@@ -170,7 +185,7 @@ Ext.define('PSI.Examine.MainForm', {
       margin: "5, 0, 0, 0",
       store: Ext.create("Ext.data.ArrayStore", {
         fields: ["id", "text"],
-        data: [["0", "未处理"], ["1", "已通过"], ["2", "已打回"]]
+        data: [["2", "待办理"], ["3", "已通过"], ["4", "未通过"], ["5", "已打回"]]
       }),
       value: ""
     }, {
@@ -206,16 +221,21 @@ Ext.define('PSI.Examine.MainForm', {
     }];
   },
   //打开审批流程窗口
-  onExamineFlow:function(){
+  onExamineFlow: function () {
     let me = this;
-  },
-  //通过选中的流程
-  onPastFlow: function () {
-    let me = this;
-  },
-  //打回选中的流程
-  onBackFlow: function () {
-    let me = this;
+    let data = me.getSelectNodeData();
+    console.log(data);
+    if (Ext.JSON.encode(data) == "{}")
+      return me.showInfo("请先选择数据");
+    if (data['status'] != "2")
+      return me.showInfo("已操作过流程");
+    if (data['flowStatus'] != "0")
+      return me.showInfo("流程已被禁用，无法进行审核");
+    let form = Ext.create("PSI.Examine.ExamineWindow", {
+      parentForm: me,
+      entity: data
+    });
+    form.show();
   },
   //查看详细信息
   onSelectInfo: function () {
@@ -224,7 +244,7 @@ Ext.define('PSI.Examine.MainForm', {
   //刷新数据
   freshGrid: function () {
     let me = this;
-    let store = me.getFlowGrid().getStore();
+    let store = me.getGrid().getStore();
     store.proxy.extraParams = {
       queryName: Ext.getCmp("editQueryName").getValue(),
       queryType: Ext.getCmp("editType").getValue()
@@ -248,5 +268,13 @@ Ext.define('PSI.Examine.MainForm', {
     let data = selected.map[id].data;
     return data;
   },
+  //改变行颜色
+  changeRowClass: function (record) {
+    let data = record['data'];
+    //返回类名可给行加上指定样式
+    //background-color-red
+    //background-color-green
+    //background-color-gray
+  }
 
 });

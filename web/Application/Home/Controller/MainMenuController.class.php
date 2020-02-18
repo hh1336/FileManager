@@ -60,17 +60,21 @@ class MainMenuController extends PSIBaseController
           //文件管理
           redirect(__ROOT__ . "/Home/FileManager/index");
           break;
-        case FIdConst::WJGL_WDSP:
+        case FIdConst::GZL_WDSP:
           //我的审批
           redirect(__ROOT__ . "/Home/Examine/index");
           break;
-        case FIdConst::WJGL_LCSZ:
+        case FIdConst::GZL_LCSZ:
           //流程设计
           redirect(__ROOT__ . "/Home/ProcessDesign/index");
           break;
-          case FIdConst::WJGL_FQLC:
+        case FIdConst::GZL_FQLC:
           //发起流程
           redirect(__ROOT__ . "/Home/StartFlow/index");
+          break;
+        case FIdConst::GZL_JSLC:
+          //接收流程
+          redirect(__ROOT__ . "/Home/ReceiveFlow/index");
           break;
 
         case FIdConst::ABOUT:

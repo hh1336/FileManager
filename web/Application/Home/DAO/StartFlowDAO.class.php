@@ -36,12 +36,14 @@ class StartFlowDAO extends PSIBaseExDAO
       }
       $list[$i]['id'] = $item['id'];
       $list[$i]['runName'] = $item['run_name'];
+      $list[$i]['flowId'] = $item['flow_id'];
       $list[$i]['action'] = $item['action'];
       $list[$i]['nextProcessUsers'] = $nextProcessName;
       $list[$i]['json'] = $item['params_json'];
       $list[$i]['isUrgent'] = $item['is_urgent'];
       $list[$i]['updatetime'] = date("Y-m-d H:i:s", $item["updatetime"]);
       $list[$i]['status'] = $item['status'];
+      $list[$i]['remark'] = $item['remark'];
     }
     $rs['dataList'] = $list;
     return $rs;
@@ -122,10 +124,12 @@ class StartFlowDAO extends PSIBaseExDAO
       return $this->failAction('操作失败，请检查流程设计');
 
 
-    $sql = "update t_flow_run set run_name = '%s',run_flow_process = '%s',updatetime = '%s',is_urgent = '%s' 
+    $sql = "update t_flow_run 
+    set run_name = '%s', flow_id = '%s', run_flow_process = '%s',updatetime = '%s',is_urgent = '%s',
+    remark = '%s', current_process = '%s'
     where id = '%s' and is_del = 0";
-    $info = $db->execute($sql, $params['run_name'], $process_info[0]['process_to'], time(),
-      $params['is_urgent'] ? 1 : 0, $params['id']);
+    $info = $db->execute($sql, $params['run_name'], $params['flow_id'], $process_info[0]['process_to'], time(),
+      $params['is_urgent'] == "true" ? 1 : 0, $params['remark'], $process_info[0]['id'], $params['id']);
     if (!$info)
       return $this->failAction('保存失败');
     return $this->successAction('保存成功');
@@ -133,7 +137,7 @@ class StartFlowDAO extends PSIBaseExDAO
   }
 
   /**
-   * 发起流程
+   * 启动流程
    * @param $params
    * @return mixed
    */
@@ -144,13 +148,47 @@ class StartFlowDAO extends PSIBaseExDAO
     $sel_data = $db->query($sel_sql, $params['id']);
     if (!count($sel_data))
       return $this->failAction('请刷新数据');
-    if (isset($sel_data[0]['flow_id']))
+    if (!isset($sel_data[0]['flow_id']))
       return $this->failAction('请先设置要执行的流程');
     if ($sel_data[0]['status'] != 0)
-      return $this->failAction('流程已在执行中');
-    $info = $db->execute("update t_flow_run set status = 1 where id = '%s'", $params['id']);
-    if (!$info)
+      return $this->failAction('流程已在执行中或已结束');
+
+    $p_ids = array($sel_data[0]['run_flow_process']);
+    if (strpos($sel_data[0]['run_flow_process'], ','))
+      $p_ids = explode($sel_data[0]['run_flow_process'], ',');
+    $db->startTrans();
+    foreach ($p_ids as $p_id) {
+      $p_data = $db->query("select * from t_flow_process where id = '%s'", $p_id);
+      $run_p_sql = "insert into t_flow_run_process (id,	uid, run_id, flow_id,	process_id,
+        is_singpost, is_back, is_receive, status, is_del, remark, parent_process)
+        values ('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s');";
+      $run_p_data['id'] = $this->newId();
+      $run_p_data['uid'] = $params['uid'];
+      $run_p_data['run_id'] = $params['id'];
+      $run_p_data['flow_id'] = $p_data[0]['flow_id'];
+      $run_p_data['process_id'] = $p_id;
+      $run_p_data['is_singpost'] = 0;
+      $run_p_data['is_back'] = 0;
+      $run_p_data['is_receive'] = 0;
+      $run_p_data['status'] = 0;
+      $run_p_data['is_del'] = 0;
+      $run_p_data['remark'] = $sel_data[0]['remark'];
+//      $run_p_data['parent_process'] = $sel_data[0]['current_process'];
+      $run_p_data['parent_process'] = "";
+      $info = $db->execute($run_p_sql, $run_p_data);
+      if (!$info) {
+        $db->rollback();
+        return $this->failAction('开启失败');
+      }
+    }
+
+    $info = $db->execute("update t_flow_run set status = 1,uid = '%s',uname = '%s' where id = '%s'",
+      $params['uid'], $params['uname'], $params['id']);
+    if (!$info) {
+      $db->rollback();
       return $this->failAction('开启失败');
+    }
+    $db->commit();
     return $this->successAction('操作成功');
   }
 }

@@ -1,4 +1,4 @@
-Ext.define('PSI.StartFlow.MainForm', {
+Ext.define('PSI.ReceiveFlow.MainForm', {
   extend: "PSI.AFX.BaseMainExForm",
   config: {},
   initComponent: function () {
@@ -6,17 +6,12 @@ Ext.define('PSI.StartFlow.MainForm', {
     Ext.apply(me, {
       tbar: [
         {
-          text: "编辑流程",
-          handler: me.onEditProcess,
+          text: "接收流程",
+          handler: me.onReceive,
           scope: me
         }, {
           text: "查看详情",
           handler: me.onSelectInfo,
-          scope: me
-        },
-        {
-          text: "启动工作流",
-          handler: me.onStartFlow,
           scope: me
         },
         {
@@ -50,17 +45,9 @@ Ext.define('PSI.StartFlow.MainForm', {
           collapsible: true,
           header: false,
           border: 0,
-          items: [me.getCensorGrid()]
+          items: [me.getGrid()]
         }]
     });
-
-    me.ajax({
-      url: me.URL("/Home/StartFlow/loadCheckFlow"),
-      success: function (resposne) {
-        me.__flows = me.decodeJSON(resposne['responseText']);
-      }
-    });
-
     me.callParent(arguments);
   },
   //搜索栏
@@ -87,7 +74,7 @@ Ext.define('PSI.StartFlow.MainForm', {
       margin: "5, 0, 0, 0",
       store: Ext.create("Ext.data.ArrayStore", {
         fields: ["id", "text"],
-        data: [["0", "未启动"], ["1", "流程中"], ["2", "通过"], ["2", "退回"]]
+        data: [["0", "正常"], ["1", "加急"]]
       }),
       value: ""
     },
@@ -123,17 +110,17 @@ Ext.define('PSI.StartFlow.MainForm', {
         }]
       }];
   },
-  //获取主面板
-  getCensorGrid: function () {
+  //主页面
+  getGrid: function () {
     let me = this;
-    if (me.__grid)
+    if (me.__grid) {
       return me.__grid;
-
-    let modelName = "StartFlowModel";
+    }
+    let modelName = "ReceiveFlowModel";
     Ext.define(modelName, {
       extend: "Ext.data.Model",
-      fields: ["id", "flowId", "action", "runName", "json", "isUrgent",
-        "nextProcessUsers", "updatetime", "status","remark"]
+      fields: ["id", "runId", "processId", "flowId", "remark", "runName",
+        "isUrgent", "isSing", "parentSponsorText", "parentProcessId", "uId", "uName"]
     });
 
     let Store = Ext.create('Ext.data.Store', {
@@ -142,7 +129,7 @@ Ext.define('PSI.StartFlow.MainForm', {
       model: modelName,
       proxy: {
         type: "ajax",
-        url: me.URL("Home/StartFlow/loadRunFlow"),
+        url: me.URL("Home/ReceiveFlow/loadData"),
         actionMethods: {
           read: "POST"
         },
@@ -172,71 +159,44 @@ Ext.define('PSI.StartFlow.MainForm', {
           menuDisabled: true,
           sortable: false,
           width: "25%"
-        },
-        {
-          header: "操作类型",
-          dataIndex: "action",
+        }, {
+          header: "发起人",
+          dataIndex: "uName",
           menuDisabled: true,
           sortable: false,
-          width: "15%"
-        },
-        {
-          header: "下一步审核人",
-          dataIndex: "nextProcessUsers",
-          menuDisabled: true,
-          sortable: false,
-          width: "20%"
-        },
-        {header: "更新时间", dataIndex: "updatetime", menuDisabled: true, sortable: false, width: "20%"},
-        {
-          header: "状态",
-          dataIndex: "status",
+          width: "10%"
+        }, {
+          header: "是否加急",
+          dataIndex: "isUrgent",
           menuDisabled: true,
           sortable: false,
           width: "10%",
           renderer: function (value) {
-            switch (value) {
-              case "0":
-                value = "未启动";
-                break;
-              case "1":
-                value = "流程中";
-                break;
-              case "2":
-                value = "已通过";
-                break;
-              case "3":
-                value = "退回";
-                break;
-              default:
-                break;
-            }
-            return value;
+            return ~~value ? "是" : "否";
           }
+        }, {
+          header: "上一步审核",
+          dataIndex: "parentSponsorText",
+          menuDisabled: true,
+          sortable: false,
+          width: "20%"
+        }, {
+          header: "备注",
+          dataIndex: "remark",
+          menuDisabled: true,
+          sortable: false,
+          width: "25%"
         }
       ]
     });
-    me.__grid.on("itemdblclick", me.onEditProcess, me);
 
     return me.__grid;
 
   },
-  //得到选中的数据
-  getSelectNodeData: function () {
-    var me = this;
-    var panel = me.__grid;
-    var selected = panel.getSelectionModel().selected;
-    var id = selected.keys[0];
-    if (!selected.map[id]) {
-      return {};
-    }
-    var data = selected.map[id].data;
-    return data;
-  },
   //刷新数据
   freshGrid: function () {
     let me = this;
-    let store = me.getCensorGrid().getStore();
+    let store = me.getGrid().getStore();
     store.proxy.extraParams = {
       queryName: Ext.getCmp("editQueryName").getValue(),
       queryType: Ext.getCmp("editType").getValue()
@@ -248,48 +208,39 @@ Ext.define('PSI.StartFlow.MainForm', {
     Ext.getCmp("editQueryName").setValue("");
     Ext.getCmp("editType").setValue("");
   },
-  //编辑流程
-  onEditProcess: function () {
+  //得到选中的数据
+  getSelectNodeData: function (action) {
     let me = this;
-    let data = me.getSelectNodeData();
-    if (JSON.stringify(data) == "{}") {
-      return me.showInfo('请选择需要编辑的数据');
+    let grid = me.__grid;
+    let selected = grid.getSelectionModel().selected;
+    let id = selected.keys[0];
+    if (!selected.map[id]) {
+      return {};
     }
-    if (data['status'] != 0) {
-      return me.showInfo("工作流已开始或结束，无法进行编辑");
-    }
-    data['flows'] = me.__flows;
-    console.log(data);
-    let from = Ext.create("PSI.StartFlow.EditFlowWindow", {
-      parentForm: me,
-      entity: data
-    });
-    from.show();
+    let data = selected.map[id].data;
+    data["action"] = action;
+    return data;
   },
   //查看详情
   onSelectInfo: function () {
-    let me = this;
   },
-  //启动工作流
-  onStartFlow: function () {
+  //接收流程
+  onReceive: function () {
     let me = this;
     let data = me.getSelectNodeData();
-    if (JSON.stringify(data) == "{}") {
-      return me.showInfo('请选择工作流');
-    }
+    if (Ext.JSON.encode(data) == "{}")
+      return me.showInfo("请先选择数据");
     me.ajax({
-      url: me.URL("/Home/StartFlow/startFlow"),
+      url: me.URL("Home/ReceiveFlow/receive"),
       params: {
-        id: data['id']
+        id: data['id'],
+        isSing: data['isSing']
       },
       success: function (response) {
         let data = me.decodeJSON(response['responseText']);
         me.showInfo(data['msg']);
         me.freshGrid();
       }
-    });
-
-  }
-
-})
-;
+    })
+  },
+});

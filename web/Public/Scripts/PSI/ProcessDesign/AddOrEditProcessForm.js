@@ -70,42 +70,42 @@ Ext.define("PSI.ProcessDesign.AddOrEditProcessForm", {
             },
             width: 300
           },
-            {
-              id: "PSI_ProcessDesign_FileType",
-              xtype: "combo",
-              queryMode: "local",
-              editable: false,
-              valueField: "id",
-              labelWidth: 60,
-              labelAlign: "right",
-              name: "fileType",
-              labelSeparator: "",
-              fieldLabel: "文件类型",
-              margin: "5, 0, 0, 0",
-              store: Ext.create("Ext.data.ArrayStore", {
-                fields: ["id", "text"],
-                data: [["file", "文件"], ["dir", "文件夹"]]
-              }),
-              value: isEdit ? entity["FileType"] : "file"
-            },
-            {
-              id: "PSI_ProcessDesign_FlowType",
-              xtype: "combo",
-              queryMode: "local",
-              editable: false,
-              name: "flowType",
-              valueField: "id",
-              labelWidth: 60,
-              labelAlign: "right",
-              labelSeparator: "",
-              fieldLabel: "流程类型",
-              margin: "5, 0, 0, 0",
-              store: Ext.create("Ext.data.ArrayStore", {
-                fields: ["id", "text"],
-                data: [["create", "新建"], ["edit", "修订"], ["delete", "删除"], ["voided", "作废"]]
-              }),
-              value: isEdit ? entity["FlowType"] : "create"
-            },
+            // {
+            //   id: "PSI_ProcessDesign_FileType",
+            //   xtype: "combo",
+            //   queryMode: "local",
+            //   editable: false,
+            //   valueField: "id",
+            //   labelWidth: 60,
+            //   labelAlign: "right",
+            //   name: "fileType",
+            //   labelSeparator: "",
+            //   fieldLabel: "文件类型",
+            //   margin: "5, 0, 0, 0",
+            //   store: Ext.create("Ext.data.ArrayStore", {
+            //     fields: ["id", "text"],
+            //     data: [["file", "文件"], ["dir", "文件夹"]]
+            //   }),
+            //   value: isEdit ? entity["FileType"] : "file"
+            // },
+            // {
+            //   id: "PSI_ProcessDesign_FlowType",
+            //   xtype: "combo",
+            //   queryMode: "local",
+            //   editable: false,
+            //   name: "flowType",
+            //   valueField: "id",
+            //   labelWidth: 60,
+            //   labelAlign: "right",
+            //   labelSeparator: "",
+            //   fieldLabel: "流程类型",
+            //   margin: "5, 0, 0, 0",
+            //   store: Ext.create("Ext.data.ArrayStore", {
+            //     fields: ["id", "text"],
+            //     data: [["create", "新建"], ["edit", "修订"], ["delete", "删除"], ["voided", "作废"]]
+            //   }),
+            //   value: isEdit ? entity["FlowType"] : "create"
+            // },
             {
               id: "PSI_ProcessDesign_SortOrder",
               fieldLabel: "排序",

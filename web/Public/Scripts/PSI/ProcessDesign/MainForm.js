@@ -325,15 +325,16 @@ Ext.define('PSI.ProcessDesign.MainForm', {
       overlays: [['Arrow', {width: 12, length: 12, location: 0.5}]]
     };
 
-    document.getElementById('Preview').innerHTML = "";
-    me.__jsPlumb.deleteEveryEndpoint();
-    me.__jsPlumb.clear();
+
     me.ajax({
       url: me.URL("Home/ProcessDesign/loadDesign"),
       params: {
         id: itemId
       },
       success: function (response) {
+        document.getElementById('Preview').innerHTML = "";
+        me.__jsPlumb.deleteEveryEndpoint();
+        me.__jsPlumb.clear();
         let data = me.decodeJSON(response['responseText']);
         for (let i = 0, len = data['data'].length; i < len; i++) {
           let node = document.createElement('div');
@@ -364,8 +365,8 @@ Ext.define('PSI.ProcessDesign.MainForm', {
   //清空查询条件
   onClearQuery: function () {
     Ext.getCmp("editQueryName").setValue(null);
-    Ext.getCmp("editActionType").setValue("create");
-    Ext.getCmp("editFileType").setValue("file");
+    // Ext.getCmp("editActionType").setValue("create");
+    // Ext.getCmp("editFileType").setValue("file");
   },
   //刷新数据
   freshProcessDesignGrid: function () {
@@ -373,8 +374,8 @@ Ext.define('PSI.ProcessDesign.MainForm', {
     let store = me.getProcessDesignGrid().getStore();
     store.proxy.extraParams = {
       ProcessName: Ext.getCmp("editQueryName").getValue(),
-      ProcessType: Ext.getCmp("editActionType").getValue(),
-      ProcessAction: Ext.getCmp("editFileType").getValue(),
+      // ProcessType: Ext.getCmp("editActionType").getValue(),
+      // ProcessAction: Ext.getCmp("editFileType").getValue(),
       Status: ""
     };
     store.reload();

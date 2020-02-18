@@ -68,8 +68,8 @@ class UserService extends PSIBaseExService
       FIdConst::CHANGE_MY_PASSWORD,
       FIdConst::RELOGIN,
       FIdConst::HOME,
-      FIdConst::ABOUT,
-      FIdConst::WJGL_WDSP
+      FIdConst::ABOUT
+      //FIdConst::WJGL_WDSP
     ];
 
     if ($fid == null || in_array($fid, $idList)) {
