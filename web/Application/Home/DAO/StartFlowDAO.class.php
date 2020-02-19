@@ -126,10 +126,10 @@ class StartFlowDAO extends PSIBaseExDAO
 
     $sql = "update t_flow_run 
     set run_name = '%s', flow_id = '%s', run_flow_process = '%s',updatetime = '%s',is_urgent = '%s',
-    remark = '%s', current_process = '%s'
+    remark = '%s'
     where id = '%s' and is_del = 0";
     $info = $db->execute($sql, $params['run_name'], $params['flow_id'], $process_info[0]['process_to'], time(),
-      $params['is_urgent'] == "true" ? 1 : 0, $params['remark'], $process_info[0]['id'], $params['id']);
+      $params['is_urgent'] == "true" ? 1 : 0, $params['remark'], $params['id']);
     if (!$info)
       return $this->failAction('保存失败');
     return $this->successAction('保存成功');
@@ -157,24 +157,48 @@ class StartFlowDAO extends PSIBaseExDAO
     if (strpos($sel_data[0]['run_flow_process'], ','))
       $p_ids = explode($sel_data[0]['run_flow_process'], ',');
     $db->startTrans();
+
+    //先插入一条起始步骤记录
+    $run_p_sql = "insert into t_flow_run_process (id,	uid, run_id, flow_id,	process_id,
+        is_singpost, is_back, is_receive, status, bl_time, is_del, remark, parent_process)
+        values ('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s')";
+
+    $start_data['id'] = $this->newId();
+    $start_data['uid'] = $params['uid'];
+    $start_data['run_id'] = $params['id'];
+    $start_data['flow_id'] = $params['flow_id'];
+    $process_id = $db->query("select id from t_flow_process
+    where flow_id = '%s' and process_type = 'StartStep'", $params['flow_id']);
+    $start_data['process_id'] = $process_id[0]['id'];
+    $start_data['is_singpost'] = 0;
+    $start_data['is_back'] = 0;
+    $start_data['is_receive'] = 1;
+    $start_data['status'] = 3;
+    $start_data['bl_time'] = time();
+    $start_data['is_del'] = 0;
+    $start_data['remark'] = "发起流程";
+    $start_data['parent_process'] = "";
+    $info = $db->execute($run_p_sql, $start_data);
+    if (!$info) {
+      $db->rollback();
+      return $this->failAction('开启失败');
+    }
+
+    //遍历下一步步骤id，下一个审核点可能有多个步骤进行审核，每个步骤为一条数据
     foreach ($p_ids as $p_id) {
-      $p_data = $db->query("select * from t_flow_process where id = '%s'", $p_id);
-      $run_p_sql = "insert into t_flow_run_process (id,	uid, run_id, flow_id,	process_id,
-        is_singpost, is_back, is_receive, status, is_del, remark, parent_process)
-        values ('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s');";
       $run_p_data['id'] = $this->newId();
       $run_p_data['uid'] = $params['uid'];
       $run_p_data['run_id'] = $params['id'];
-      $run_p_data['flow_id'] = $p_data[0]['flow_id'];
+      $run_p_data['flow_id'] = $params['flow_id'];
       $run_p_data['process_id'] = $p_id;
       $run_p_data['is_singpost'] = 0;
       $run_p_data['is_back'] = 0;
       $run_p_data['is_receive'] = 0;
       $run_p_data['status'] = 0;
+      $run_p_data['bl_time'] = "";
       $run_p_data['is_del'] = 0;
       $run_p_data['remark'] = $sel_data[0]['remark'];
-//      $run_p_data['parent_process'] = $sel_data[0]['current_process'];
-      $run_p_data['parent_process'] = "";
+      $run_p_data['parent_process'] = $start_data['id'];
       $info = $db->execute($run_p_sql, $run_p_data);
       if (!$info) {
         $db->rollback();
@@ -182,8 +206,8 @@ class StartFlowDAO extends PSIBaseExDAO
       }
     }
 
-    $info = $db->execute("update t_flow_run set status = 1,uid = '%s',uname = '%s' where id = '%s'",
-      $params['uid'], $params['uname'], $params['id']);
+    $info = $db->execute("update t_flow_run set status = 1,uid = '%s',uname = '%s', current_process='%s' 
+    where id = '%s'", $params['uid'], $params['uname'], $start_data['id'], $params['id']);
     if (!$info) {
       $db->rollback();
       return $this->failAction('开启失败');

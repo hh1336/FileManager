@@ -95,12 +95,12 @@ Ext.define("PSI.Examine.ExamineWindow", {
     if (me.__center)
       return me.__center;
 
-    let data = getEntity();
+    let data = me.getEntity();
 
     let modelName = "CenterModel";
     Ext.define(modelName, {
       extend: "Ext.data.Model",
-      fields: ["sponsorUser", "remark", "Step", "bltime"]
+      fields: ["sponsorUser", "remark", "status", "bltime"]
     });
 
     let Store = Ext.create('Ext.data.Store', {
@@ -113,7 +113,9 @@ Ext.define("PSI.Examine.ExamineWindow", {
         actionMethods: {
           read: "POST"
         },
-        extraParams: {},
+        extraParams: {
+          runProcessId: data['id']
+        },
         reader: {
           type: 'json',
           root: 'dataList',
@@ -122,16 +124,18 @@ Ext.define("PSI.Examine.ExamineWindow", {
       }
     });
 
-    let columns = [
-      {header: '审批人', dataIndex: 'sponsorUser'},
-      {header: '审批意见', dataIndex: 'remark'},
-      {header: '操作', dataIndex: 'Step'},
-      {header: '审核时间', dataIndex: "bltime"}
-    ];
-    me.__center = Ext.create("Ext.panel.Table", {
-      header: false,
-      border: 0,
-
+    me.__center = me.__grid = Ext.create("Ext.grid.Panel", {
+      cls: "PSI",
+      border: 1,
+      columnLines: true,
+      store: Store,
+      columns: [
+        {xtype: "rownumberer", width: "10%", header: "序号"},
+        {header: '审批人', width: "15%", dataIndex: 'sponsorUser', sortable: false, menuDisabled: true},
+        {header: '操作', width: "20%", dataIndex: 'status', sortable: false, menuDisabled: true},
+        {header: '审核时间', width: "25%", dataIndex: "bltime", sortable: false, menuDisabled: true},
+        {header: '审批意见', width: "30%", dataIndex: 'remark', sortable: false, menuDisabled: true}
+      ]
     });
 
     return me.__center;

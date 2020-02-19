@@ -48,4 +48,33 @@ class ExamineDAO extends PSIBaseExDAO
     return $rs;
   }
 
+  /**
+   * 加载流程进度
+   * @param $params
+   * @param null $is_current
+   */
+  public function flowAdvance($params, $is_current = true)
+  {
+    if (!$params['id']) {
+      return;
+    }
+    $db = $this->db;
+    $run_process = $db->query("select * from t_flow_run_process where id = '%s'", $params['id']);
+    $run_flow = $db->query("select * from t_flow_run where id = '%s'", $run_process[0]['run_id']);
+
+    $item["sponsorUser"] = $run_process[0]['sponsor_text'] ?? $run_flow[0]['uname'];
+    $item['bltime'] = $is_current ? "" : date("Y-m-d H:i:s", $run_process[0]['bl_time']);
+    $item['remark'] = $run_process[0]['remark'];
+    $item['status'] = $is_current ? "当前步骤" : (empty($run_process[0]['parent_process']) ? "发起流程" : "通过");
+
+    $data['id'] = $run_process[0]['parent_process'];
+    $arr['dataList'] = [];
+    if ($data['id']) {
+      $arr = $this->flowAdvance($data, false);
+    }
+    array_push($arr['dataList'], $item);
+
+    return $arr;
+  }
+
 }

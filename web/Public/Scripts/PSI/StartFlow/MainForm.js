@@ -133,7 +133,7 @@ Ext.define('PSI.StartFlow.MainForm', {
     Ext.define(modelName, {
       extend: "Ext.data.Model",
       fields: ["id", "flowId", "action", "runName", "json", "isUrgent",
-        "nextProcessUsers", "updatetime", "status","remark"]
+        "nextProcessUsers", "updatetime", "status", "remark"]
     });
 
     let Store = Ext.create('Ext.data.Store', {
@@ -280,7 +280,8 @@ Ext.define('PSI.StartFlow.MainForm', {
     me.ajax({
       url: me.URL("/Home/StartFlow/startFlow"),
       params: {
-        id: data['id']
+        id: data['id'],
+        flowId: data['flowId']
       },
       success: function (response) {
         let data = me.decodeJSON(response['responseText']);

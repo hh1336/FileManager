@@ -135,7 +135,7 @@ class ReceiveFlowDAO extends PSIBaseExDAO
     }
     //接收完流程后，将流程步骤改为当前步骤
     $info = $db->execute("update t_flow_run set current_process = '%s',run_flow_process = '%s', updatetime = '%s'
-    where id = '%s'", $run_process['process_id'], $process[0]['process_to'], time(), $run_process['run_id']);
+    where id = '%s'", $run_process[0]['id'], $process[0]['process_to'], time(), $run_process[0]['run_id']);
 
     if (!$info) {
       $db->rollback();

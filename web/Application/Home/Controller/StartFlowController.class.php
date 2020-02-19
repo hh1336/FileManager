@@ -73,7 +73,8 @@ class StartFlowController extends PSIBaseController
   {
     if (IS_POST) {
       $params = array(
-        'id' => I("post.id")
+        'id' => I("post.id"),
+        'flow_id' => I("post.flowId")
       );
       $sf = new StartFlowService();
       $this->ajaxReturn($sf->startFlow($params));

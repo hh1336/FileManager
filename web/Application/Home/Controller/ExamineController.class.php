@@ -32,4 +32,15 @@ class  ExamineController extends PSIBaseController
     }
   }
 
+  public function flowAdvance()
+  {
+    if (IS_POST) {
+      $params = array(
+        "id" => I("runProcessId")
+      );
+      $ed = new ExamineService();
+      $this->ajaxReturn($ed->flowAdvance($params));
+    }
+  }
+
 }
