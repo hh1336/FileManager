@@ -43,4 +43,15 @@ class  ExamineController extends PSIBaseController
     }
   }
 
+  public function getFileInfoByRunId()
+  {
+    if (IS_POST) {
+      $params = array(
+        "run_id" => I("post.runId")
+      );
+      $ed = new ExamineService();
+      $this->ajaxReturn($ed->getFileInfoByRunId($params));
+    }
+  }
+
 }

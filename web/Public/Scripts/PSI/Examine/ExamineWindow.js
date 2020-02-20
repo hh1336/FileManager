@@ -46,7 +46,6 @@ Ext.define("PSI.Examine.ExamineWindow", {
       return me.__west;
 
     let data = me.getEntity();
-    console.log(data);
     me.__west = Ext.create("Ext.form.Panel", {
       header: false,
       border: 0,
@@ -124,7 +123,7 @@ Ext.define("PSI.Examine.ExamineWindow", {
       }
     });
 
-    me.__center = me.__grid = Ext.create("Ext.grid.Panel", {
+    me.__center = Ext.create("Ext.grid.Panel", {
       cls: "PSI",
       border: 1,
       columnLines: true,
@@ -134,7 +133,7 @@ Ext.define("PSI.Examine.ExamineWindow", {
         {header: '审批人', width: "15%", dataIndex: 'sponsorUser', sortable: false, menuDisabled: true},
         {header: '操作', width: "20%", dataIndex: 'status', sortable: false, menuDisabled: true},
         {header: '审核时间', width: "25%", dataIndex: "bltime", sortable: false, menuDisabled: true},
-        {header: '审批意见', width: "30%", dataIndex: 'remark', sortable: false, menuDisabled: true}
+        {header: '审批意见', width: "29.5%", dataIndex: 'remark', sortable: false, menuDisabled: true}
       ]
     });
 
@@ -142,6 +141,64 @@ Ext.define("PSI.Examine.ExamineWindow", {
   },
   //文件信息Panel
   getSouthPanel: function () {
+    let me = this;
+    let data = me.getEntity();
+    let modelName = "SouthModel";
+    Ext.define(modelName, {
+      extend: "Ext.data.Model",
+      fields: ["suffix", "size", "name", "path"]
+    });
+    let Store = Ext.create('Ext.data.Store', {
+      model: modelName,
+      data: []
+    });
+    me.ajax({
+      url: me.URL("Home/Examine/getFileInfoByRunId"),
+      params: {
+        runId: data['runId']
+      },
+      success: function (response) {
+        let p_json = Ext.JSON.decode(response["responseText"]);
+        let file_json = Ext.JSON.decode(p_json["params_json"]);
+        if (file_json['vType'] == "file") {
+          Store.add(file_json);
+        } else {
+
+        }
+      }
+    });
+
+    me.__south = Ext.create("Ext.grid.Panel", {
+      cls: "PSI",
+      border: 1,
+      columnLines: true,
+      store: Store,
+      columns: [
+        {header: '文件名', width: "30%", dataIndex: 'name', sortable: false, menuDisabled: true},
+        {header: '拓展名', width: "20%", dataIndex: 'suffix', sortable: false, menuDisabled: true},
+        {
+          header: '文件大小',
+          width: "20%",
+          dataIndex: "size",
+          sortable: false,
+          menuDisabled: true,
+          renderer: function (val) {
+            return (val / 1024).toFixed(2) + "M";
+          }
+        },
+        {
+          header: '预览',
+          width: "29.8%",
+          dataIndex: 'path',
+          sortable: false,
+          menuDisabled: true,
+          renderer: function (val) {
+            return "<a href='" + me.URL(val) + "' target='_blank'>预览</a>"
+          }
+        }
+      ]
+    });
+    return me.__south;
 
   },
   //通过

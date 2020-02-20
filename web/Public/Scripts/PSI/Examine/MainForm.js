@@ -224,7 +224,6 @@ Ext.define('PSI.Examine.MainForm', {
   onExamineFlow: function () {
     let me = this;
     let data = me.getSelectNodeData();
-    console.log(data);
     if (Ext.JSON.encode(data) == "{}")
       return me.showInfo("请先选择数据");
     if (data['status'] != "2")

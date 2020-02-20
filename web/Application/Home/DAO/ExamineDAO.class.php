@@ -73,8 +73,15 @@ class ExamineDAO extends PSIBaseExDAO
       $arr = $this->flowAdvance($data, false);
     }
     array_push($arr['dataList'], $item);
-
     return $arr;
+  }
+
+  public function getFileInfoByRunId($params)
+  {
+    $db = $this->db;
+    $run_flow = $db->query("select params_json from t_flow_run where id = '%s'", $params['run_id']);
+
+    return $run_flow[0];
   }
 
 }
