@@ -56,7 +56,7 @@ Ext.define('PSI.Examine.MainForm', {
     Ext.define(modelName, {
       extend: "Ext.data.Model",
       fields: ["id", "runName", "runId", "uId", "uName", "runRemark", "receiveTime",
-        "status", "isBack", "remark", "isUserEnd", "flowStatus", "isUrgent"]
+        "status", "isBack", "remark", "isUserEnd", "flowStatus", "isUrgent", "processTo", "processType"]
     });
 
     let Store = Ext.create('Ext.data.Store', {
@@ -148,6 +148,9 @@ Ext.define('PSI.Examine.MainForm', {
                 break;
               case "5":
                 value = "已打回";
+                break;
+              case "6":
+                value = "他人已通过";
                 break;
               default:
                 break;

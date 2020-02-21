@@ -4,7 +4,7 @@ Ext.define("PSI.Examine.ExamineWindow", {
     let me = this;
 
     Ext.apply(me, {
-      width: 900,
+      width: 980,
       height: 600,
       layout: "border",
       items: [{
@@ -12,7 +12,7 @@ Ext.define("PSI.Examine.ExamineWindow", {
         xtype: "panel",
         region: "west",
         layout: "fit",
-        width: "40%",
+        width: "33%",
         height: "30%",
         split: false,
         collapsible: false,
@@ -24,7 +24,7 @@ Ext.define("PSI.Examine.ExamineWindow", {
         xtype: "panel",
         height: "30%",
         layout: "fit",
-        border: 1,
+        border: 0,
         items: [me.getCenterPanel()]
       }, {
         title: "文件信息",
@@ -46,6 +46,7 @@ Ext.define("PSI.Examine.ExamineWindow", {
       return me.__west;
 
     let data = me.getEntity();
+    console.log(data);
     me.__west = Ext.create("Ext.form.Panel", {
       header: false,
       border: 0,
@@ -61,7 +62,7 @@ Ext.define("PSI.Examine.ExamineWindow", {
       }, {
         xtype: "button",
         disabled: false,
-        text: "通过",
+        text: data['processTo'] == "" || (data['processType'] == "End") ? "通过(结束)" : "通过",
         margin: "10 0 0 10",
         handler: me.onPass
       }, {
@@ -72,13 +73,13 @@ Ext.define("PSI.Examine.ExamineWindow", {
         handler: me.onFail
       }, {
         xtype: "button",
-        disabled: false,
+        disabled: !~~data['isBack'],
         margin: "10 0 0 10",
         text: "打回",
         handler: me.onBack
       }, {
         xtype: "button",
-        disabled: false,
+        disabled: !~~data['isUserEnd'],
         margin: "10 0 0 10",
         text: "通过并结束流程",
         handler: me.onPassEnd
@@ -99,7 +100,7 @@ Ext.define("PSI.Examine.ExamineWindow", {
     let modelName = "CenterModel";
     Ext.define(modelName, {
       extend: "Ext.data.Model",
-      fields: ["sponsorUser", "remark", "status", "bltime"]
+      fields: ["sponsorUser", "remark", "status", "bltime", "receiveTime"]
     });
 
     let Store = Ext.create('Ext.data.Store', {
@@ -125,15 +126,16 @@ Ext.define("PSI.Examine.ExamineWindow", {
 
     me.__center = Ext.create("Ext.grid.Panel", {
       cls: "PSI",
-      border: 1,
+      border: 0,
       columnLines: true,
       store: Store,
       columns: [
-        {xtype: "rownumberer", width: "10%", header: "序号"},
-        {header: '审批人', width: "15%", dataIndex: 'sponsorUser', sortable: false, menuDisabled: true},
-        {header: '操作', width: "20%", dataIndex: 'status', sortable: false, menuDisabled: true},
-        {header: '审核时间', width: "25%", dataIndex: "bltime", sortable: false, menuDisabled: true},
-        {header: '审批意见', width: "29.5%", dataIndex: 'remark', sortable: false, menuDisabled: true}
+        {xtype: "rownumberer", width: "6%", header: "序号"},
+        {header: '审批人', width: "14%", dataIndex: 'sponsorUser', sortable: false, menuDisabled: true},
+        {header: '操作', width: "11%", dataIndex: 'status', sortable: false, menuDisabled: true},
+        {header: '接收时间', width: "22.5%", dataIndex: "receiveTime", sortable: false, menuDisabled: true},
+        {header: '审核时间', width: "22.5%", dataIndex: "bltime", sortable: false, menuDisabled: true},
+        {header: '审批意见', width: "24%", dataIndex: 'remark', sortable: false, menuDisabled: true}
       ]
     });
 
@@ -203,6 +205,21 @@ Ext.define("PSI.Examine.ExamineWindow", {
   },
   //通过
   onPass: function () {
+    let me = this;
+    let data = me.getEntity();
+    me.confirm("审核过后，审核意见不可改，是否操作？", function () {
+      let remarkCmp = Ext.getCmp("remark");
+      me.ajax({
+        url: me.URL("/Home/Examine/passFlow"),
+        params: {
+          runProcessId: data['id'],
+          remark: remarkCmp.getValue()
+        },
+        success: function (response) {
+          console.log(response);
+        }
+      });
+    });
 
   },
   //不通过

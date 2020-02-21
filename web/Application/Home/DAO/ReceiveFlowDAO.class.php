@@ -20,7 +20,7 @@ class ReceiveFlowDAO extends PSIBaseExDAO
     left join t_flow_run fr on fr.id = frp.run_id
     left join t_flow f on frp.flow_id = f.id
     left join t_flow_run_process p_frp on p_frp.id = frp.parent_process
-    where	frp.is_del = 0 and fp.is_del = 0 and fr.is_del = 0 and f.is_del = 0 and frp.is_receive = 0
+    where	frp.is_del = 0 and fp.is_del = 0 and fr.is_del = 0 and f.is_del = 0 and frp.is_receive = 0 and fr.status = 1
     and (fp.user_ids like ('%" . $params['uid'] . "%') ";
     foreach ($role_ids as $role_id) {
       $sql .= " or fp.role_ids like ('%" . $role_id['role_id'] . "%')";

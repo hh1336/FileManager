@@ -13,8 +13,8 @@ class ExamineDAO extends PSIBaseExDAO
   {
     $db = $this->db;
     $sql = "select frp.id, frp.run_id, fr.run_name,	fr.uid,	fr.uname,	fr.remark as run_remark, frp.receive_time,
-	  frp.status,	frp.is_back, frp.remark, fp.is_user_end, f.status as flow_status, fr.is_urgent 
-	  from t_flow_run_process frp
+	  frp.status,	frp.is_back, frp.remark, fp.is_user_end, f.status as flow_status, fr.is_urgent,
+	  fp.process_to, fp.process_type from t_flow_run_process frp
     left join t_flow_process fp on fp.id = frp.process_id
     left join t_flow_run fr on frp.run_id = fr.id
     left join t_flow_process parent_fp on parent_fp.id = frp.parent_process
@@ -42,6 +42,8 @@ class ExamineDAO extends PSIBaseExDAO
       $item['isUserEnd'] = $v['is_user_end'];
       $item['flowStatus'] = $v['flow_status'];
       $item['isUrgent'] = $v['is_urgent'];
+      $item['processTo'] = $v['process_to'];
+      $item['processType'] = $v['process_type'];
 
       array_push($rs['dataList'], $item);
     }
@@ -76,6 +78,11 @@ class ExamineDAO extends PSIBaseExDAO
     return $arr;
   }
 
+  /**
+   * 获取文件上传信息
+   * @param $params
+   * @return mixed
+   */
   public function getFileInfoByRunId($params)
   {
     $db = $this->db;
@@ -83,5 +90,77 @@ class ExamineDAO extends PSIBaseExDAO
 
     return $run_flow[0];
   }
+
+  /**
+   * 通过或结束流程
+   *
+   * 当多个流程节点中的其中一个流程节点通过时，将流程转交到下一步，其他节点的流程停止审核
+   * 如果流程开关关闭了，则不允许审核
+   * 如果是最后一步，则开始上传文件
+   * @param $params
+   * @return mixed
+   */
+  public function passFlow($params)
+  {
+    $db = $this->db;
+    $sel_sql = "select frp.id, frp.status, fr.status as run_status,	frp.process_id,	fr.current_process,
+     fp.process_to,	fp.process_type, fr.params_json, f.status as flow_status, frp.parent_process
+     from t_flow_run_process frp
+    left join t_flow_process fp on frp.process_id = fp.id
+    left join t_flow_run fr on frp.run_id = fr.id
+    left join t_flow f on frp.flow_id = f.id
+    where	frp.id = '%s'";
+    $process_data = $db->query($sel_sql, $params['id']);
+
+    if ($process_data[0]['flow_status'] != "0")
+      return $this->failAction("流程已关闭，请先开启流程后再进行审核");
+
+    if ($process_data[0]['run_status'] != "1")
+      return $this->failAction("流程已结束，不需要继续审核");
+
+    //判断其他流程步骤已经通过了
+    $other_is_pass = false;
+    if (strpos($process_data[0]['current_process'], ',') !== false) {
+      $arr = explode($process_data[0]['current_process'], ',');
+      foreach ($arr as $item) {
+        if ($item == $process_data[0]['id']) {
+          $other_is_pass = true;
+          break;
+        }
+      }
+    } else {
+      $other_is_pass = $process_data[0]['current_process'] == $process_data[0]['id'];
+    }
+
+    $db->startTrans();
+    $info = "";
+    if ($other_is_pass) {//其他流程步骤未审核
+      //修改当前步骤状态
+      $update_sql = "update t_flow_run_process 
+        set  status = '3', remark = '%s', bl_time = '%s', updatetime = '%s',
+        where	id = '%s'";
+      $info = $db->execute($update_sql, $params['remark'], time(), time(), $params['id']);
+      if (!$info) {
+        $db->rollback();
+        return $this->failAction('操作失败');
+      }
+      //修改其他步骤状态
+      $update_sql = "update t_flow_run_process
+       set status = '6' where id != '%s' and parent_process = '%s'";
+      $info = $db->execute($update_sql, $params['id'],$process_data[0]['parent_process']);
+      if (!$info) {
+        $db->rollback();
+        return $this->failAction('操作失败');
+      }
+      //TODO 判断是否结束流程进行文件上传，下一步则修改运行中流程的信息，根据下一步是否需要会签进行操作
+      //修改运行中的流程信息
+
+
+    } else {//其他流程步骤已审核
+
+    }
+
+  }
+
 
 }

@@ -54,4 +54,17 @@ class  ExamineController extends PSIBaseController
     }
   }
 
+  public function passFlow()
+  {
+    if (IS_POST) {
+      $params = array(
+        "id" => I("post.runProcessId"),
+        "remark" => I("post.remark")
+      );
+      $ed = new ExamineService();
+      $this->ajaxReturn($ed->passFlow($params));
+    }
+  }
+
+
 }

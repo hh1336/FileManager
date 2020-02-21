@@ -37,4 +37,14 @@ class ExamineService extends PSIBaseExService
     return $ed->getFileInfoByRunId($params);
   }
 
+  public function passFlow($params)
+  {
+    if ($this->isNotOnline()) {
+      return $this->emptyResult();
+    }
+    $params['uid'] = $this->getLoginUserId();
+    $ed = new ExamineDAO($this->db());
+    return $ed->passFlow($params);
+  }
+
 }
