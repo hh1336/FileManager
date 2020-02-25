@@ -66,5 +66,41 @@ class  ExamineController extends PSIBaseController
     }
   }
 
+  public function passEnd()
+  {
+    if (IS_POST) {
+      $params = array(
+        "id" => I("post.runProcessId"),
+        "remark" => I("post.remark")
+      );
+      $ed = new ExamineService();
+      $this->ajaxReturn($ed->passEnd($params));
+    }
+  }
+
+  public function fail()
+  {
+    if (IS_POST) {
+      $params = array(
+        "id" => I("post.runProcessId"),
+        "remark" => I("post.remark")
+      );
+      $ed = new ExamineService();
+      $this->ajaxReturn($ed->fail($params));
+    }
+  }
+
+  public function back()
+  {
+    if (IS_POST) {
+      $params = array(
+        "id" => I("post.runProcessId"),
+        "remark" => I("post.remark")
+      );
+      $ed = new ExamineService();
+      $this->ajaxReturn($ed->back($params));
+    }
+  }
+
 
 }

@@ -43,8 +43,41 @@ class ExamineService extends PSIBaseExService
       return $this->emptyResult();
     }
     $params['uid'] = $this->getLoginUserId();
+    $params['uname'] = $this->getLoginUserName();
     $ed = new ExamineDAO($this->db());
     return $ed->passFlow($params);
+  }
+
+  public function passEnd($params)
+  {
+    if ($this->isNotOnline()) {
+      return $this->emptyResult();
+    }
+    $params['uid'] = $this->getLoginUserId();
+    $params['uname'] = $this->getLoginUserName();
+    $ed = new ExamineDAO($this->db());
+    return $ed->passFlow($params, true);
+  }
+
+  public function fail($params)
+  {
+    if ($this->isNotOnline()) {
+      return $this->emptyResult();
+    }
+    $params['uid'] = $this->getLoginUserId();
+    $params['uname'] = $this->getLoginUserName();
+    $ed = new ExamineDAO($this->db());
+    return $ed->fail($params);
+  }
+
+  public function back($params)
+  {
+    if ($this->isNotOnline()) {
+      return $this->emptyResult();
+    }
+    $params['uid'] = $this->getLoginUserId();
+    $ed = new ExamineDAO($this->db());
+    return $ed->back($params);
   }
 
 }

@@ -87,7 +87,7 @@ Ext.define('PSI.StartFlow.MainForm', {
       margin: "5, 0, 0, 0",
       store: Ext.create("Ext.data.ArrayStore", {
         fields: ["id", "text"],
-        data: [["0", "未启动"], ["1", "流程中"], ["2", "通过"], ["2", "退回"]]
+        data: [["0", "未启动"], ["1", "流程中"], ["2", "已通过"], ["3", "已结束"]]
       }),
       value: ""
     },
@@ -206,7 +206,7 @@ Ext.define('PSI.StartFlow.MainForm', {
                 value = "已通过";
                 break;
               case "3":
-                value = "退回";
+                value = "已结束";
                 break;
               default:
                 break;
@@ -259,7 +259,6 @@ Ext.define('PSI.StartFlow.MainForm', {
       return me.showInfo("工作流已开始或结束，无法进行编辑");
     }
     data['flows'] = me.__flows;
-    console.log(data);
     let from = Ext.create("PSI.StartFlow.EditFlowWindow", {
       parentForm: me,
       entity: data

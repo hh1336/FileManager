@@ -16,7 +16,7 @@ class StartFlowDAO extends PSIBaseExDAO
 
     if ($params['query_name'])
       $sql .= " and run_name like('%" . $params['query_name'] . "%')";
-    if ($params['query_type'])
+    if ($params['query_type'] != "")
       $sql .= " and status = " . $params['query_type'];
 
     $data = $db->query($sql);
@@ -186,13 +186,14 @@ class StartFlowDAO extends PSIBaseExDAO
 
     //遍历下一步步骤id，下一个审核点可能有多个步骤进行审核，每个步骤为一条数据
     foreach ($p_ids as $p_id) {
+      $process = $db->query("select * from t_flow_process where id = '%s'", $p_id);
       $run_p_data['id'] = $this->newId();
       $run_p_data['uid'] = $params['uid'];
       $run_p_data['run_id'] = $params['id'];
       $run_p_data['flow_id'] = $params['flow_id'];
       $run_p_data['process_id'] = $p_id;
-      $run_p_data['is_singpost'] = 0;
-      $run_p_data['is_back'] = 0;
+      $run_p_data['is_singpost'] = $process[0]["is_sing"];
+      $run_p_data['is_back'] = $process[0]['is_back'];
       $run_p_data['is_receive'] = 0;
       $run_p_data['status'] = 0;
       $run_p_data['bl_time'] = "";

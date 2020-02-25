@@ -173,7 +173,9 @@ class FileManagerController extends PSIBaseController
         $fms->cancelUpLoadFile($del_params);
         $this->ajaxReturn($rs);
       } else {// 上传成功
-        $params['name'] = $info['file']['name'];
+        $str_len = strlen($info['file']['name']) - strlen("." . $info['file']['ext']);
+        $end_len = strlen("." . $info['file']['ext']);
+        $params['name'] = substr_replace($info['file']['name'], "", $str_len, $end_len);
         $params['save_name'] = $info['file']['savename'];
         $params['path'] = 'Uploads/' . $info['file']['savename'];
         $params['size'] = $info['file']['size'];

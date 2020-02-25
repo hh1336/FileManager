@@ -4,7 +4,7 @@ Ext.define("PSI.Examine.ExamineWindow", {
     let me = this;
 
     Ext.apply(me, {
-      width: 980,
+      width: 1000,
       height: 600,
       layout: "border",
       items: [{
@@ -46,7 +46,6 @@ Ext.define("PSI.Examine.ExamineWindow", {
       return me.__west;
 
     let data = me.getEntity();
-    console.log(data);
     me.__west = Ext.create("Ext.form.Panel", {
       header: false,
       border: 0,
@@ -64,25 +63,29 @@ Ext.define("PSI.Examine.ExamineWindow", {
         disabled: false,
         text: data['processTo'] == "" || (data['processType'] == "End") ? "通过(结束)" : "通过",
         margin: "10 0 0 10",
-        handler: me.onPass
+        handler: me.onPass,
+        scope: me
       }, {
         xtype: "button",
         disabled: false,
         margin: "10 0 0 10",
         text: "不通过",
-        handler: me.onFail
+        handler: me.onFail,
+        scope: me
       }, {
         xtype: "button",
         disabled: !~~data['isBack'],
         margin: "10 0 0 10",
-        text: "打回",
-        handler: me.onBack
+        text: "退回",
+        handler: me.onBack,
+        scope: me
       }, {
         xtype: "button",
         disabled: !~~data['isUserEnd'],
         margin: "10 0 0 10",
         text: "通过并结束流程",
-        handler: me.onPassEnd
+        handler: me.onPassEnd,
+        scope: me
       }]
     });
 
@@ -185,6 +188,9 @@ Ext.define("PSI.Examine.ExamineWindow", {
           sortable: false,
           menuDisabled: true,
           renderer: function (val) {
+            val /= 1024;
+            if (val < 1024)
+              return val.toFixed(2) + "KB";
             return (val / 1024).toFixed(2) + "M";
           }
         },
@@ -206,32 +212,42 @@ Ext.define("PSI.Examine.ExamineWindow", {
   //通过
   onPass: function () {
     let me = this;
+    me.send("/Home/Examine/passFlow", "审核过后，审核意见不可改，是否操作？", me);
+  },
+  //不通过
+  onFail: function () {
+    let me = this;
+    me.send("/Home/Examine/fail", "提交后审核意见不可改，是否操作？", me);
+  },
+  //退回
+  onBack: function () {
+    let me = this;
+    me.send("/Home/Examine/back", "提交后审核意见不可更改，是否操作？", me);
+  },
+  //通过并结束流程
+  onPassEnd: function () {
+    let me = this;
+    me.send("/Home/Examine/passEnd", "审核过后，审核意见不可改，是否操作？", me);
+  },
+  send: function (url, msg, me) {
     let data = me.getEntity();
-    me.confirm("审核过后，审核意见不可改，是否操作？", function () {
+    me.confirm(msg, function () {
       let remarkCmp = Ext.getCmp("remark");
       me.ajax({
-        url: me.URL("/Home/Examine/passFlow"),
+        url: me.URL(url),
         params: {
           runProcessId: data['id'],
           remark: remarkCmp.getValue()
         },
         success: function (response) {
-          console.log(response);
+          let data = me.decodeJSON(response['responseText']);
+          if (data['success']) {
+            me.close();
+          }
+          me.showInfo(data['msg']);
+          me.getParentForm().freshGrid();
         }
       });
     });
-
-  },
-  //不通过
-  onFail: function () {
-
-  },
-  //打回
-  onBack: function () {
-
-  },
-  //通过并结束流程
-  onPassEnd: function () {
-
   }
 });

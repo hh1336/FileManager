@@ -472,7 +472,7 @@ Ext.define("PSI.ProcessDesign.DesignFlowWindow", {
           labelWidth: 70,
           store: Ext.create("Ext.data.ArrayStore", {
             fields: ["id", "text"],
-            data: [['0', "不允许"], ['1', "回到开始"], ['2', "回到上一步"]]
+            data: [['0', "不允许"], ['1', "回到上一步"]]
           }),
           value: '0'
         },

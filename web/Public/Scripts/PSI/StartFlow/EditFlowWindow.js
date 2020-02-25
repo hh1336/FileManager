@@ -168,6 +168,7 @@ Ext.define("PSI.StartFlow.EditFlowWindow", {
         me.showInfo(data['msg']);
         me.getParentForm().freshGrid();
         me.close();
+
       }
     });
 

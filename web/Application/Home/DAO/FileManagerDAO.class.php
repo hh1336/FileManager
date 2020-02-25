@@ -924,7 +924,7 @@ class FileManagerDAO extends PSIBaseExDAO
     $param["data"] = $data;
     $param['id'] = $data["id"];
     $msg = "上传成功";
-    copy($param['path'], $data['file_path'] . $data['file_name']);
+    copy($param['path'], $data['file_path'] . $data['file_version'] . "." . $data['file_suffix']);
     unlink($param['path']);
     $this->convertFile($param);
     return $this->successAction($msg);
