@@ -14,7 +14,8 @@ class FileManagerlogService extends PSIBaseExService
   public function log(&$params)
   {
     $dao = new FileManagerlogDAO($this->db());
-    $params["login_user_id"] = $this->getLoginUserId();
+    if (!isset($params["login_user_id"]))
+      $params["login_user_id"] = $this->getLoginUserId();
 
     $dao->log($params);
   }
@@ -48,7 +49,8 @@ class FileManagerlogService extends PSIBaseExService
   public function loadLog($params)
   {
     $dao = new FileManagerlogDAO($this->db());
-    $params["login_user_id"] = $this->getLoginUserId();
+    if (!isset($params["login_user_id"]))
+      $params["login_user_id"] = $this->getLoginUserId();
     return $dao->loadLog($params);
   }
 
@@ -57,17 +59,20 @@ class FileManagerlogService extends PSIBaseExService
    * @param $params
    * @return mixed
    */
-  public function backLog($params){
+  public function backLog($params)
+  {
     $dao = new FileManagerlogDAO($this->db());
     return $dao->backVersion($params);
   }
 
-  public function editLogRemarksById($id,$remarks){
+  public function editLogRemarksById($id, $remarks)
+  {
     $dao = new FileManagerlogDAO($this->db());
-    $dao->editLogRemarksById($id,$remarks);
+    $dao->editLogRemarksById($id, $remarks);
   }
 
-  public function revokeFile($params){
+  public function revokeFile($params)
+  {
     $dao = new FileManagerlogDAO($this->db());
     return $dao->revokeFile($params);
   }

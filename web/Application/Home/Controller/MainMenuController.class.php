@@ -76,6 +76,10 @@ class MainMenuController extends PSIBaseController
           //接收流程
           redirect(__ROOT__ . "/Home/ReceiveFlow/index");
           break;
+        case FIdConst::GZL_HQSH:
+          //会签审核
+          redirect(__ROOT__ . "/Home/JointlySign/index");
+          break;
 
         case FIdConst::ABOUT:
           // 修改我的密码

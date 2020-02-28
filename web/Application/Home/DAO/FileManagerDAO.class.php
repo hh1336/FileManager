@@ -521,6 +521,7 @@ class FileManagerDAO extends PSIBaseExDAO
         //上传后给自己设置权限
         $permissionDara["file_id"] = $data["id"];
         $permissionDara["checked"] = true;
+        $permissionDara["login_d"] = $params['login_user_id'];
         $permissionService->setFileCRUDPermission($permissionDara, "dir");
         $msg = "操作成功";
         return $this->successAction($msg);
@@ -919,6 +920,7 @@ class FileManagerDAO extends PSIBaseExDAO
     //上传后给自己设置权限
     $permissionDara["file_id"] = $data["id"];
     $permissionDara["checked"] = true;
+    $permissionDara['login_id'] = $param['login_user_id'];
     $permissionService->setFileCRUDPermission($permissionDara, "file");
 
     $param["data"] = $data;
@@ -936,7 +938,7 @@ class FileManagerDAO extends PSIBaseExDAO
    * @param $info
    * @return mixed
    */
-  public function editFile($params, $info)
+  public function editFile($params)
   {
     $db = $this->db;
     $fmps = new FileManagerPermissionService();
@@ -984,29 +986,26 @@ class FileManagerDAO extends PSIBaseExDAO
         return $this->failAction($msg);
       }
 
-      copy($file_info[0]["file_path"] . $old_version . "." . $file_info[0]["file_suffix"],
-        $file_info[0]["file_path"] . $file_info[0]["file_version"] . "." . $file_info[0]["file_suffix"]);
+      copy($params['path'], $file_info[0]["file_path"] . $file_info[0]["file_version"] . "." . $params['ext']);
 
     } else {//上传了新的文件
 
-      $file_name = substr($info["file"]["name"], 0,
-        (-1 - strlen($info["file"]["ext"])));
       //验证名称
       $is_container = $db->query("select * from t_file_info
             where parent_dir_id = '%s' and is_del = 0 and file_name in ('%s') and file_suffix in ('%s')",
-        $file_info[0]["parent_dir_id"], $file_name, $info["file"]["ext"]);
+        $file_info[0]["parent_dir_id"], $params["name"], $params["suffix"]);
       if (count($is_container)) {
         $db->rollback();
         $logService->deleteLog($params["log_id"]);
-        unlink("Uploads/" . $info["file"]["savename"]);
+        unlink($params['path']);
         $msg = "上传的文件与其他文件发生冲突";
         return $this->failAction($msg);
       }
 
       $file_info[0]["id"] = $new_id;
-      $file_info[0]["file_name"] = $file_name;
-      $file_info[0]["file_size"] = $info["file"]["size"];
-      $file_info[0]["file_suffix"] = $info["file"]["ext"];
+      $file_info[0]["file_name"] = $params["name"];
+      $file_info[0]["file_size"] = $params["size"];
+      $file_info[0]["file_suffix"] = $params["suffix"];
       $file_info[0]["file_version"] = $this->newId();
       $file_info[0]["action_time"] = Date("Y-m-d H:i:s");
       $file_info[0]["action_user_id"] = $params["login_user_id"];
@@ -1021,9 +1020,9 @@ class FileManagerDAO extends PSIBaseExDAO
         return $this->failAction($msg);
       }
 
-      copy("Uploads/" . $info["file"]["savename"],
-        $file_info[0]["file_path"] . $file_info[0]["file_version"] . "." . $file_info[0]["file_suffix"]);
-      unlink("Uploads/" . $info["file"]["savename"]);
+      copy($params["path"],
+        $file_info[0]["file_path"] . $file_info[0]["file_version"] . "." . $params['suffix']);
+      unlink($params["path"]);
 
       $convert_data["id"] = $file_info[0]["id"];
       $this->convertFile($convert_data);

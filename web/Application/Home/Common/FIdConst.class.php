@@ -176,6 +176,11 @@ class FIdConst
    */
   const GZL_JSLC = "-9995-04";
 
+  /**
+   * 会签审核
+   */
+  const GZL_HQSH = "-9995-05";
+
 
   /**
    * 文件管理

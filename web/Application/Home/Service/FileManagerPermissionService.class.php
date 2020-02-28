@@ -45,7 +45,8 @@ class FileManagerPermissionService extends PSIBaseExService
     }
 
     $dao = new FileManagerPermissionDAO($this->db());
-    $params["login_id"] = $this->getLoginUserId();
+    if (!isset($params["login_id"]))
+      $params["login_id"] = $this->getLoginUserId();
     $rs = $dao->setRolePermission($params);
     return $rs;
 
@@ -88,7 +89,8 @@ class FileManagerPermissionService extends PSIBaseExService
   public function setFileCRUDPermission($params, $type)
   {
     $dao = new FileManagerPermissionDAO($this->db());
-    $params["login_id"] = $this->getLoginUserId();
+    if (!isset($params["login_id"]))
+      $params["login_id"] = $this->getLoginUserId();
     $permission_arr = [];
     if ($type == "dir") {
       $permission_arr = [

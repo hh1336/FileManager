@@ -97,7 +97,8 @@ class FileManagerService extends PSIBaseExService
     $params['service_name'] = __CLASS__;
     $params['function_name'] = __FUNCTION__;
     $pValidation = new ProcessValidationService();
-    if ($pValidation->isOpenValidation($params['vType']) & !isset($params['validated']) ?? true) {//没有经过审核
+    if ($pValidation->isOpenValidation($params['vType']) & !isset($params['validated']) ?? true) {
+      $params['login_user_id'] = $this->getLoginUserId();
       return $pValidation->validation($params);
     }
 
@@ -153,7 +154,8 @@ class FileManagerService extends PSIBaseExService
     $params['service_name'] = __CLASS__;
     $params['function_name'] = __FUNCTION__;
     $pValidation = new ProcessValidationService();
-    if ($pValidation->isOpenValidation($params['vType']) & !isset($params['validated']) ?? true) {//没有经过审核
+    if ($pValidation->isOpenValidation($params['vType']) & !isset($params['validated']) ?? true) {
+      $params['login_user_id'] = $this->getLoginUserId();
       return $pValidation->validation($params);
     }
     $dao = new FileManagerDAO($this->db());
@@ -185,7 +187,8 @@ class FileManagerService extends PSIBaseExService
     $params['service_name'] = __CLASS__;
     $params['function_name'] = __FUNCTION__;
     $pValidation = new ProcessValidationService();
-    if ($pValidation->isOpenValidation($params['vType']) & !isset($params['validated']) ?? true) {//没有经过审核
+    if ($pValidation->isOpenValidation($params['vType']) & !isset($params['validated']) ?? true) {
+      $params['login_user_id'] = $this->getLoginUserId();
       return $pValidation->validation($params);
     }
 
@@ -219,7 +222,8 @@ class FileManagerService extends PSIBaseExService
     $params['service_name'] = __CLASS__;
     $params['function_name'] = __FUNCTION__;
     $pValidation = new ProcessValidationService();
-    if ($pValidation->isOpenValidation($params['vType']) & !isset($params['validated']) ?? true) {//没有经过审核
+    if ($pValidation->isOpenValidation($params['vType']) & !isset($params['validated']) ?? true) {
+      $params['login_user_id'] = $this->getLoginUserId();
       return $pValidation->validation($params);
     }
 
@@ -231,7 +235,7 @@ class FileManagerService extends PSIBaseExService
     return $rs;
   }
 
-  public function editFile($params, $info)
+  public function editFile($params)
   {
     if ($this->isNotOnline()) {
       return $this->emptyResult();
@@ -246,14 +250,15 @@ class FileManagerService extends PSIBaseExService
     $params['service_name'] = __CLASS__;
     $params['function_name'] = __FUNCTION__;
     $pValidation = new ProcessValidationService();
-    if ($pValidation->isOpenValidation($params['vType']) & !isset($params['validated']) ?? true) {//没有经过审核
+    if ($pValidation->isOpenValidation($params['vType']) & !isset($params['validated']) ?? true) {
+      $params['login_user_id'] = $this->getLoginUserId();
       return $pValidation->validation($params);
     }
 
     $params["log_info"] = "编辑文件[" . $params["file_name"] . "]";
     $this->logAction($params);
     $dao = new FileManagerDAO($this->db());
-    return $dao->editFile($params, $info);
+    return $dao->editFile($params);
   }
 
   public function setFileSize($id, $size)

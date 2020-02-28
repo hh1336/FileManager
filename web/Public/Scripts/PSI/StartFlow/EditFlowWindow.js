@@ -166,7 +166,7 @@ Ext.define("PSI.StartFlow.EditFlowWindow", {
       success: function (response) {
         let data = me.decodeJSON(response['responseText']);
         me.showInfo(data['msg']);
-        me.getParentForm().freshGrid();
+        location.reload();
         me.close();
 
       }

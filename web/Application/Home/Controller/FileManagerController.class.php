@@ -212,11 +212,26 @@ class FileManagerController extends PSIBaseController
         $upload->rootPath = "Uploads/"; // 设置附件上传根目录
 
         $info = $upload->upload();
+        $fms = new FileManagerService();
+        if (!$info) {// 上传错误提示错误信息
+          $rs["msg"] = "上传[" . $params["data"]['file_name'] . "]，出现了：" . $upload->getError();
+          $del_params["id"] = $params["data"]["id"];
+          $del_params["login_user_id"] = $params["login_user_id"];
+          $del_params["log_id"] = $params['log_id'];
+          $fms->cancelUpLoadFile($del_params);
+          $this->ajaxReturn($rs);
+        } else {// 上传成功
+          $str_len = strlen($info['file']['name']) - strlen("." . $info['file']['ext']);
+          $end_len = strlen("." . $info['file']['ext']);
+          $params['name'] = substr_replace($info['file']['name'], "", $str_len, $end_len);
+          $params['save_name'] = $info['file']['savename'];
+          $params['path'] = 'Uploads/' . $info['file']['savename'];
+          $params['size'] = $info['file']['size'];
+          $params['suffix'] = $info['file']['ext'];
+          $rs = $fms->editFile($params);
+          $this->ajaxReturn($rs);
+        }
       }
-
-      $fms = new FileManagerService();
-      $rs = $fms->editFile($params, $info);
-      $this->ajaxReturn($rs);
     }
   }
 

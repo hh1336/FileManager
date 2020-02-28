@@ -81,27 +81,32 @@ class ReceiveFlowDAO extends PSIBaseExDAO
 
     $info = 0;
     $db->startTrans();
+    $msg = "";
     //是否是会签，会签需要所有人都接收后状态才能改变成审核中
     if ($params['is_sing']) {
       //插入一条会签记录
-      $insert_sign_sql = "insert into t_flow_run_sign (id, uid, run_flow_id, run_flow_process_id,	is_agree)
-        values('%s','%s','%s','%s','%s')";
+      $insert_sign_sql = "insert into t_flow_run_sign (id, uid, uname, run_flow_id,
+    run_flow_process_id, is_agree, receive_time)
+        values('%s','%s','%s','%s','%s','%s','%s')";
       $insert_sign_data['id'] = $this->newId();
       $insert_sign_data['uid'] = $params['uid'];
+      $insert_sign_data['uname'] = $params['uname'];
       $insert_sign_data['run_flow_id'] = $run_process[0]['run_id'];
       $insert_sign_data['run_flow_process_id'] = $run_process[0]['id'];
       $insert_sign_data['is_agree'] = 0;
+      $insert_sign_data['receive_time'] = time();
       $info = $db->execute($insert_sign_sql, $insert_sign_data);
       if (!$info) {
         $db->rollback();
         return $this->failAction('操作失败');
       }
 
+      //判断会签人的人是否都已接收，接收完毕后则将状态改为审核中
       $user_ids = [];
       if ($process[0]['processing_mode'] == 'user') {
-        $user_ids = array_merge($user_ids, explode($process[0]['user_ids'], ','));
+        $user_ids = array_merge($user_ids, explode(',', $process[0]['user_ids']));
       } else {
-        $role_ids = explode($process[0]['role_ids'], ',');
+        $role_ids = explode(',', $process[0]['role_ids']);
         $sql = "select user_id from t_role_user where 1 = 1 ";
         foreach ($role_ids as $role_id) {
           $sql .= " or role_id = '" . $role_id . "'";
@@ -114,25 +119,26 @@ class ReceiveFlowDAO extends PSIBaseExDAO
       }
       $sql = "select count(*) from t_flow_run_sign where run_flow_process_id = '%s'";
       $signs_count = $db->query($sql, $run_process[0]['id']);
-      //判断会签人的人是否都已接收，接收完毕后则将状态改为审核中
+
       $status = 1;
       if (count($user_ids) == $signs_count[0]['count(*)']) {
         $status = 2;
       }
-      $info = $db->execute("update t_flow_run_process set status = '%s' where id = '%s'",
+      $db->execute("update t_flow_run_process set status = '%s' where id = '%s'",
         $status, $run_process[0]['id']);
-
+      $msg = "接收成功，请到[会签审核]模块进行审核";
     } else {
       $sql = "update t_flow_run_process set is_receive = 1, status = 2,
         sponsor_ids = '%s', sponsor_text = '%s', receive_time = '%s' 
         where id = '%s' ";
       $info = $db->execute($sql, $params['uid'], $params['uname'], time(), $params['id']);
+      $msg = "接收成功，请到[我的审核]模块进行审核";
+      if (!$info) {
+        $db->rollback();
+        return $this->failAction('操作失败');
+      }
     }
 
-    if (!$info) {
-      $db->rollback();
-      return $this->failAction('操作失败');
-    }
     //接收完流程后，将流程步骤改为当前步骤
     $info = $db->execute("update t_flow_run set current_process = '%s',run_flow_process = '%s', updatetime = '%s'
     where id = '%s'", $run_process[0]['id'], $process[0]['process_to'], time(), $run_process[0]['run_id']);
@@ -143,7 +149,7 @@ class ReceiveFlowDAO extends PSIBaseExDAO
     }
 
     $db->commit();
-    return $this->successAction('操作成功');
+    return $this->successAction($msg);
   }
 
 }

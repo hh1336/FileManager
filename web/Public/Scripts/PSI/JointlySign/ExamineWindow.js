@@ -1,4 +1,4 @@
-Ext.define("PSI.Examine.ExamineWindow", {
+Ext.define("PSI.JointlySign.ExamineWindow", {
   extend: "PSI.AFX.BaseDialogForm",
   initComponent: function () {
     let me = this;
@@ -31,10 +31,20 @@ Ext.define("PSI.Examine.ExamineWindow", {
         region: "south",
         xtype: "panel",
         layout: "fit",
-        height: "70%",
-        border: 1,
+        height: "30%",
+        border: 0,
         items: [me.getSouthPanel()]
-      }]
+      },
+        {
+          title: "会签进度",
+          region: "south",
+          xtype: "panel",
+          layout: "fit",
+          height: "40%",
+          border: 0,
+          items: [me.getJointlySignAdvance()]
+        }
+      ]
     });
 
     me.callParent(arguments);
@@ -51,17 +61,17 @@ Ext.define("PSI.Examine.ExamineWindow", {
       border: 0,
       padding: "0 0 0 10",
       items: [{
-        id: "remark",
+        id: "content",
         fieldLabel: "意见:",
         labelWidth: 30,
         anchor: '100%',
         xtype: "textarea",
         autoScroll: true,
-        value: data['remark'],
+        value: "",
       }, {
         xtype: "button",
         disabled: false,
-        text: data['processTo'] == "" || (data['processType'] == "End") ? "通过(结束)" : "通过",
+        text: "通过",
         margin: "10 0 0 10",
         handler: me.onPass,
         scope: me
@@ -71,20 +81,6 @@ Ext.define("PSI.Examine.ExamineWindow", {
         margin: "10 0 0 10",
         text: "不通过",
         handler: me.onFail,
-        scope: me
-      }, {
-        xtype: "button",
-        disabled: !~~data['isBack'],
-        margin: "10 0 0 10",
-        text: "退回",
-        handler: me.onBack,
-        scope: me
-      }, {
-        xtype: "button",
-        disabled: !~~data['isUserEnd'],
-        margin: "10 0 0 10",
-        text: "通过并结束流程",
-        handler: me.onPassEnd,
         scope: me
       }]
     });
@@ -112,12 +108,13 @@ Ext.define("PSI.Examine.ExamineWindow", {
       model: modelName,
       proxy: {
         type: "ajax",
-        url: me.URL("Home/Examine/flowAdvance"),
+        url: me.URL("Home/JointlySign/flowAdvance"),
         actionMethods: {
           read: "POST"
         },
         extraParams: {
-          runProcessId: data['id']
+          signId: data['id'],
+          runProcessId: data['runProcessId']
         },
         reader: {
           type: 'json',
@@ -138,7 +135,7 @@ Ext.define("PSI.Examine.ExamineWindow", {
         {header: '操作', width: "11%", dataIndex: 'status', sortable: false, menuDisabled: true},
         {header: '接收时间', width: "22.5%", dataIndex: "receiveTime", sortable: false, menuDisabled: true},
         {header: '审核时间', width: "22.5%", dataIndex: "bltime", sortable: false, menuDisabled: true},
-        {header: '审批意见', width: "24%", dataIndex: 'remark', sortable: false, menuDisabled: true}
+        {header: '审批意见', width: "23.5%", dataIndex: 'remark', sortable: false, menuDisabled: true}
       ]
     });
 
@@ -201,7 +198,7 @@ Ext.define("PSI.Examine.ExamineWindow", {
           sortable: false,
           menuDisabled: true,
           renderer: function (val) {
-            return "<a href='#' id='FileName'>预览</a>"
+            return "<a href='" + me.URL(val) + "' target='_blank'>预览</a>"
           }
         }
       ]
@@ -209,35 +206,101 @@ Ext.define("PSI.Examine.ExamineWindow", {
     return me.__south;
 
   },
+  //获取会签进度
+  getJointlySignAdvance: function () {
+    let me = this;
+    let data = me.getEntity();
+    if (me.__jointlySignAdvance)
+      return me.__jointlySignAdvance;
+    let modelName = "JointlySignAdvanceModel";
+    Ext.define(modelName, {
+      extend: "Ext.data.Model",
+      fields: ["id", "uName", "isAgree", "receiveTime", "content"]
+    });
+    let Store = Ext.create('Ext.data.Store', {
+      model: modelName,
+      data: []
+    });
+
+    let toolbar = Ext.create('Ext.toolbar.Toolbar', {
+      width: 700,
+      items: []
+    });
+
+    me.ajax({
+      url: me.URL("/Home/JointlySign/jointlySignAdvance"),
+      params: {
+        runProcessId: data['runProcessId']
+      },
+      success: function (response) {
+        let data = me.decodeJSON(response['responseText']);
+        Store.add(data);
+      }
+    });
+
+    me.ajax({
+      url: me.URL("/Home/JointlySign/loadJointlyCount"),
+      params: {
+        runProcessId: data['runProcessId']
+      },
+      success: function (response) {
+        let data = me.decodeJSON(response['responseText']);
+        let str = "会签人数共： " + data['receiveCount'] + "/" + data['jointlySignCount'] + " 人，" +
+          "待审核：" + data['unauditedCount'] + " 人，" +
+          "通过：" + data['passCount'] + " 人，" +
+          "不通过：" + data['failCount'] + " 人";
+        toolbar.add({
+          text: str
+        });
+      }
+    });
+
+    me.__jointlySignAdvance = Ext.create("Ext.grid.Panel", {
+      cls: "PSI",
+      border: 1,
+      columnLines: true,
+      store: Store,
+      columns: [
+        {xtype: "rownumberer", width: "10%", header: "序号"},
+        {header: '审核人', width: "20%", dataIndex: 'uName', sortable: false, menuDisabled: true},
+        {header: '接收时间', width: "25%", dataIndex: 'receiveTime', sortable: false, menuDisabled: true},
+        {
+          header: '操作',
+          width: "10%",
+          dataIndex: 'isAgree',
+          sortable: false,
+          menuDisabled: true,
+          renderer: function (val) {
+            val = ~~val;
+            return val == 0 ? "待审核" : val == 1 ? "已通过" : "不通过";
+          }
+        },
+        {header: '意见', width: "34.5%", dataIndex: 'content', sortable: false, menuDisabled: true}
+      ],
+      bbar: toolbar
+    });
+
+    return me.__jointlySignAdvance;
+  },
   //通过
   onPass: function () {
     let me = this;
-    me.send("/Home/Examine/passFlow", "审核过后，审核意见不可改，是否操作？", me);
+    me.send("/Home/JointlySign/pass", "审核过后，审核意见不可改，是否操作？", me);
   },
   //不通过
   onFail: function () {
     let me = this;
-    me.send("/Home/Examine/fail", "提交后审核意见不可改，是否操作？", me);
-  },
-  //退回
-  onBack: function () {
-    let me = this;
-    me.send("/Home/Examine/back", "提交后审核意见不可更改，是否操作？", me);
-  },
-  //通过并结束流程
-  onPassEnd: function () {
-    let me = this;
-    me.send("/Home/Examine/passEnd", "审核过后，审核意见不可改，是否操作？", me);
+    me.send("/Home/JointlySign/fail", "提交后审核意见不可改，是否操作？", me);
   },
   send: function (url, msg, me) {
     let data = me.getEntity();
     me.confirm(msg, function () {
-      let remarkCmp = Ext.getCmp("remark");
+      let contentCmp = Ext.getCmp("content");
       me.ajax({
         url: me.URL(url),
         params: {
-          runProcessId: data['id'],
-          remark: remarkCmp.getValue()
+          signId: data['id'],
+          content: contentCmp.getValue()
         },
         success: function (response) {
           let data = me.decodeJSON(response['responseText']);
@@ -245,7 +308,7 @@ Ext.define("PSI.Examine.ExamineWindow", {
             me.close();
           }
           me.showInfo(data['msg']);
-          me.getParentForm().freshGrid();
+          location.reload();
         }
       });
     });

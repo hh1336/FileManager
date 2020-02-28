@@ -1,20 +1,19 @@
-Ext.define('PSI.Examine.MainForm', {
+Ext.define('PSI.JointlySign.MainForm', {
   extend: "PSI.AFX.BaseMainExForm",
-  config: {},
   initComponent: function () {
     let me = this;
-
     Ext.apply(me, {
-      tbar: [{
-        text: "审批流程",
-        handler: me.onExamineFlow,
-        scope: me
-      }, {
-        text: "查看详细信息",
-        handler: me.onSelectInfo,
-        scope: me
-      },
+      tbar: [
         {
+          text: "审核流程",
+          handler: me.onExamineFlow,
+          scope: me
+        },
+        {
+          text: "查看详细信息",
+          handler: me.onSelectInfo,
+          scope: me
+        }, {
           text: "刷新",
           handler: me.freshGrid,
           scope: me
@@ -36,7 +35,7 @@ Ext.define('PSI.Examine.MainForm', {
           items: me.getQueryCmp()
         },
         {
-          id: "panelFlowInfo",
+          id: "JointlySignPanel",
           xtype: "panel",
           region: "west",
           layout: "fit",
@@ -48,20 +47,77 @@ Ext.define('PSI.Examine.MainForm', {
           items: [me.getGrid()]
         }]
     });
-
-    me.callParent(arguments);
+    me.callParent(arguments)
   },
-  //获取主面板
+  //搜索栏
+  getQueryCmp: function () {
+    let me = this;
+    return [{
+      id: "editQueryName",
+      labelWidth: 60,
+      labelAlign: "right",
+      labelSeparator: "",
+      fieldLabel: "名称",
+      margin: "5, 0, 0, 0",
+      xtype: "textfield"
+    }, {
+      id: "editType",
+      xtype: "combo",
+      queryMode: "local",
+      editable: true,
+      valueField: "id",
+      labelWidth: 60,
+      labelAlign: "right",
+      labelSeparator: "",
+      fieldLabel: "状态",
+      margin: "5, 0, 0, 0",
+      store: Ext.create("Ext.data.ArrayStore", {
+        fields: ["id", "text"],
+        data: [["0", "待办理"], ["1", "已通过"], ["2", "未通过"]]
+      }),
+      value: ""
+    }, {
+      xtype: "container",
+      items: [{
+        xtype: "button",
+        text: "查询",
+        width: 100,
+        height: 26,
+        margin: "5, 0, 0, 20",
+        handler: me.freshGrid,
+        scope: me
+      }, {
+        xtype: "button",
+        text: "清空查询条件",
+        width: 100,
+        height: 26,
+        margin: "5, 0, 0, 5",
+        handler: me.onClearQuery,
+        scope: me
+      }, {
+        xtype: "button",
+        text: "隐藏查询条件栏",
+        width: 130,
+        height: 26,
+        iconCls: "PSI-button-hide",
+        margin: "5 0 0 10",
+        handler: function () {
+          Ext.getCmp("panelQueryCmp").collapse();
+        },
+        scope: me
+      }]
+    }];
+  },
+  //获取grid
   getGrid: function () {
     let me = this;
     if (me.__grid)
       return me.__grid;
-
-    let modelName = "ExamineModel";
+    let modelName = "JointlySignModel";
     Ext.define(modelName, {
       extend: "Ext.data.Model",
-      fields: ["id", "runName", "runId", "uId", "uName", "runRemark", "receiveTime",
-        "status", "isBack", "remark", "isUserEnd", "flowStatus", "isUrgent", "processTo", "processType"]
+      fields: ["id", "isAgree", "content", "runName", "isUrgent", "runRemark", "runStatus",
+        "runProcessStatus", "flowStatus", "runUser", "receiveTime", "runProcessId", "runId"]
     });
 
     let Store = Ext.create('Ext.data.Store', {
@@ -70,7 +126,7 @@ Ext.define('PSI.Examine.MainForm', {
       model: modelName,
       proxy: {
         type: "ajax",
-        url: me.URL("Home/Examine/loadFlow"),
+        url: me.URL("Home/JointlySign/loadData"),
         actionMethods: {
           read: "POST"
         },
@@ -108,7 +164,7 @@ Ext.define('PSI.Examine.MainForm', {
         },
         {
           header: "发起人",
-          dataIndex: "uName",
+          dataIndex: "runUser",
           menuDisabled: true,
           sortable: false,
           width: "8%"
@@ -118,7 +174,7 @@ Ext.define('PSI.Examine.MainForm', {
           dataIndex: "runRemark",
           menuDisabled: true,
           sortable: false,
-          width: "24%"
+          width: "20%"
         },
         {
           header: "接收时间",
@@ -128,34 +184,38 @@ Ext.define('PSI.Examine.MainForm', {
           width: "10%"
         },
         {
-          header: "备注",
-          dataIndex: "remark",
+          header: "是否加急",
+          dataIndex: "isUrgent",
           menuDisabled: true,
           sortable: false,
-          width: "24%"
+          width: "8%",
+          renderer: function (value) {
+            return ~~value ? "是" : "否";
+          }
+        },
+        {
+          header: "备注",
+          dataIndex: "content",
+          menuDisabled: true,
+          sortable: false,
+          width: "20%"
         },
         {
           header: "状态",
-          dataIndex: "status",
+          dataIndex: "isAgree",
           menuDisabled: true,
           sortable: false,
           width: "10%",
           renderer: function (value) {
             switch (value) {
-              case "2":
+              case "0":
                 value = "待办理";
                 break;
-              case "3":
+              case "1":
                 value = "已通过";
                 break;
-              case "4":
+              case "2":
                 value = "未通过";
-                break;
-              case "5":
-                value = "已打回";
-                break;
-              case "6":
-                value = "他人已通过";
                 break;
               default:
                 break;
@@ -165,89 +225,10 @@ Ext.define('PSI.Examine.MainForm', {
         }
       ]
     });
-    me.__grid.on("itemdblclick", me.onExamineFlow, me);
+    me.__grid.on("itemdblclik", me.onExamineFlow, me);
 
     return me.__grid;
 
-  },
-  //搜索栏
-  getQueryCmp: function () {
-    let me = this;
-    return [{
-      id: "editQueryName",
-      labelWidth: 60,
-      labelAlign: "right",
-      labelSeparator: "",
-      fieldLabel: "名称",
-      margin: "5, 0, 0, 0",
-      xtype: "textfield"
-    }, {
-      id: "editType",
-      xtype: "combo",
-      queryMode: "local",
-      editable: true,
-      valueField: "id",
-      labelWidth: 60,
-      labelAlign: "right",
-      labelSeparator: "",
-      fieldLabel: "状态",
-      margin: "5, 0, 0, 0",
-      store: Ext.create("Ext.data.ArrayStore", {
-        fields: ["id", "text"],
-        data: [["2", "待办理"], ["3", "已通过"], ["4", "未通过"], ["5", "已打回"]]
-      }),
-      value: ""
-    }, {
-      xtype: "container",
-      items: [{
-        xtype: "button",
-        text: "查询",
-        width: 100,
-        height: 26,
-        margin: "5, 0, 0, 20",
-        handler: me.freshGrid,
-        scope: me
-      }, {
-        xtype: "button",
-        text: "清空查询条件",
-        width: 100,
-        height: 26,
-        margin: "5, 0, 0, 5",
-        handler: me.onClearQuery,
-        scope: me
-      }, {
-        xtype: "button",
-        text: "隐藏查询条件栏",
-        width: 130,
-        height: 26,
-        iconCls: "PSI-button-hide",
-        margin: "5 0 0 10",
-        handler: function () {
-          Ext.getCmp("panelQueryCmp").collapse();
-        },
-        scope: me
-      }]
-    }];
-  },
-  //打开审批流程窗口
-  onExamineFlow: function () {
-    let me = this;
-    let data = me.getSelectNodeData();
-    if (Ext.JSON.encode(data) == "{}")
-      return me.showInfo("请先选择数据");
-    if (data['status'] != "2")
-      return me.showInfo("已操作过流程");
-    if (data['flowStatus'] != "0")
-      return me.showInfo("流程已被禁用，无法进行审核");
-    let form = Ext.create("PSI.Examine.ExamineWindow", {
-      parentForm: me,
-      entity: data
-    });
-    form.show();
-  },
-  //查看详细信息
-  onSelectInfo: function () {
-    let me = this;
   },
   //刷新数据
   freshGrid: function () {
@@ -257,7 +238,6 @@ Ext.define('PSI.Examine.MainForm', {
       queryName: Ext.getCmp("editQueryName").getValue(),
       queryType: Ext.getCmp("editType").getValue()
     };
-    setTimeout(store.reload, 1000);
     store.reload();
   },
   //清空查询条件
@@ -277,13 +257,27 @@ Ext.define('PSI.Examine.MainForm', {
     let data = selected.map[id].data;
     return data;
   },
-  //改变行颜色
-  changeRowClass: function (record) {
-    let data = record['data'];
-    //返回类名可给行加上指定样式
-    //background-color-red
-    //background-color-green
-    //background-color-gray
-  }
+  //审核会签内容
+  onExamineFlow: function () {
+    let me = this;
+    let data = me.getSelectNodeData();
+    console.log(data);
+    if (Ext.JSON.encode(data) == "{}")
+      return me.showInfo("请先选择数据");
+    if (data['isAgree'] != "0")
+      return me.showInfo("已审核过流程");
+    if (data['flowStatus'] != "0")
+      return me.showInfo("流程已被禁用，无法进行审核");
+    let form = Ext.create("PSI.JointlySign.ExamineWindow", {
+      parentForm: me,
+      entity: data
+    });
+    form.show();
 
+  },
+  //查看流程订单信息
+  onSelectInfo: function () {
+    let me = this;
+
+  }
 });

@@ -155,7 +155,7 @@ class StartFlowDAO extends PSIBaseExDAO
 
     $p_ids = array($sel_data[0]['run_flow_process']);
     if (strpos($sel_data[0]['run_flow_process'], ','))
-      $p_ids = explode($sel_data[0]['run_flow_process'], ',');
+      $p_ids = explode(',', $sel_data[0]['run_flow_process']);
     $db->startTrans();
 
     //先插入一条起始步骤记录
@@ -176,7 +176,7 @@ class StartFlowDAO extends PSIBaseExDAO
     $start_data['status'] = 3;
     $start_data['bl_time'] = time();
     $start_data['is_del'] = 0;
-    $start_data['remark'] = "发起流程";
+    $start_data['remark'] = $sel_data[0]['remark'];
     $start_data['parent_process'] = "";
     $info = $db->execute($run_p_sql, $start_data);
     if (!$info) {

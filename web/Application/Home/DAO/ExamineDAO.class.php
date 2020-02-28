@@ -57,23 +57,21 @@ class ExamineDAO extends PSIBaseExDAO
    */
   public function flowAdvance($params, $is_current = true)
   {
-    if (!$params['id']) {
-      return;
-    }
     $db = $this->db;
     $run_process = $db->query("select * from t_flow_run_process where id = '%s'", $params['id']);
     $run_flow = $db->query("select * from t_flow_run where id = '%s'", $run_process[0]['run_id']);
 
-    $item["sponsorUser"] = $run_process[0]['sponsor_text'] ?? $run_flow[0]['uname'];
+    $item["sponsorUser"] = $run_process[0]['is_singpost'] == 1 ?
+      "多人会签中" : ($run_process[0]['sponsor_text'] ?? $run_flow[0]['uname']);
     $item['bltime'] = $is_current ? "" : date("Y-m-d H:i:s", $run_process[0]['bl_time']);
     $item['remark'] = $run_process[0]['remark'];
     $item['status'] = $is_current ? "当前步骤" : (empty($run_process[0]['parent_process']) ?
       "发起流程" : ($run_process[0]['status'] == "3" ? "已通过" : "退回"));
     $item['receiveTime'] = $run_process[0]['receive_time'] ?
       date("Y-m-d H:i:s", $run_process[0]['receive_time']) : "";
-    $data['id'] = $run_process[0]['parent_process'];
     $arr['dataList'] = [];
-    if ($data['id']) {
+    if ($run_process[0]['parent_process']) {
+      $data['id'] = $run_process[0]['parent_process'];
       $arr = $this->flowAdvance($data, false);
     }
     array_push($arr['dataList'], $item);
@@ -125,18 +123,6 @@ class ExamineDAO extends PSIBaseExDAO
     if ($process_data[0]['status'] != "2")
       return $this->failAction("其他步骤已通过");
 
-    //判断其他流程步骤已经通过了
-//    $other_is_pass = $process_data[0]['current_process'] == $process_data[0]['id'];
-//    if (strpos($process_data[0]['current_process'], ',') !== false) {
-//      $arr = explode($process_data[0]['current_process'], ',');
-//      foreach ($arr as $item) {
-//        if ($item == $process_data[0]['id']) {
-//          $other_is_pass = true;
-//          break;
-//        }
-//      }
-//    }
-
     $info = "";
     $db->startTrans();
     //修改当前步骤状态
@@ -157,13 +143,14 @@ class ExamineDAO extends PSIBaseExDAO
     if (!$is_end & $process_data[0]['process_to'] != "" && $process_data[0]['process_type'] != "End") {
       $next_process_ids = array($process_data[0]['process_to']);
       if (strpos($process_data[0]['process_to'], ',') !== false) {
-        $next_process_ids = explode($process_data[0]['process_to'], ',');
+        $next_process_ids = explode(',', $process_data[0]['process_to']);
       }
 
       $current_process_ids = [];
       foreach ($next_process_ids as $item) {
         $next_process = $db->query("select * from t_flow_process where id = '%s'", $item);
         if ($next_process[0]['role_ids'] == "" && $next_process[0]['user_ids'] == "") {
+          $db->rollback();
           return $this->failAction("请先在流程设计中完善流程审核人");
         }
 
@@ -345,7 +332,7 @@ class ExamineDAO extends PSIBaseExDAO
 
       $p_ids = array($p_parent_process[0]['process_to']);
       if (strpos($p_parent_process[0]['process_to'], ','))
-        $p_ids = explode($p_parent_process[0]['process_to'], ',');
+        $p_ids = explode(',', $p_parent_process[0]['process_to']);
       $current_ids = [];
       foreach ($p_ids as $p_id) {
         $process = $db->query("select * from t_flow_process where id = '%s'", $p_id);
